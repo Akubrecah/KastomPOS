@@ -1,0 +1,232 @@
+{% extends "layout.html" %}
+
+{% block title %}Close Day Report | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    .my-btn {
+        background-color: #E1E1E1;
+        border-radius: 0px;
+        border-top: none;
+        border-right: none;
+        color: black !important;
+        font-weight: bold;
+        margin-right: 2px;
+    }
+    #active {
+        border: unset !important;
+        color: #fff !important;
+        background: #017870 !important;
+    }
+    .table-sm th, .table-sm td {
+        padding: 0.3rem;
+    }
+    @media print {
+        .no-print { display: none !important; }
+        .card { border: none !important; box-shadow: none !important; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">Close Day Report</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item"><a href="#">Reports</a></li>
+                    <li class="breadcrumb-item active">Close Day Report</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row no-print mb-3">
+            <div class="col-12">
+                <a href="/admin/reports/close-day" class="btn my-btn" id="active">General/POS Sales</a>
+                <a href="#" class="btn my-btn">Invoices</a>
+                <a href="#" class="btn my-btn">Room Bookings</a>
+                <a href="#" class="btn my-btn">Cash/Bank</a>
+                <a href="#" class="btn my-btn">Cash/Bank Statement</a>
+            </div>
+        </div>
+
+        <!-- Stat Boxes -->
+        <div class="row">
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3>{{ sales|length }}</h3>
+                        <p>Total Orders</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3>{{ settings.currency }} {{ "{:,.0f}".format(total_net) }}</h3>
+                        <p>Total Revenue</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-warning">
+                    <div class="inner">
+                        <h3>15</h3>
+                        <p>New Customers</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-danger">
+                    <div class="inner">
+                        <h3>{{ settings.currency }} {{ "{:,.0f}".format(total_balance) }}</h3>
+                        <p>Outstanding Balances</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-outline card-primary no-print">
+            <div class="card-body">
+                <form method="GET" action="/admin/reports/close-day">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Organization/Store</label>
+                                <select name="org_id" class="form-control select2">
+                                    <option value="">All Organizations</option>
+                                    {% for org in orgs %}
+                                    <option value="{{ org.id }}" {% if request.query_params.get('org_id') == org.id|string %}selected{% endif %}>{{ org.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>From Date</label>
+                                <input type="date" name="from_date" class="form-control" value="{{ request.query_params.get('from_date', today) }}">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>To Date</label>
+                                <input type="date" name="to_date" class="form-control" value="{{ request.query_params.get('to_date', today) }}">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn btn-primary btn-block">Filter Report</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card card-outline card-success">
+            <div class="card-header">
+                <h3 class="card-title">General/POS Sales Report</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-sm mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Date</th>
+                                <th>Ref/Receipt</th>
+                                <th>Customer</th>
+                                <th>Payment Method</th>
+                                <th>Gross Amount</th>
+                                <th>Discount</th>
+                                <th>Net Amount</th>
+                                <th>Paid</th>
+                                <th>Balance</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if sales %}
+                                {% for sale in sales %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ sale.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ sale.receipt.receipt_number if sale.receipt else sale.id }}</td>
+                                    <td>{{ sale.customer.name if sale.customer else 'Walking Customer' }}</td>
+                                    <td>
+                                        {% for payment in sale.payments %}
+                                            <span class="badge badge-info">{{ payment.method }}</span>
+                                        {% endfor %}
+                                    </td>
+                                    <td>{{ settings.currency }} {{ "{:,.2f}".format(sale.total_amount) }}</td>
+                                    <td>{{ settings.currency }} 0.00</td>
+                                    <td>{{ settings.currency }} {{ "{:,.2f}".format(sale.total_amount) }}</td>
+                                    <td>{{ settings.currency }} {{ "{:,.2f}".format(sale.payments|sum(attribute='amount_paid')) }}</td>
+                                    <td>{{ settings.currency }} {{ "{:,.2f}".format(sale.total_amount - (sale.payments|sum(attribute='amount_paid'))) }}</td>
+                                    <td>
+                                        {% if sale.status == 'paid' or (sale.total_amount - (sale.payments|sum(attribute='amount_paid'))) <= 0 %}
+                                            <span class="badge badge-success">Paid</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">Partial</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="11" class="text-center p-4">No sales records found for the selected period.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                        <tfoot class="bg-light font-weight-bold">
+                            <tr>
+                                <td colspan="5" class="text-right">TOTALS:</td>
+                                <td>{{ settings.currency }} {{ "{:,.2f}".format(total_gross) }}</td>
+                                <td>{{ settings.currency }} 0.00</td>
+                                <td>{{ settings.currency }} {{ "{:,.2f}".format(total_net) }}</td>
+                                <td>{{ settings.currency }} {{ "{:,.2f}".format(total_paid) }}</td>
+                                <td>{{ settings.currency }} {{ "{:,.2f}".format(total_balance) }}</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({
+            theme: 'bootstrap4'
+        });
+    });
+</script>
+{% endblock %}

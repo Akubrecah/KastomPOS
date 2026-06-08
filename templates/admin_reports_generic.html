@@ -1,0 +1,170 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ title }} | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    .table-sm th, .table-sm td {
+        padding: 0.4rem;
+        vertical-align: middle;
+    }
+    @media print {
+        .no-print { display: none !important; }
+        .card { border: none !important; box-shadow: none !important; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="backbtn" title="Back" onclick="window.history.back()"><i class="fa fa-arrow-left"></i></button>
+                    {{ title }}
+                </h1>
+                <p class="text-muted mb-0 mt-1">{{ description }}</p>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item"><a href="#">Reports</a></li>
+                    <li class="breadcrumb-item active">{{ title }}</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <!-- Date/Store Filter Card -->
+        <div class="card no-print mb-3">
+            <div class="card-body">
+                <form method="GET" action="{{ filter_url }}">
+                    <div class="row">
+                        <div class="col-md-12 text-info mb-2">
+                            Filter by date range
+                        </div>
+                        <div class="col-md-3">
+                            <label class="font-weight-bold">From Date <i class="fa fa-calendar"></i></label>
+                            <input type="date" name="from_date" class="form-control" value="{{ from_date }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="font-weight-bold">To Date <i class="fa fa-calendar"></i></label>
+                            <input type="date" name="to_date" class="form-control" value="{{ to_date }}">
+                        </div>
+                        <div class="col-md-6">
+                            <button type="submit" style="margin-top: 30px;" class="btn btn-rgp">
+                                Filter <i class="fa fa-filter"></i>
+                            </button>
+                            <button type="button" style="margin-top: 30px;" class="btn btn-rgd ml-2" onclick="window.print()">
+                                Print <i class="fa fa-print"></i>
+                            </button>
+                            <button type="button" style="margin-top: 30px;" class="btn btn-rgs ml-2" onclick="exportToCSV()">
+                                Export CSV <i class="fa fa-file-csv"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Summary KPI Widget (If custom stats are defined) -->
+        {% if stats %}
+        <div class="row mb-3">
+            {% for stat in stats %}
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-{{ stat.bg|default('info') }}">
+                    <div class="inner">
+                        <h3>{{ stat.value }}</h3>
+                        <p class="font-weight-bold">{{ stat.label }}</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-{{ stat.icon|default('chart-bar') }}"></i>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="card card-outline">
+            <div class="card-header bg-light">
+                <h3 class="card-title font-weight-bold">{{ title }} Details</h3>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-sm mb-0" id="reportTable">
+                        <thead class="bg-light">
+                            <tr>
+                                {% for col in headers %}
+                                <th>{{ col }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if items %}
+                                {% for item in items %}
+                                <tr>
+                                    {% for field in fields %}
+                                    <td>
+                                        {% if field.type == 'currency' %}
+                                            {{ currency }} {{ "{:,.2f}".format(item[field.key]) if item[field.key] is not none else '0.00' }}
+                                        {% elif field.type == 'datetime' %}
+                                            {{ item[field.key].strftime('%d %b, %Y %I:%M %p') if item[field.key] else '-' }}
+                                        {% elif field.type == 'date' %}
+                                            {{ item[field.key].strftime('%d %b, %Y') if item[field.key] else '-' }}
+                                        {% else %}
+                                            {{ item[field.key] if item[field.key] is not none else '-' }}
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="{{ headers|length }}" class="text-center p-4 text-muted">
+                                        <i class="fas fa-history fa-2x mb-2"></i><br>
+                                        No matching transactional records found.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function exportToCSV() {
+        let csv = [];
+        let rows = document.querySelectorAll("#reportTable tr");
+        
+        for (let i = 0; i < rows.length; i++) {
+            let row = [], cols = rows[i].querySelectorAll("td, th");
+            
+            for (let j = 0; j < cols.length; j++) {
+                let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/(\s\s+)/gm, " ");
+                data = data.replace(/"/g, '""');
+                row.push('"' + data + '"');
+            }
+            csv.push(row.join(","));
+        }
+        
+        let csvContent = "data:text/csv;charset=utf-8," + csv.join("\n");
+        let encodedUri = encodeURI(csvContent);
+        let link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "{{ title|lower|replace(' ', '_') }}_report.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+{% endblock %}

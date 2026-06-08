@@ -1,0 +1,227 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">
+                        <button class="pull-left backbtn" title="Back" onclick="goBack()">
+                            <i class="fa fa-arrow-left" aria-hidden="true"> </i>
+                        </button>
+                        Bank Transfers
+                    </h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item active">Bank Transfers</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12 col-sm-12">
+                    <div class="card card-outline card-primary shadow-sm">
+                        <div class="card-header">
+                            <h3 class="card-title font-weight-bold">New Bank Transfer Form</h3>
+                            <div class="card-tools">
+                                <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <form action="/admin/accounting/add_transfer" method="post">
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="org_id">Org/Store/Location <i class="text-danger">*</i></label>
+                                        <select name="org_id" id="org_id" class="select2 form-control" required>
+                                            <option value="">~Select Store~</option>
+                                            {% for store in stores %}
+                                            <option value="{{ store.id }}">{{ store.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+
+                                    <div class="col-sm-4 col-xs-12 mb-3">
+                                        <label for="account_idcr">From which account (OUT Account) <i class="text-danger">*</i></label>
+                                        <select name="account_idcr" id="account_idcr" required class="select2 form-control">
+                                            <option value="">~Select account~</option>
+                                            {% for acc in accounts %}
+                                            <option value="{{ acc.id }}">{{ acc.name }} ({{ acc.code }}) ~ Balance: {{ acc.balance|format_currency }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+
+                                    <div class="col-sm-4 col-xs-12 mb-3">
+                                        <label for="account_iddr">Into which account (IN account) <i class="text-danger">*</i></label>
+                                        <select name="account_iddr" id="account_iddr" class="select2 form-control" required>
+                                            <option value="">~Select account~</option>
+                                            {% for acc in accounts %}
+                                            <option value="{{ acc.id }}">{{ acc.name }} ({{ acc.code }}) ~ Balance: {{ acc.balance|format_currency }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-4 col-sm-12 col-xs-12 mb-3">
+                                        <label for="fiscal_year">Fiscal Year <i class="text-danger">*</i></label>
+                                        <select name="fiscal_year" id="fiscal_year" class="select2 form-control" required>
+                                            {% for fy in fiscal_years %}
+                                            <option value="{{ fy.id }}" {% if fy.is_active %}selected{% endif %}>{{ fy.year }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-4 col-xs-12 mb-3">
+                                        <label>Amount <i class="text-danger">*</i></label>
+                                        <input type="number" step="0.01" name="amount" placeholder="Enter amount" required class="form-control" />
+                                    </div>
+
+                                    <div class="col-md-4 col-xs-12 mb-3">
+                                        <label>Reference <i class="text-danger">*</i></label>
+                                        <input type="text" name="reference" required class="form-control" placeholder="Enter transaction reference" />
+                                    </div>
+
+                                    <div class="col-md-4 col-xs-12 mb-3">
+                                        <label>Transaction Date <i class="text-danger">*</i></label>
+                                        <input type="date" name="transaction_date" required max="{{ today }}" value="{{ today }}" class="form-control" />
+                                    </div>
+
+                                    <div class="col-md-12 col-xs-12 mb-3">
+                                        <label>Narrative </label>
+                                        <textarea name="narrative" class="form-control" rows="2" placeholder="Write some notes here..."></textarea>
+                                    </div>
+
+                                    <div class="col-md-12 col-sm-12">
+                                        <button type="submit" class="btn btn-primary shadow-sm px-4">
+                                            <i class="fas fa-save mr-1"></i> Submit Transfer
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12 col-sm-12">
+                    <div class="card card-outline card-info shadow-sm">
+                        <div class="card-body">
+                            <form id="filter_form">
+                                <div class="row">
+                                    <div class="col-md-12 text-info mb-2 font-weight-bold">
+                                        <i class="fas fa-filter mr-1"></i> Filter by date range
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="filter_org_id">Org/Store/Location</label>
+                                        <select name="org_id" id="filter_org_id" class="select2 form-control">
+                                            <option value="All">All Stores</option>
+                                            {% for store in stores %}
+                                            <option value="{{ store.id }}">{{ store.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label>From Date</label>
+                                        <input type="date" name="from_date" id="filter_from_date" class="form-control" value="{{ today }}" />
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label>To Date</label>
+                                        <input type="date" name="to_date" id="filter_to_date" class="form-control" value="{{ today }}" />
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <button type="button" onclick="refreshTable()" style="margin-top: 30px;" class="btn btn-info shadow-sm">
+                                            Filter <i class="fas fa-search ml-1"></i>
+                                        </button>
+                                        <button type="button" onclick="exportCSV()" style="margin-top: 30px;" class="btn btn-success shadow-sm">
+                                            Export <i class="fas fa-file-excel ml-1"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card card-outline card-dark shadow-sm">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table id="data_table" class="table table-hover table-sm table-bordered">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Ref#</th>
+                                            <th>Ref2#</th>
+                                            <th>Account Name</th>
+                                            <th>Account Code</th>
+                                            <th>Narrative</th>
+                                            <th>User</th>
+                                            <th>DR (IN)</th>
+                                            <th>CR (OUT)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var dataTable;
+    $(document).ready(function() {
+        dataTable = $('#data_table').DataTable({
+            "pageLength": 20,
+            "processing": true,
+            "serverSide": true,
+            "ajax": {
+                url: "/admin/accounting/all_transfers",
+                type: 'GET',
+                data: function(d) {
+                    d.from_date = $('#filter_from_date').val();
+                    d.to_date = $('#filter_to_date').val();
+                    d.org_id = $('#filter_org_id').val();
+                }
+            },
+            "columns": [
+                { "data": "date" },
+                { "data": "ref_no" },
+                { "data": "reference" },
+                { "data": "account_name" },
+                { "data": "account_code" },
+                { "data": "narrative" },
+                { "data": "user" },
+                { "data": "dr" },
+                { "data": "cr" }
+            ],
+            "order": [[0, "desc"]]
+        });
+    });
+
+    function refreshTable() {
+        dataTable.ajax.reload();
+    }
+
+    function exportCSV() {
+        var from = $('#filter_from_date').val();
+        var to = $('#filter_to_date').val();
+        var org = $('#filter_org_id').val();
+        window.location.href = `/admin/accounting/export_transfers_csv?from_date=${from}&to_date=${to}&org_id=${org}`;
+    }
+
+    function goBack() {
+        window.history.back();
+    }
+</script>
+{% endblock %}

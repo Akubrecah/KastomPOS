@@ -1,0 +1,250 @@
+{% extends "layout.html" %}
+
+{% block extra_css %}
+<style>
+    .headings th { background: #2A3F54; color: white; font-weight: bold; }
+    .select2-container { width: 100% !important; }
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+{% endblock %}
+
+{% block content %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">
+                        <button class="pull-left backbtn" title="Back" onclick="window.history.back()"><i class="fa fa-arrow-left"></i></button>
+                        Wastages & Damages
+                    </h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item active">Wastages & Damages</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12 col-xs-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <form method="GET" action="/admin/wastage">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>Org/Branch/Store <i class="text-danger">*</i></label>
+                                        <select class="form-control select2" name="orgid">
+                                            <option value="">Select option</option>
+                                            {% for store in stores %}
+                                            <option value="{{ store.id }}" {% if orgid == store.id %}selected{% endif %}>{{ store.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label>From Date <i class="text-danger">*</i></label>
+                                        <input type="date" name="from_date" value="{{ from_date or '' }}" class="form-control" required />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label>To Date <i class="text-danger">*</i></label>
+                                        <input type="date" name="to_date" value="{{ to_date or '' }}" class="form-control" required />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <br />
+                                        <button type="submit" class="btn btn-primary mt-2">Filter <i class="fa fa-filter"></i></button>
+                                        <button type="button" class="btn btn-danger mt-2">Print <i class="fa fa-print"></i></button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-12 col-sm-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Wastage List</h3>
+                            <div class="card-tools">
+                                <a href="#!" data-toggle="modal" data-target="#addWastage" class="btn btn-dark btn-xs">Record Wastage/Damage <i class="fa fa-plus"></i></a>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table id="itemtable" class="table table-sm table-striped table-hover">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th>Ref#</th>
+                                            <th>Barcode</th>
+                                            <th>Name</th>
+                                            <th>Unit</th>
+                                            <th>Category</th>
+                                            <th>QTY</th>
+                                            <th>COST</th>
+                                            <th>Store</th>
+                                            <th>Occurrence Date</th>
+                                            <th>Narrative</th>
+                                            <th>Created By</th>
+                                            <th>Timestamp</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+<!-- Add Wastage Modal -->
+<div id="addWastage" class="modal fade" role="dialog" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Wastage & Damages Form</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <form action="/sys/add_wastage" method="post">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <p class="text-info"><i class="fa fa-info-circle"></i> Record a new wastage/damage below</p>
+                        </div>
+                        <div class="col-md-12 mt-2">
+                            <label>Store <span class="text-danger">*</span></label>
+                            <select name="store_id" id="org_id1" onchange="get_items3()" class="form-control select2" required>
+                                <option value="">~Select store~</option>
+                                {% for store in stores %}
+                                <option value="{{ store.id }}">{{ store.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-12 mt-2">
+                            <label>Item <span class="text-danger">*</span></label>
+                            <select name="item_id" id="org_items2" class="select2 form-control" required>
+                                <option value="">Select item</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mt-2">
+                            <label>Quantity <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" name="qty" class="form-control" placeholder="Qty..." required />
+                        </div>
+                        <div class="col-md-6 mt-2">
+                            <label>Occurrence Date <span class="text-danger">*</span></label>
+                            <input type="date" name="wastage_date" class="form-control" required />
+                        </div>
+                        <div class="col-md-12 mt-2">
+                            <label>Expense Account <span class="text-danger">*</span></label>
+                            <select name="expense_id" class="form-control select2" required>
+                                <option value="">~Select expense type~</option>
+                                {% for acc in accounts if acc.account_type == 'Expense' %}
+                                <option value="{{ acc.id }}">{{ acc.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-12 mt-2">
+                            <label>Asset/Inventory Account <span class="text-danger">*</span></label>
+                            <select name="asset_id" class="form-control select2" required>
+                                <option value="0">~NOT APPLICABLE~</option>
+                                {% for acc in accounts if acc.account_type == 'Asset' %}
+                                <option value="{{ acc.id }}">{{ acc.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-12 mt-2">
+                            <label>Narrative <span class="text-danger">*</span></label>
+                            <textarea name="narrative" class="form-control" required placeholder="Reason for wastage..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-rgd btn-sm" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-dark btn-sm">Submit <i class="fa fa-check"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Wastage Modal -->
+<div id="viewWastage" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Waste Details</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="waste-body"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({ width: '100%' });
+
+        $('#itemtable').DataTable({
+            "processing": true,
+            "ajax": {
+                "url": "/sys/all_item_wastages",
+                "data": {
+                    "from_date": "{{ from_date or '' }}",
+                    "to_date": "{{ to_date or '' }}",
+                    "orgid": "{{ orgid or '' }}"
+                }
+            }
+        });
+    });
+
+    function get_items3() {
+        var orgid = $('#org_id1').val();
+        $.ajax({
+            url: '/data/org_items',
+            type: 'POST',
+            data: { data: orgid },
+            success: function(html) {
+                $('#org_items2').html(html).trigger('change');
+            }
+        });
+    }
+
+    function view_waste(id) {
+        toastr.info("View requested for Wastage ID: " + id);
+    }
+
+    function delete_waste(id) {
+        swal({
+            title: "Are you sure?",
+            text: "Once deleted, this record cannot be recovered!",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $.ajax({
+                    url: '/delete/waste_record/' + id,
+                    type: 'POST',
+                    success: function(resp) {
+                        if(resp.resp == "1") {
+                            swal("Deleted!", resp.message, "success");
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            swal("Error!", resp.message, "error");
+                        }
+                    }
+                });
+            }
+        });
+    }
+</script>
+{% endblock %}

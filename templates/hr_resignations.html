@@ -1,0 +1,228 @@
+{% extends "layout.html" %}
+
+{% block title %}Resignations | KastomPOS{% endblock %}
+
+{% block styles %}
+
+{% endblock %}
+
+{% block content %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">
+                        <button class="pull-left backbtn" title="Back" onclick="goBack()">
+                            <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                        </button>
+                        Resignations
+                    </h1>
+                    <script>
+                        function goBack() { window.history.back(); }
+                    </script>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item active">Resignations</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Resignation Form Card -->
+            <div class="card card-outline card-primary">
+                <div class="card-header">
+                    <h3 class="card-title">Resignation Form</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body" style="display: none;">
+                    <form id="resignation_form">
+                        <div class="row">
+                            <div class="col-md-7 pr-3">
+                                <div class="row">
+                                    <div class="col-12 mb-3">
+                                        <label>Staff/Employee <span class="text-danger">*</span></label>
+                                        <select class="form-control select2" name="staff_id" id="staff_id" required>
+                                            <option value="">~Select Employee~</option>
+                                            {% for s in staff %}
+                                            <option value="{{ s.id }}">{{ s.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label>Notice Date <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control" name="notice_date" id="notice_date" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label>Resignation Date <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control" name="resignation_date" id="resignation_date" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-5 pl-3">
+                                <div class="row">
+                                    <div class="col-12 mb-3">
+                                        <label>Description</label>
+                                        <textarea class="form-control" rows="4" name="description" id="description" placeholder="Type description here..."></textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <label>Attachment</label>
+                                        <input type="file" class="form-control-file" name="attachment" id="attachment">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 pt-4">
+                                <button type="submit" class="btn btn-primary float-right">
+                                    <i class="fa fa-check-square mr-1"></i> Save Resignation
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Resignation List Card -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h3 class="card-title">Resignation List</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="resignation_table" class="table table-striped table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Full name</th>
+                                    <th>Notice Date</th>
+                                    <th>Resignation Date</th>
+                                    <th>File</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data populated via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({ theme: 'bootstrap4' });
+        load_resignations();
+
+        $('#resignation_form').on('submit', function(e) {
+            e.preventDefault();
+            save_resignation();
+        });
+    });
+
+    function load_resignations() {
+        $.ajax({
+            url: '/api/admin/hr/get-resignations',
+            type: 'GET',
+            success: function(response) {
+                render_table(response);
+            },
+            error: function() {
+                toastr.error('Failed to load resignations');
+            }
+        });
+    }
+
+    function render_table(data) {
+        let html = '';
+        data.forEach(function(item) {
+            html += '<tr>';
+            html += '<td>' + item.staff_name + '</td>';
+            html += '<td>' + item.notice_date + '</td>';
+            html += '<td>' + item.resignation_date + '</td>';
+            html += '<td>';
+            if (item.attachment) {
+                html += '<a href="/' + item.attachment + '" target="_blank"><i class="fa fa-paperclip"></i></a>';
+            } else {
+                html += '-';
+            }
+            html += '</td>';
+            html += '<td>';
+            html += '<button class="btn btn-xs btn-rgp mr-1" onclick="delete_resignation(' + item.id + ')"><i class="fa fa-trash text-danger"></i></button>';
+            html += '</td>';
+            html += '</tr>';
+        });
+        
+        if ($.fn.DataTable.isDataTable('#resignation_table')) {
+            $('#resignation_table').DataTable().destroy();
+        }
+        
+        $('#resignation_table tbody').html(html);
+        $('#resignation_table').DataTable({
+            "responsive": true,
+            "autoWidth": false
+        });
+    }
+
+    function save_resignation() {
+        let formData = new FormData($('#resignation_form')[0]);
+
+        $.ajax({
+            url: '/api/admin/hr/add-resignation',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.error) {
+                    toastr.error(response.error);
+                } else {
+                    toastr.success('Resignation saved successfully');
+                    load_resignations();
+                    $('#resignation_form')[0].reset();
+                    $('.select2').val('').trigger('change');
+                    $('.card-body').slideUp();
+                }
+            },
+            error: function() {
+                toastr.error('Failed to save resignation');
+            }
+        });
+    }
+
+    function delete_resignation(id) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This resignation record will be permanently removed.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/api/admin/hr/delete-resignation',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ id: id }),
+                    success: function() {
+                        toastr.success('Resignation deleted');
+                        load_resignations();
+                    }
+                });
+            }
+        });
+    }
+</script>
+{% endblock %}

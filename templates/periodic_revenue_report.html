@@ -1,0 +1,151 @@
+{% extends "layout.html" %}
+
+{% block title %}Periodic Revenue Report | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    .tb_title {
+        height: 30px;
+        background: #2A3F54;
+        position: relative;
+        color: #fff;
+        font-weight: bold;
+        border: none;
+        width: 200px;
+        text-align: left;
+    }
+    .tb_title:before {
+        content: '';
+        position: absolute;
+        right: 0;
+        border-top: 30px solid white;
+        border-left: 30px solid #2A3F54;
+        width: 0;
+        top: 0;
+    }
+    .headings th {
+        background-color: #00817a;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="window.history.back()">
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                    </button>
+                    Periodic Revenue Report <small>~ On the selling points</small>
+                </h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Periodic Revenue Report</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12 col-sm-12">
+                <div class="card card-outline card-primary">
+                    <div class="card-body">
+                        <form method="GET" action="/admin/reports/periodic-revenue">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>Org/Store/Shop <i class="fa fa-building"></i> *</label>
+                                        <select class="form-control select2" name="store_id" required>
+                                            <option value="All">All Stores</option>
+                                            {% for store in stores %}
+                                            <option value="{{ store.id }}" {% if request.query_params.get('store_id') == store.id|string %}selected{% endif %}>{{ store.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>From Date * <i class="fa fa-calendar"></i></label>
+                                        <input type="date" name="from_date" class="form-control" value="{{ request.query_params.get('from_date', today) }}" required />
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>To Date * <i class="fa fa-calendar"></i></label>
+                                        <input type="date" name="to_date" class="form-control" value="{{ request.query_params.get('to_date', today) }}" required />
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label class="d-none d-md-block">&nbsp;</label>
+                                        <button type="submit" class="btn btn-primary">Filter <i class="fa fa-filter"></i></button>
+                                        <button type="button" onclick="window.print()" class="btn btn-danger">Print <i class="fa fa-print"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-12 col-sm-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="data_table" class="table table-hover table-striped table-sm">
+                                <thead>
+                                    <tr class="headings">
+                                        <th>Store:</th>
+                                        <th>Gross Sales:</th>
+                                        <th>Tax_A (VAT)</th>
+                                        <th>Tax_B (CTL)</th>
+                                        <th>Net Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if report_data %}
+                                        {% for date, stores in report_data.items() %}
+                                        <tr>
+                                            <th colspan="5" class="bg-light">Date: <span style="padding-left: 25px;">{{ date }}</span></th>
+                                        </tr>
+                                            {% for store in stores %}
+                                            <tr style="border-bottom: 2px dashed;">
+                                                <td class="text-center">{{ store.name }}</td>
+                                                <td>{{ settings.currency }} {{ "{:,.2f}".format(store.gross) }}</td>
+                                                <td>{{ settings.currency }} {{ "{:,.2f}".format(store.tax_a) }}</td>
+                                                <td>{{ settings.currency }} {{ "{:,.2f}".format(store.tax_b) }}</td>
+                                                <td>{{ settings.currency }} {{ "{:,.2f}".format(store.net) }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center p-4">No revenue data found for the selected period.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(function () {
+        $('.select2').select2({ theme: 'bootstrap4' });
+    });
+</script>
+{% endblock %}

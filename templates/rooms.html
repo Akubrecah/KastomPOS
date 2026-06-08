@@ -1,0 +1,427 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+    .custom_nav_theme {
+        color: black !important;
+        border-bottom: 1px grey solid;
+    }
+
+    .fa-ian {
+        color: #393B3D !important;
+    }
+
+    .select2 {
+        width: 100% !important;
+    }
+
+    .card-header {
+        padding: .50rem 1.25rem !important;
+    }
+</style>
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="goBack()"><i class="fa fa-arrow-left" aria-hidden="true"> </i></button>
+                    Rooms</h1>
+                <script>
+                    function goBack() {
+                        window.history.back();
+                    }
+                </script>
+            </div><!-- /.col -->
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/admin">Home</a></li>
+                    <li class="breadcrumb-item active">Rooms</li>
+                </ol>
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                {% if error %}
+                <div class="alert alert-danger alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                    {{ error }}
+                </div>
+                {% endif %}
+                {% if success %}
+                <div class="alert alert-success alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                    {{ success }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12 pb-2">
+                <small>KRA E-Tims / Digitax Integration</small> <br />
+                <a href="#" id="addDigitax" onclick="digitax_actions('post',0)" class="btn btn-xs btn-primary" title="Add to Digitax">Add <i class="fa fa-plus"></i></a>
+                <a href="#" id="updateDigitax" onclick="digitax_actions('put',0)" class="btn btn-xs btn-dark" title="Update in Digitax">Update <i class="fa fa-edit"></i></a>
+                <a href="#" id="deleteDigitax" onclick="digitax_actions('delete',0)" class="btn btn-xs btn-danger" title="Delete from digitax">Delete <i class="fa fa-trash"></i></a>
+            </div>
+
+            <div class="col-md-12 col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Room list</h3>
+                        <div class="card-tools">
+                            <button type="button" data-toggle="modal" data-target="#addRoom" class="btn btn-sm btn-primary">New room <i class="fas fa-plus"></i> </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12 table-responsive">
+                                <table id="example1" class="table table-striped responsive-utilities table-sm">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th>.#</th>
+                                            <th>Room Name</th>
+                                            <th>Room Type</th>
+                                            <th>Day Rest</th>
+                                            <th>Bed only</th>
+                                            <th>Bed & breakfast</th>
+                                            <th>Half board</th>
+                                            <th>Full board</th>
+                                            <th>Online rate</th>
+                                            <th>Condition</th>
+                                            <th>Booking Status</th>
+                                            <th>Org/Branch</th>
+                                            <th>Active</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {% for room in rooms %}
+                                        <tr class="even pointer">
+                                            <td><small>{{ loop.index }}.</small></td>
+                                            <td>
+                                                <a href="/admin/rooms/profile/{{ room.id }}">{{ room.room_number }}</a>
+                                            </td>
+                                            <td>{{ room.room_type }}</td>
+                                            <td>
+                                                <small><b>S - </b>{{ room.day_rest_s }}<br><b>D - </b>{{ room.day_rest_d }}</small>
+                                            </td>
+                                            <td>
+                                                <small><b>S - </b>{{ room.price_per_night }}<br><b>D - </b>{{ room.bed_only_d }}</small>
+                                            </td>
+                                            <td>
+                                                <small><b>S - </b>{{ room.bb_s }}<br><b>D - </b>{{ room.bb_d }}</small>
+                                            </td>
+                                            <td>
+                                                <small><b>S - </b>{{ room.hb_s }}<br><b>D - </b>{{ room.hb_d }}</small>
+                                            </td>
+                                            <td>
+                                                <small><b>S - </b>{{ room.fb_s }}<br><b>D - </b>{{ room.fb_d }}</small>
+                                            </td>
+                                            <td>0</td>
+                                            <td>
+                                                {{ room.status|capitalize }}
+                                                <a href="#" onclick="get_room_status({{ room.id }})" title="Change?"><i class="fa fa-edit"></i></a>
+                                            </td>
+                                            <td></td>
+                                            <td>KastomPOS ERP</td>
+                                            <td class="a-right">
+                                                <span class="btn btn-xs btn-success">Active</span>
+                                            </td>
+                                            <td class="last" style="min-width: 180px;">
+                                                <button class="btn btn-info btn-xs" data-toggle="modal" data-target="#editModal{{ room.id }}"> Edit <span class="fa fa-pencil"></span> </button>
+                                                <a href="/admin/rooms/profile/{{ room.id }}" class="btn btn-xs btn-rgp"> View <span class="fa fa-eye"></span></a>
+                                                <a href="/api/admin/rooms/delete/{{ room.id }}" class="btn btn-xs btn-danger" onclick="return confirm('Delete this room?')"> Delete <span class="fa fa-close"></span></a>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Edit Room Modal for each room -->
+                                        <div id="editModal{{ room.id }}" class="modal fade" role="dialog">
+                                            <div class="modal-dialog modal-xl">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h4 class="modal-title">Edit Room details</h4>
+                                                        <button type="button" class="close" data-dismiss="modal">×</button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <form action="/api/admin/rooms/update/{{ room.id }}" method="post">
+                                                            <div class="row">
+                                                                <div class="col-md-7" style="border-right: 1px solid #ddd;">
+                                                                    <div class="row">
+                                                                        <div class="col-md-6">
+                                                                            <div class="form-group">
+                                                                                <label>Room Number/Name *</label>
+                                                                                <input type="text" name="room_number" value="{{ room.room_number }}" class="form-control" required>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-6">
+                                                                            <div class="form-group">
+                                                                                <label>Room Type *</label>
+                                                                                <select name="room_type" class="form-control select2" required>
+                                                                                    {% for rt in room_types %}
+                                                                                    <option value="{{ rt.name }}" {% if room.room_type == rt.name %}selected{% endif %}>{{ rt.name }}</option>
+                                                                                    {% else %}
+                                                                                    <option value="Single" {% if room.room_type == 'Single' %}selected{% endif %}>Single Room</option>
+                                                                                    <option value="Double" {% if room.room_type == 'Double' %}selected{% endif %}>Double Room</option>
+                                                                                    <option value="Family" {% if room.room_type == 'Family' %}selected{% endif %}>Family Room</option>
+                                                                                    <option value="Executive" {% if room.room_type == 'Executive' %}selected{% endif %}>Executive</option>
+                                                                                    {% endfor %}
+                                                                                </select>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-12">
+                                                                            <hr>
+                                                                            <h5>Pricing Details</h5>
+                                                                        </div>
+                                                                        <div class="col-md-4">
+                                                                            <div class="form-group">
+                                                                                <label>Day Rest (Single)</label>
+                                                                                <input type="number" step="0.01" name="day_rest_s" value="{{ room.day_rest_s }}" class="form-control">
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-4">
+                                                                            <div class="form-group">
+                                                                                <label>Bed Only (Single)</label>
+                                                                                <input type="number" step="0.01" name="price_per_night" value="{{ room.price_per_night }}" class="form-control" required>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-4">
+                                                                            <div class="form-group">
+                                                                                <label>Bed & Breakfast (S)</label>
+                                                                                <input type="number" step="0.01" name="bb_s" value="{{ room.bb_s }}" class="form-control">
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-4">
+                                                                            <div class="form-group">
+                                                                                <label>Half Board (S)</label>
+                                                                                <input type="number" step="0.01" name="hb_s" value="{{ room.hb_s }}" class="form-control">
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-4">
+                                                                            <div class="form-group">
+                                                                                <label>Full Board (S)</label>
+                                                                                <input type="number" step="0.01" name="fb_s" value="{{ room.fb_s }}" class="form-control">
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-4">
+                                                                            <div class="form-group">
+                                                                                <label>Day Rest (Double)</label>
+                                                                                <input type="number" step="0.01" name="day_rest_d" value="{{ room.day_rest_d }}" class="form-control">
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-4">
+                                                                            <div class="form-group">
+                                                                                <label>Bed Only (Double)</label>
+                                                                                <input type="number" step="0.01" name="bed_only_d" value="{{ room.bed_only_d }}" class="form-control">
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-4">
+                                                                            <div class="form-group">
+                                                                                <label>Bed & Breakfast (D)</label>
+                                                                                <input type="number" step="0.01" name="bb_d" value="{{ room.bb_d }}" class="form-control">
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-4">
+                                                                            <div class="form-group">
+                                                                                <label>Half Board (D)</label>
+                                                                                <input type="number" step="0.01" name="hb_d" value="{{ room.hb_d }}" class="form-control">
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-4">
+                                                                            <div class="form-group">
+                                                                                <label>Full Board (D)</label>
+                                                                                <input type="number" step="0.01" name="fb_d" value="{{ room.fb_d }}" class="form-control">
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-5">
+                                                                    <div class="form-group">
+                                                                        <label>Status</label>
+                                                                        <select name="status" class="form-control">
+                                                                            <option value="available" {% if room.status == 'available' %}selected{% endif %}>Available</option>
+                                                                            <option value="maintenance" {% if room.status == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                                                                            <option value="cleaning" {% if room.status == 'cleaning' %}selected{% endif %}>Cleaning</option>
+                                                                            <option value="occupied" {% if room.status == 'occupied' %}selected{% endif %}>Occupied</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label>Narrative</label>
+                                                                        <textarea name="narrative" class="form-control" rows="5"></textarea>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                                <button type="submit" class="btn btn-primary">Update Details</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Add Room Modal -->
+<div class="modal fade" id="addRoom" tabindex="-1" role="dialog" aria-labelledby="addRoomLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="addRoomLabel">Add New Room</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form action="/api/admin/rooms/add" method="post">
+                    <div class="row">
+                        <div class="col-md-7" style="border-right: 1px solid #ddd;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Room Number/Name *</label>
+                                        <input type="text" name="room_number" class="form-control" required placeholder="e.g. 101">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Room Type *</label>
+                                        <select name="room_type" class="form-control select2" required>
+                                            {% for rt in room_types %}
+                                            <option value="{{ rt.name }}">{{ rt.name }}</option>
+                                            {% else %}
+                                            <option value="Single">Single Room</option>
+                                            <option value="Double">Double Room</option>
+                                            <option value="Family">Family Room</option>
+                                            <option value="Executive">Executive</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <hr>
+                                    <h5>Pricing Details</h5>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Day Rest (Single)</label>
+                                        <input type="number" step="0.01" name="day_rest_s" value="0" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Bed Only (Single) *</label>
+                                        <input type="number" step="0.01" name="price_per_night" class="form-control" required placeholder="0.00">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Bed & Breakfast (S)</label>
+                                        <input type="number" step="0.01" name="bb_s" value="0" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Half Board (S)</label>
+                                        <input type="number" step="0.01" name="hb_s" value="0" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Full Board (S)</label>
+                                        <input type="number" step="0.01" name="fb_s" value="0" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Day Rest (Double)</label>
+                                        <input type="number" step="0.01" name="day_rest_d" value="0" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Bed Only (Double)</label>
+                                        <input type="number" step="0.01" name="bed_only_d" value="0" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Bed & Breakfast (D)</label>
+                                        <input type="number" step="0.01" name="bb_d" value="0" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Half Board (D)</label>
+                                        <input type="number" step="0.01" name="hb_d" value="0" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Full Board (D)</label>
+                                        <input type="number" step="0.01" name="fb_d" value="0" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select name="status" class="form-control">
+                                    <option value="available">Available</option>
+                                    <option value="maintenance">Maintenance</option>
+                                    <option value="cleaning">Cleaning</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Narrative</label>
+                                <textarea name="narrative" class="form-control" rows="5"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save Room</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        if (!$.fn.DataTable.isDataTable('#example1')) {
+            $("#example1").DataTable({
+                "responsive": true,
+                "autoWidth": false,
+            });
+        }
+    });
+
+    function digitax_actions(action, id) {
+        alert('Digitax ' + action + ' initiated');
+    }
+
+    function get_room_status(id) {
+        alert('Change status for room ' + id);
+    }
+</script>
+{% endblock %}

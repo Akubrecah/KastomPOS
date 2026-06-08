@@ -1,0 +1,367 @@
+{% extends "layout.html" %}
+
+{% block title %}Generate Payroll | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    .basic { color: blue; }
+    .allow { color: green; }
+    .gross { color: black; font-weight: bold; }
+    .dedct { color: red; }
+    .net { color: green; font-weight: bold; }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">
+                        <button class="pull-left backbtn" title="Back" onclick="window.history.back()">
+                            <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                        </button>
+                        Generate Payroll
+                    </h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item active">Generate Payroll</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Process Payroll Card -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-outline card-primary">
+                        <div class="card-body">
+                            <form id="payroll_process_form">
+                                <h5><b>Bulk Payroll Processing</b></h5>
+                                <p><span class="fa fa-info-circle text-info"> Select "All Staff" to process everyone in the branch, or pick specific employees.</span></p>
+                                
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>Store/Branch <span class="text-danger">*</span></label>
+                                        <select name="store_id" class="form-control select2" required onchange="loadEmployees(this.value)">
+                                            <option value="">~ Select Store ~</option>
+                                            {% for store in stores %}
+                                            <option value="{{ store.id }}">{{ store.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label>Select Staff <small>(Multiple)</small> <span class="text-danger">*</span></label>
+                                        <select name="employee_ids" id="employee_select" class="form-control select2" multiple="multiple" required>
+                                            <option value="all">~ All Staff ~</option>
+                                            <!-- Loaded via AJAX -->
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label>Year <span class="text-danger">*</span></label>
+                                        <select name="fiscal_year_id" class="form-control select2" required>
+                                            <option value="">~ Year ~</option>
+                                            {% for year in fiscal_years %}
+                                            <option value="{{ year.id }}" {% if year.is_active %}selected{% endif %}>{{ year.year }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label>Month <span class="text-danger">*</span></label>
+                                        <select name="month" class="form-control select2" required>
+                                            <option value="">~ Month ~</option>
+                                            <option value="1">JANUARY</option>
+                                            <option value="2">FEBRUARY</option>
+                                            <option value="3">MARCH</option>
+                                            <option value="4">APRIL</option>
+                                            <option value="5" selected>MAY</option>
+                                            <option value="6">JUNE</option>
+                                            <option value="7">JULY</option>
+                                            <option value="8">AUGUST</option>
+                                            <option value="9">SEPTEMBER</option>
+                                            <option value="10">OCTOBER</option>
+                                            <option value="11">NOVEMBER</option>
+                                            <option value="12">DECEMBER</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 pt-4">
+                                        <button type="submit" id="process_btn" class="btn btn-success btn-block mt-1">
+                                            Process Payroll <i class="fa fa-check-square-o ml-1"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payroll List Card -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-outline card-info">
+                        <div class="card-header">
+                            <h3 class="card-title" id="payroll_title">Salaries for May 2026</h3>
+                            <div class="card-tools">
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-toggle="modal" data-target="#filterModal">
+                                    Filter <i class="fa fa-filter"></i>
+                                </button>
+                                <button class="btn btn-rgd btn-sm ml-2" onclick="deletePayroll()"><i class="fa fa-trash"></i> Delete</button>
+                                <div class="btn-group ml-2">
+                                    <button class="btn btn-rgs btn-sm dropdown-toggle" data-toggle="dropdown">Export <i class="fa fa-download"></i></button>
+                                    <div class="dropdown-menu">
+                                        <a href="#" class="dropdown-item">PDF Payslips</a>
+                                        <a href="#" class="dropdown-item">Excel Report</a>
+                                        <a href="#" class="dropdown-item">P10 Form</a>
+                                        <a href="#" class="dropdown-item">NSSF Return</a>
+                                        <a href="#" class="dropdown-item">SHA Return</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table id="payroll_table" class="table table-sm table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Staff</th>
+                                            <th class="basic">Basic</th>
+                                            <th class="allow">Allowances</th>
+                                            <th class="gross">Gross</th>
+                                            <th>NSSF</th>
+                                            <th>SHA</th>
+                                            <th>H.Levy</th>
+                                            <th>PAYE</th>
+                                            <th class="dedct">Other Ded.</th>
+                                            <th class="net">Net Salary</th>
+                                            <th>Status</th>
+                                            <th>Org/Store</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="payroll_body">
+                                        <!-- Loaded via AJAX -->
+                                    </tbody>
+                                    <tfoot>
+                                        <tr style="background: #f4f6f9; font-weight: bold;">
+                                            <td>TOTALS</td>
+                                            <td id="total_basic" class="basic">0.00</td>
+                                            <td id="total_allow" class="allow">0.00</td>
+                                            <td id="total_gross" class="gross">0.00</td>
+                                            <td id="total_nssf">0.00</td>
+                                            <td id="total_sha">0.00</td>
+                                            <td id="total_hlevy">0.00</td>
+                                            <td id="total_paye">0.00</td>
+                                            <td id="total_other" class="dedct">0.00</td>
+                                            <td id="total_net" class="net">0.00</td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Filter Payroll Records</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="filter_form">
+                    <div class="form-group">
+                        <label>Store/Branch</label>
+                        <select name="store_id" class="form-control select2">
+                            <option value="">~ All Stores ~</option>
+                            {% for store in stores %}
+                            <option value="{{ store.id }}">{{ store.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Year</label>
+                        <select name="fiscal_year_id" class="form-control select2">
+                            {% for year in fiscal_years %}
+                            <option value="{{ year.id }}" {% if year.is_active %}selected{% endif %}>{{ year.year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Month</label>
+                        <select name="month" class="form-control select2">
+                            <option value="1">JANUARY</option>
+                            <option value="2">FEBRUARY</option>
+                            <option value="3">MARCH</option>
+                            <option value="4">APRIL</option>
+                            <option value="5" selected>MAY</option>
+                            <option value="6">JUNE</option>
+                            <option value="7">JULY</option>
+                            <option value="8">AUGUST</option>
+                            <option value="9">SEPTEMBER</option>
+                            <option value="10">OCTOBER</option>
+                            <option value="11">NOVEMBER</option>
+                            <option value="12">DECEMBER</option>
+                        </select>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary btn-block">Apply Filters</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({ theme: 'bootstrap4' });
+        loadPayroll();
+
+        $('#payroll_process_form').on('submit', function(e) {
+            e.preventDefault();
+            processPayroll();
+        });
+
+        $('#filter_form').on('submit', function(e) {
+            e.preventDefault();
+            loadPayroll();
+            $('#filterModal').modal('hide');
+        });
+    });
+
+    function loadEmployees(storeId) {
+        if (!storeId) {
+            $('#employee_select').html('<option value="all">~ All Staff ~</option>');
+            return;
+        }
+        $.ajax({
+            url: `/api/admin/payroll/get-store-staff/${storeId}`,
+            type: 'GET',
+            success: function(data) {
+                let html = '<option value="all">~ All Staff ~</option>';
+                data.forEach(function(staff) {
+                    html += `<option value="${staff.id}">${staff.name}</option>`;
+                });
+                $('#employee_select').html(html);
+            }
+        });
+    }
+
+    function processPayroll() {
+        let formData = $('#payroll_process_form').serialize();
+        $('#process_btn').prop('disabled', true).html('Processing... <i class="fa fa-spinner fa-spin ml-1"></i>');
+        
+        $.ajax({
+            url: '/api/admin/payroll/generate',
+            type: 'POST',
+            data: formData,
+            success: function(obj) {
+                if (obj.resp == '1') {
+                    toastr.success(obj.message);
+                    loadPayroll();
+                } else {
+                    toastr.error(obj.message);
+                }
+                $('#process_btn').prop('disabled', false).html('Process Payroll <i class="fa fa-check-square-o ml-1"></i>');
+            }
+        });
+    }
+
+    function loadPayroll() {
+        let formData = $('#filter_form').serialize();
+        $.ajax({
+            url: '/api/admin/payroll/get-records',
+            type: 'GET',
+            data: formData,
+            success: function(data) {
+                let html = '';
+                let totals = { basic: 0, allow: 0, gross: 0, nssf: 0, sha: 0, hlevy: 0, paye: 0, other: 0, net: 0 };
+                
+                data.records.forEach(function(item) {
+                    html += `<tr>
+                        <td>${item.staff_name}</td>
+                        <td class="basic">${item.basic_salary.toLocaleString()}</td>
+                        <td class="allow">${item.allowances.toLocaleString()}</td>
+                        <td class="gross">${item.gross_salary.toLocaleString()}</td>
+                        <td>${item.nssf.toLocaleString()}</td>
+                        <td>${item.sha.toLocaleString()}</td>
+                        <td>${item.housing_levy.toLocaleString()}</td>
+                        <td>${item.paye.toLocaleString()}</td>
+                        <td class="dedct">${item.other_deductions.toLocaleString()}</td>
+                        <td class="net">${item.net_salary.toLocaleString()}</td>
+                        <td><span class="badge badge-info">${item.status}</span></td>
+                        <td>${item.store_name}</td>
+                        <td>
+                            <button class="btn btn-xs btn-outline-info" onclick="viewPayslip(${item.id})"><i class="fa fa-eye"></i></button>
+                        </td>
+                    </tr>`;
+                    
+                    totals.basic += item.basic_salary;
+                    totals.allow += item.allowances;
+                    totals.gross += item.gross_salary;
+                    totals.nssf += item.nssf;
+                    totals.sha += item.sha;
+                    totals.hlevy += item.housing_levy;
+                    totals.paye += item.paye;
+                    totals.other += item.other_deductions;
+                    totals.net += item.net_salary;
+                });
+                
+                $('#payroll_body').html(html);
+                $('#total_basic').text(totals.basic.toLocaleString());
+                $('#total_allow').text(totals.allow.toLocaleString());
+                $('#total_gross').text(totals.gross.toLocaleString());
+                $('#total_nssf').text(totals.nssf.toLocaleString());
+                $('#total_sha').text(totals.sha.toLocaleString());
+                $('#total_hlevy').text(totals.hlevy.toLocaleString());
+                $('#total_paye').text(totals.paye.toLocaleString());
+                $('#total_other').text(totals.other.toLocaleString());
+                $('#total_net').text(totals.net.toLocaleString());
+                
+                if ($.fn.DataTable.isDataTable('#payroll_table')) {
+                    $('#payroll_table').DataTable().destroy();
+                }
+                $('#payroll_table').DataTable({ responsive: true, paging: false, searching: false });
+                
+                $('#payroll_title').text(`Salaries for ${data.month_name} ${data.year}`);
+            }
+        });
+    }
+
+    function deletePayroll() {
+        if (confirm('Are you sure you want to delete payroll for the selected filters?')) {
+            let formData = $('#filter_form').serialize();
+            $.ajax({
+                url: '/api/admin/payroll/delete-batch',
+                type: 'POST',
+                data: formData,
+                success: function(obj) {
+                    if (obj.resp == '1') {
+                        toastr.success(obj.message);
+                        loadPayroll();
+                    } else {
+                        toastr.error(obj.message);
+                    }
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

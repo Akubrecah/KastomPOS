@@ -1,0 +1,121 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="goBack()"><i class="fa fa-arrow-left" aria-hidden="true"> </i></button>
+                    Complementary Sales</h1>
+                <script>
+                    function goBack() {
+                        window.history.back();
+                    }
+                </script>
+            </div><!-- /.col -->
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/admin">Home</a></li>
+                    <li class="breadcrumb-item active">Complementary Sales</li>
+                </ol>
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12 col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Complementary Sales</h3>
+                        <div class="card-tools">
+                            <a href="/admin/pos" target="_blank" class="btn btn-dark btn-xs">New Sale</a>
+                        </div>
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12 table-responsive">
+                                <table id="data_table" class="table table-striped jambo_table">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th>Serial</th>
+                                            <th>Bill No</th>
+                                            <th>Customer Name</th>
+                                            <th>Sales Point</th>
+                                            <th>Status</th>
+                                            <th>Date</th>
+                                            <th>T.Type</th>
+                                            <th>Net Amount</th>
+                                            <th>Narrative</th>
+                                            <th>Reason</th>
+                                            <th class=" no-link last"><span class="nobr">Action</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="orders">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div><!-- /.card-body -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .jambo_table thead {
+        background: #2A3F54;
+        color: white;
+    }
+
+    </style>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('#data_table').DataTable({
+            "pageLength": 40,
+            "processing": true,
+            "serverSide": true,
+            "responsive": true,
+            "autoWidth": false,
+            "order": [[5, 'desc']],
+            "ajax": {
+                url: "/admin/all-complementary-sales-data",
+                type: 'GET'
+            },
+            "columns": [
+                { "data": "serial" },
+                { "data": "bill_no" },
+                { "data": "customer" },
+                { "data": "sales_point" },
+                { "data": "status" },
+                { "data": "date" },
+                { "data": "transaction_type" },
+                { "data": "net_amount" },
+                { "data": "narrative" },
+                { "data": "reason" },
+                { "data": "actions", "orderable": false }
+            ]
+        });
+    });
+
+    function view_order(id) {
+        // Implement view logic
+        window.location.href = "/admin/order/" + id;
+    }
+</script>
+{% endblock %}

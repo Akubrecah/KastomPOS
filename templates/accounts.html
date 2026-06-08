@@ -1,0 +1,269 @@
+{% extends "layout.html" %}
+
+{% block title %}Chart of Accounts | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    .custom_nav_theme {
+        color: black !important;
+        border-bottom: 1px grey solid;
+    }
+
+    .select2-container--bootstrap4 .select2-selection--single {
+        height: calc(2.25rem + 2px) !important;
+    }
+
+    .card-header {
+        padding: .50rem 1.25rem !important;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0,0,0,.125);
+    }
+    
+    .card-title {
+        font-weight: 600;
+        color: #444;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="goBack()">
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                    </button>
+                    Chart of Accounts
+                </h1>
+                <script>
+                    function goBack() {
+                        window.history.back();
+                    }
+                </script>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Chart of Accounts</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card shadow-sm card-outline card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Register New Account</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body" style="display: none;">
+                        <form id="addAccountForm" action="/admin/accounting/add_account" method="post">
+                            <div class="row">
+                                <div class="col-md-4 col-sm-6 mb-3">
+                                    <label>Organization/Store/Shop <span class="text-danger">*</span></label>
+                                    <select class="form-control select2" name="org_id" required>
+                                        <option value="">~Select Store~</option>
+                                        {% for store in stores %}
+                                        <option value="{{ store.id }}">{{ store.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4 col-sm-6 mb-3">
+                                    <label>Account Type <span class="text-danger">*</span></label>
+                                    <select name="account_type_id" class="form-control select2" onchange="get_subaccounts(this)" required>
+                                        <option value="">~Select account type~</option>
+                                        {% for type in account_types %}
+                                        <option value="{{ type.id }}">{{ type.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4 col-sm-6 mb-3">
+                                    <label>Sub-Account Type <span class="text-danger">*</span></label>
+                                    <select name="subaccount_type_id" id="subaccount_type_id" class="form-control select2">
+                                        <option value="">~Select sub-account type~</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 col-sm-6 mb-3">
+                                    <label>Account Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="account_name" class="form-control" placeholder="Enter account name" required />
+                                </div>
+                                <div class="col-md-4 col-sm-6 mb-3">
+                                    <label>Account Code/Number <span class="text-danger">*</span></label>
+                                    <input type="text" name="account_code" class="form-control" placeholder="Enter account code" required />
+                                </div>
+                                <div class="col-md-4 col-sm-6 mb-3">
+                                    <label>Opening Balance</label>
+                                    <input type="number" step="0.01" name="opening_balance" value="0" class="form-control" />
+                                </div>
+                                <div class="col-md-4 col-sm-6 mb-3">
+                                    <label>Account Category</label>
+                                    <select name="other_category" class="form-control select2">
+                                        <option value="">~Select option~</option>
+                                        <option value="CA">Current Assets</option>
+                                        <option value="NCA">Non-current Assets</option>
+                                        <option value="CL">Current Liabilities</option>
+                                        <option value="NCL">Non-current Liabilities</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 col-sm-6 mb-3">
+                                    <label>Narrative</label>
+                                    <input type="text" name="narrative" class="form-control" placeholder="Optional notes" />
+                                </div>
+                                <div class="col-md-2 col-sm-6 mb-3">
+                                    <label>Is Key Account</label>
+                                    <div class="custom-control custom-radio">
+                                        <input class="custom-control-input" type="radio" id="is_key_yes" name="is_key" value="1">
+                                        <label for="is_key_yes" class="custom-control-label">Yes</label>
+                                    </div>
+                                    <div class="custom-control custom-radio">
+                                        <input class="custom-control-input" type="radio" id="is_key_no" name="is_key" value="0" checked>
+                                        <label for="is_key_no" class="custom-control-label">No</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 col-sm-6 mb-3">
+                                    <label>Status</label>
+                                    <div class="custom-control custom-checkbox">
+                                        <input class="custom-control-input" type="checkbox" id="active_status" name="active" value="true" checked>
+                                        <label for="active_status" class="custom-control-label">Active</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-md-12 text-right">
+                                    <button type="submit" class="btn btn-primary px-5 shadow-sm">
+                                        Submit & Save <i class="fa fa-save ml-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-12 mb-3 text-right">
+                <button type="button" onclick="window.print()" class="btn btn-outline-danger btn-sm shadow-sm">
+                    Print PDF <i class="fa fa-file-pdf ml-1"></i>
+                </button>
+                <button type="button" class="btn btn-outline-success btn-sm shadow-sm ml-1">
+                    Export CSV <i class="fa fa-file-excel ml-1"></i>
+                </button>
+            </div>
+
+            <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="accountsTable" class="table table-hover table-striped table-bordered w-100">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Acc. Name</th>
+                                        <th>Acc. Code</th>
+                                        <th>Sub-Acc. Type</th>
+                                        <th>Acc. Type</th>
+                                        <th>Org</th>
+                                        <th>Active</th>
+                                        <th>Created By</th>
+                                        <th>Narrative</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({
+            theme: 'bootstrap4',
+            width: '100%'
+        });
+
+        $('#accountsTable').DataTable({
+            "processing": true,
+            "serverSide": true,
+            "ajax": "/admin/accounting/all_accounts",
+            "columns": [
+                { "data": "id" },
+                { "data": "name" },
+                { "data": "code" },
+                { "data": "sub_type" },
+                { "data": "type" },
+                { "data": "org" },
+                { "data": "active" },
+                { "data": "created_by" },
+                { "data": "narrative" },
+                { "data": "action" }
+            ],
+            "order": [[0, "desc"]],
+            "responsive": true,
+            "autoWidth": false,
+            "language": {
+                "search": "_INPUT_",
+                "searchPlaceholder": "Search accounts..."
+            }
+        });
+    });
+
+    function get_subaccounts(element) {
+        var parent_id = $(element).val();
+        if (parent_id) {
+            $.get("/admin/accounting/subaccount_types/" + parent_id, function (data) {
+                var sub_select = $('#subaccount_type_id');
+                sub_select.empty();
+                sub_select.append('<option value="">~Select sub-account type~</option>');
+                $.each(data, function (index, item) {
+                    sub_select.append('<option value="' + item.id + '">' + item.name + '</option>');
+                });
+            });
+        }
+    }
+
+    function delete_account(id) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.post('/admin/accounting/delete_account/' + id, function (data) {
+                    if (data.resp == "1") {
+                        toastr.success(data.message);
+                        $('#accountsTable').DataTable().ajax.reload();
+                    } else {
+                        toastr.error(data.message);
+                    }
+                });
+            }
+        });
+    }
+    
+    function get_account(id) {
+        toastr.info("Edit functionality coming soon");
+    }
+</script>
+{% endblock %}

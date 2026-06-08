@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+    <title>POS | {{ settings.business_name|default('KastomPOS') }} </title>
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- overlayScrollbars -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/overlayscrollbars/1.13.0/css/OverlayScrollbars.min.css">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    
+    <!-- Select2 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
+    
+    <!-- Theme style (AdminLTE) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+
+    <!-- Google Font: Source Sans Pro -->
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- jQuery UI -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
+    <!-- Toaster alert -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <!-- Sweet alert -->
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+    <style type="text/css">
+        .backbtn {
+            border-radius: 10rem;
+            border: 1px solid #b10000;
+            font-size: 1.2rem;
+            margin: 5px;
+            padding-right: 1.3rem;
+            color: #00817a;
+            background-color: transparent;
+        }
+
+        .backbtn:hover {
+            background-color: #b10000 !important;
+            color: white !important;
+        }
+
+        .rm_border_top {
+            border-top: none !important;
+        }
+
+        .modal-header {
+            padding: .6rem !important;
+        }
+
+        .pd_right {
+            text-align: right;
+        }
+
+        .bd_left {
+            border-left: 2px solid !important;
+            text-align: left;
+        }
+
+        .form-control {
+            height: 42px;
+        }
+
+        .top_nav {
+            margin-left: 0px !important;
+        }
+
+        .right_col {
+            padding: 10px 20px 0;
+            margin-left: 0px !important;
+            width: 100%;
+        }
+
+        .nav_menu {
+            float: left;
+            background: #EDEDED;
+            border-bottom: 1px solid black !important;
+            margin-bottom: 10px;
+            width: 100%;
+            box-shadow: 0 4px 10px 0 rgba(0, 0, 0, 0.2), 0 4px 20px 0 rgba(0, 0, 0, 0.19) !important;
+        }
+
+        .my-btn {
+            background-color: #E1E1E1;
+            border-radius: 0px;
+            border-top: none;
+            border-right: none;
+            color: black !important;
+            font-weight: bold;
+        }
+
+        .my-a {
+            padding-left: 0px !important;
+            padding-right: 0px !important;
+        }
+
+        #active {
+            border: unset !important;
+            color: #fff !important;
+            background: #017870 !important;
+        }
+
+        .wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .btn-rgp {
+            border: 1px solid #1177BB;
+            color: #000;
+        }
+
+        .btn-rgp:hover {
+            background-color: #569CD6;
+        }
+
+        .btn-rgs {
+            border: 1px solid green;
+            color: green;
+        }
+
+        .btn-rgs:hover {
+            background-color: #AEDAE4;
+        }
+
+        .btn-rgd {
+            border: 1px solid red;
+            color: red;
+        }
+
+        li a {
+            padding-left: 10px !important;
+        }
+        
+        .my-form {
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            border-color: #008394;
+        }
+
+        .my-color {
+            color: #000;
+        }
+
+        .rm,
+        td .select2-selection {
+            border: none !important;
+        }
+
+        .td {
+            min-width: 250px;
+        }
+
+        .large {
+            font-weight: bold;
+        }
+
+        .input-sm,
+        .select2-selection {
+            height: 30px !important;
+            font-size: 15px !important;
+            line-height: 30px !important;
+        }
+    </style>
+
+</head>
+
+<body id="body" class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed layout-footer-fixed layout-top-nav">
+    <div class="wrapper" style="width: 100% !important;">
+        <!-- Navbar -->
+        <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+            <!-- Left navbar links -->
+            <ul class="navbar-nav">
+                <li class="nav-item d-none d-sm-inline-block">
+                    <a href="/admin" class="nav-link my-btn" >Home <i class="fa fa-home"></i> </a>
+                </li>
+                <li class="nav-item d-none d-sm-inline-block">
+                    <a href="/admin/sales" class="nav-link my-btn" >My Sales <i class="fa fa-shopping-cart"></i> </a>
+                </li>
+                <li class="nav-item d-none d-sm-inline-block">
+                    <a href="#" data-toggle="modal" data-target="#unpaidModal" class="nav-link my-btn" >Open Sales <span class="badge badge-danger navbar-badge" style="font-size: 15px; font-weight: bold;">{{ open_sales_count|default(0) }}</span> </a>
+                </li>
+                <li class="nav-item d-none d-sm-inline-block">
+                    <a href="/pos" class="nav-link my-btn" id="active">POS </a>
+                </li>
+            </ul>
+
+            <!-- mobile menu start-->
+            <ul class="navbar-nav d-block d-sm-none">
+                <li class="nav-item dropdown">
+                    <a class="nav-link" data-toggle="dropdown" href="#">
+                        <span class="fa fa-bars"></span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                        <a href="/admin" class="dropdown-item"> <i class="fas fa-user mr-2"></i> Home </a>
+                        <a href="/admin/sales" class="dropdown-item"><i class="fa fa-shopping-cart mr-2"></i> My Sales </a>
+                        <a href="/pos" class="dropdown-item"><i class="fa fa-money mr-2"></i> POS </a>
+                        <a href="#" data-toggle="modal" data-target="#unpaidModal" class="dropdown-item"><i class="fa fa-expand mr-2"></i> Open Sales <sup style="color: red; font-size: 15px; font-weight: bold;">{{ open_sales_count|default(0) }}</sup></a>
+                    </div>
+                </li>
+            </ul>
+            <!-- mobile menu end -->
+
+            <!-- Right navbar links -->
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a href="#" title="Select selling point" class="nav-link" role="button" data-toggle="modal" data-target="#sp"> <u>Selling Point</u>: <span id="current_sp">{{ current_store.name|default('None') }}</span> </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" title="Logout" href="/logout" role="button"><i class="fa fa-sign-out-alt"></i></a>
+                </li>
+
+            {% set current_user = get_current_user() %}
+            {% set alerts = get_notifications() %}
+            <!-- Notifications Dropdown Menu -->
+            <li class="nav-item dropdown">
+                <a class="nav-link" data-toggle="dropdown" href="#">
+                    <i class="far fa-bell"></i>
+                    <span class="badge badge-warning navbar-badge" style="background-color: #00817a; color: white;">{{ alerts|length }}</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right shadow-lg border-0" style="border-radius: 8px; overflow: hidden; width: 320px;">
+                    <span class="dropdown-item dropdown-header font-weight-bold bg-teal text-white py-2" style="background-color: #00817a !important; color: white !important;">{{ alerts|length }} Notifications</span>
+                    <div class="dropdown-divider m-0"></div>
+                    
+                    <div style="max-height: 250px; overflow-y: auto;">
+                        {% for a in alerts %}
+                        <a href="{{ a.link }}" class="dropdown-item d-flex align-items-start py-3" style="border-bottom: 1px solid #f4f6f9; white-space: normal;">
+                            <div class="mr-3">
+                                <span class="d-inline-block text-center rounded-circle {{ a.class }}" style="width: 32px; height: 32px; line-height: 32px; background-color: #f4f6f9;">
+                                    <i class="{{ a.icon }}"></i>
+                                </span>
+                            </div>
+                            <div style="flex: 1;">
+                                <p class="mb-0 text-sm font-weight-bold text-dark">{{ a.title }}</p>
+                                <p class="text-xs text-muted mb-0" style="line-height: 1.3;">{{ a.description }}</p>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="dropdown-divider m-0"></div>
+                    <a href="/admin/notifications" class="dropdown-item dropdown-footer text-center font-weight-bold text-teal py-2" style="color: #00817a !important;">
+                        See All Notifications
+                    </a>
+                </div>
+            </li>
+
+            <!-- User Profile -->
+            <li class="nav-item dropdown">
+                <a class="nav-link" data-toggle="dropdown" href="#">
+                    <img src="https://ui-avatars.com/api/?name={{ current_user.name|default('John')|urlencode }}&background=00817a&color=fff" class="img-circle elevation-2" style="height: 30px; width: 30px; object-fit: cover;" alt="User">
+                    <span class="ml-2 d-none d-md-inline text-dark font-weight-bold">{{ current_user.name|default('John') }}</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-md dropdown-menu-right shadow-lg border-0" style="border-radius: 8px; overflow: hidden; width: 220px;">
+                    <div class="p-3 text-center bg-light" style="border-bottom: 1px solid #f4f6f9;">
+                        <img src="https://ui-avatars.com/api/?name={{ current_user.name|default('John')|urlencode }}&background=00817a&color=fff" class="img-circle elevation-2 mb-2" style="height: 50px; width: 50px;" alt="User">
+                        <h6 class="font-weight-bold text-dark mb-0">{{ current_user.name|default('John') }}</h6>
+                        <small class="text-teal font-weight-bold">@{{ current_user.username|default('user') }}</small>
+                    </div>
+                    <a href="/admin/profile" class="dropdown-item py-2"><i class="fas fa-user mr-2 text-teal"></i> My Profile</a>
+                    <div class="dropdown-divider m-0"></div>
+                    <a href="/logout" class="dropdown-item py-2 text-orange"><i class="fas fa-sign-out-alt mr-2"></i> Logout</a>
+                </div>
+            </li>
+            </ul>
+        </nav>
+        <!-- /.navbar -->
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <section class="content">
+                <div class="container-fluid">
+                    
+                    <div class="row pt-3">
+                        <div class="col-md-8">
+                            <div class="card card-outline card-teal">
+                                <div class="card-header">
+                                    <h3 class="card-title">Order Terminal</h3>
+                                    <div class="card-tools">
+                                        <button type="button" class="btn btn-tool" onclick="add_row(null)"><i class="fas fa-plus"></i> Add Line</button>
+                                    </div>
+                                </div>
+                                <div class="card-body p-0">
+                                    <table class="table table-sm" id="order_table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 20%">Barcode</th>
+                                                <th style="width: 35%">Item</th>
+                                                <th style="width: 10%">Qty</th>
+                                                <th style="width: 15%">Rate</th>
+                                                <th style="width: 15%">Total</th>
+                                                <th style="width: 5%"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr id="row1">
+                                                <td><input type="text" class="form-control form-control-sm barcode" id="barcode_1" onkeydown="handle_barcode(1, event)"></td>
+                                                <td>
+                                                    <select class="form-control form-control-sm select2 itemid" id="item_1" onchange="select_item(1)">
+                                                        <option value="">Select Item</option>
+                                                        {% for p in products %}
+                                                        <option value="{{ p.id }}">{{ p.name }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </td>
+                                                <td><input type="number" class="form-control form-control-sm" id="qty_1" value="1" onchange="qty(1)"></td>
+                                                <td><input type="number" class="form-control form-control-sm" id="rate_1" onchange="set_amount(1)"></td>
+                                                <td><input type="text" class="form-control form-control-sm total" id="amount_1" readonly></td>
+                                                <td></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card card-teal">
+                                <div class="card-header">
+                                    <h3 class="card-title">Payment Summary</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label>Subtotal</label>
+                                        <input type="text" class="form-control form-control-lg text-right" id="subtotal" readonly value="0.00">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Tax</label>
+                                        <input type="text" class="form-control text-right" id="tax_total" readonly value="0.00">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Grand Total</label>
+                                        <input type="text" class="form-control form-control-lg text-right bg-dark text-warning font-weight-bold" id="grand_total" readonly value="0.00">
+                                        <input type="hidden" id="itemstotal">
+                                    </div>
+                                    <hr>
+                                    <div class="form-group">
+                                        <label>Amount Paid</label>
+                                        <input type="number" class="form-control form-control-lg text-right lipa" id="paid_amount" onkeyup="get_change_return(this)" value="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Change/Balance</label>
+                                        <input type="text" class="form-control text-right" id="change_return" readonly value="0.00">
+                                    </div>
+                                    <button class="btn btn-kastompos-teal btn-block btn-lg" id="submit" onclick="process_order()">Process Order <i class="fas fa-check-circle"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </div>
+
+        <!-- Modals -->
+        <div id="sp" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-teal">
+                        <h5 class="modal-title">Selling Point(SP)</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <label>Select shop/store you're selling from</label>
+                        <select class="form-control select2" onchange="set_org(this)">
+                            <option value="">~ Select store ~</option>
+                            {% for store in stores %}
+                            <option value="{{ store.id }}" {% if current_store.id == store.id %}selected{% endif %}>{{ store.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="main-footer">
+            <strong>KastomPOS POS Terminal</strong>
+            <div class="float-right d-none d-sm-inline-block">
+                <b>Version 6.0</b>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('.select2').select2();
+            $("#barcode_1").focus();
+        });
+
+        function add_row(e) {
+            let rowno = $("#order_table tr").length;
+            let newRow = `
+                <tr id="row${rowno}">
+                    <td><input type="text" class="form-control form-control-sm barcode" id="barcode_${rowno}" onkeydown="handle_barcode(${rowno}, event)"></td>
+                    <td>
+                        <select class="form-control form-control-sm select2 itemid" id="item_${rowno}" onchange="select_item(${rowno})">
+                            <option value="">Select Item</option>
+                            {% for p in products %}
+                            <option value="{{ p.id }}">{{ p.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td><input type="number" class="form-control form-control-sm" id="qty_${rowno}" value="1" onchange="qty(${rowno})"></td>
+                    <td><input type="number" class="form-control form-control-sm" id="rate_${rowno}" onchange="set_amount(${rowno})"></td>
+                    <td><input type="text" class="form-control form-control-sm total" id="amount_${rowno}" readonly></td>
+                    <td><button type="button" class="btn btn-danger btn-xs" onclick="delete_row(${rowno})"><i class="fas fa-minus"></i></button></td>
+                </tr>`;
+            $("#order_table tbody").append(newRow);
+            $(`#item_${rowno}`).select2();
+            $(`#barcode_${rowno}`).focus();
+        }
+
+        function delete_row(rowno) {
+            $(`#row${rowno}`).remove();
+            refresh_table();
+        }
+
+        function handle_barcode(row, event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                get_this_item(row);
+            }
+        }
+
+        function get_this_item(row) {
+            let barcode = $(`#barcode_${row}`).val();
+            if (!barcode) return;
+
+            $.ajax({
+                url: '/data/search_barcode',
+                type: 'POST',
+                data: { data: barcode },
+                success: function(resp) {
+                    if (resp.data_control == '1') {
+                        $(`#item_${row}`).val(resp.item_id).change();
+                        $(`#rate_${row}`).val(resp.marked_price);
+                        qty(row);
+                        add_row(null);
+                    } else {
+                        toastr.error(resp.message || "Item not found");
+                    }
+                }
+            });
+        }
+
+        function select_item(row) {
+            let itemid = $(`#item_${row}`).val();
+            if (!itemid) return;
+
+            $.ajax({
+                url: '/data/specific_item',
+                type: 'POST',
+                data: { data: itemid },
+                success: function(resp) {
+                    $(`#rate_${row}`).val(resp.marked_price);
+                    qty(row);
+                }
+            });
+        }
+
+        function qty(row) {
+            let q = parseFloat($(`#qty_${row}`).val()) || 0;
+            let r = parseFloat($(`#rate_${row}`).val()) || 0;
+            $(`#amount_${row}`).val((q * r).toFixed(2));
+            refresh_table();
+        }
+
+        function set_amount(row) {
+            qty(row);
+        }
+
+        function refresh_table() {
+            let total = 0;
+            $(".total").each(function() {
+                total += parseFloat($(this).val()) || 0;
+            });
+            $("#subtotal").val(total.toFixed(2));
+            $("#grand_total").val(total.toFixed(2));
+            $("#itemstotal").val(total);
+            get_change_return();
+        }
+
+        function get_change_return() {
+            let total = parseFloat($("#itemstotal").val()) || 0;
+            let paid = parseFloat($("#paid_amount").val()) || 0;
+            let balance = paid - total;
+            $("#change_return").val(balance.toFixed(2));
+        }
+
+        function set_org(e) {
+            let id = e.value;
+            $.post('/data/set_org', { id: id }, function() {
+                location.reload();
+            });
+        }
+
+        function process_order() {
+            let items = [];
+            $("#order_table tbody tr").each(function() {
+                let id = $(this).find(".itemid").val();
+                let q = $(this).find("input[type='number']").first().val();
+                let p = $(this).find("input[type='number']").last().val();
+                if (id) {
+                    items.push({ product_id: id, quantity: q, price: p });
+                }
+            });
+
+            if (items.length == 0) {
+                toastr.error("No items in order");
+                return;
+            }
+
+            $.ajax({
+                url: '/orders/create',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ items: items, total_amount: $("#grand_total").val() }),
+                success: function(resp) {
+                    swal("Success", "Order Processed", "success").then(() => {
+                        location.reload();
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html>

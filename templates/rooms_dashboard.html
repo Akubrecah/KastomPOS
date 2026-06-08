@@ -1,0 +1,278 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="goBack()"><i class="fa fa-arrow-left" aria-hidden="true"> </i></button>
+                    Accomodation Dashboard</h1>
+                <script>
+                    function goBack() {
+                        window.history.back();
+                    }
+                </script>
+            </div><!-- /.col -->
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/admin">Home</a></li>
+                    <li class="breadcrumb-item active">Accomodation Dashboard</li>
+                </ol>
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <!-- Filter Bar -->
+        <form role="form" method="GET" action="/admin/rooms/dashboard">
+            <div class="row mb-3">
+                <div class="col-md-3 col-sm-6 col-xs-12">
+                    <label>Org/Station</label>
+                    <select class="form-control" name="org_id" required>
+                        <option value="1" selected> KastomPOS ERP Demo </option>
+                        {% for store in stores %}
+                        <option value="{{ store.id }}">{{ store.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6 col-xs-12">
+                    <label>Report Date:</label>
+                    <input type="date" name="report_date" value="{{ today }}" class="form-control">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" id="applyFilters">
+                        <i class="fas fa-filter"></i> Apply Date Filter
+                    </button>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <a href="/admin/rooms/bookings-calendar" class="btn btn-rgp w-100">
+                        <i class="fas fa-calendar"></i> Booking Calendar
+                    </a>
+                </div>
+            </div>
+        </form>
+
+        <!-- Top Summary Boxes -->
+        <div class="row">
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3>{{ total_rooms }}</h3>
+                        <p>Total Rooms</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-bed"></i></div>
+                    <a href="/admin/rooms" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3>{{ available_rooms }}</h3>
+                        <p>Available Rooms</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-door-open"></i></div>
+                    <a href="/admin/rooms/book-room" class="small-box-footer">Check availability <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-warning">
+                    <div class="inner">
+                        <h3>{{ occupied_rooms }} <small class="pull-right" style="font-weight: 100;">{{ occupancy_rate }}%</small></h3>
+                        <p>Occupied Rooms</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-user-check"></i></div>
+                    <a href="/admin/rooms/bookings" class="small-box-footer">Booking list <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-primary">
+                    <div class="inner">
+                        <h3>{{ currency }} {{ revenue_today|format_currency }}</h3>
+                        <p><u>{{ today_name }}'s</u> Revenue</p>
+                    </div>
+                    <div class="icon"><i class="fas fa-calendar-check"></i></div>
+                    <a href="/admin/rooms/bookings" class="small-box-footer">View details <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Widgets -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon bg-info"><i class="fas fa-chart-line"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Avg. Stay (LOS)</span>
+                        <span class="info-box-number">2 Days</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon bg-success"><i class="fas fa-bed"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Complementaries</span>
+                        <span class="info-box-number">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon bg-warning"><i class="fas fa-user-clock"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Voids/Cancellations</span>
+                        <span class="info-box-number">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon bg-danger"><i class="fas fa-sort-amount-desc"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Outstanding Balances</span>
+                        <span class="info-box-number">{{ currency }} {{ outstanding_balances|format_currency }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle Row -->
+        <div class="row">
+            <!-- Occupancy Rate -->
+            <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-chart-pie"></i> RoomType Occupancy Rate</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress-group">
+                            Superior <span class="float-right"><b>1</b>/3</span>
+                            <div class="progress progress-sm">
+                                <div class="progress-bar bg-info" style="width: 33%"></div>
+                            </div>
+                        </div>
+                        <!-- Add more room types dynamically here if needed -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today’s Flow -->
+            <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="card card-success">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-user-clock"></i> <u>{{ today_name }}’s</u> Flow</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>Check-ins: <span class="badge bg-primary">0</span></p>
+                        <p>Check-outs: <span class="badge bg-danger">1</span></p>
+                        <p>No Show: <span class="badge bg-warning">0</span></p>
+                        <p><a href="/admin/rooms/online-bookings"><b>Online bookings:</b> <span class="badge bg-danger">0</span></a></p>
+                        <p>Total day bookings: <span class="badge bg-info">0</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reservation Trends -->
+            <div class="col-md-3 col-sm-12 col-xs-12">
+                <div class="card card-warning">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-chart-line"></i> Reservation Trends</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="reservationChart" style="height: 200px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Overview -->
+            <div class="col-md-3 col-sm-12 col-xs-12">
+                <div class="card card-danger">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-dollar-sign"></i> Revenue Overview</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="revenueChart" style="height: 200px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+    google.charts.load('current', {
+        'packages': ['corechart']
+    });
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+        reservationTrendChart();
+        revenueChart();
+    }
+
+    function reservationTrendChart() {
+        var data = google.visualization.arrayToDataTable([
+            ['Day', 'Bookings'],
+            ['Mon', 0],['Tue', 0],['Wed', 2],['Thu', 3],['Fri', 2],['Sat', 1],['Sun', 0],
+        ]);
+
+        var options = {
+            title: 'Reservation trend (previous week)',
+            curveType: 'function',
+            legend: {
+                position: 'bottom'
+            },
+            chartArea: { width: '80%', height: '70%' }
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('reservationChart'));
+        chart.draw(data, options);
+    }
+
+    function revenueChart() {
+        var data = google.visualization.arrayToDataTable([
+            ["Day", "Revenue", {
+                role: "style"
+            }],
+            ['Mon', 0, '#b87333'],['Tue', 0, 'blue'],['Wed', 5000, 'orangered'],['Thu', 8000, 'green'],['Fri', 6000, '#b87333'],['Sat', 4000, 'green'],['Sun', 0, 'blue'],
+        ]);
+
+        var view = new google.visualization.DataView(data);
+        view.setColumns([
+            0, 1,
+            {
+                calc: "stringify",
+                sourceColumn: 1,
+                type: "string",
+                role: "annotation"
+            },
+            2
+        ]);
+
+        var options = {
+            title: "Revenue for the previous week",
+            bar: {
+                groupWidth: "95%"
+            },
+            legend: {
+                position: "none"
+            },
+            chartArea: { width: '80%', height: '70%' }
+        };
+
+        var chart = new google.visualization.ColumnChart(document.getElementById("revenueChart"));
+        chart.draw(view, options);
+    }
+</script>
+{% endblock %}

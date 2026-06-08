@@ -1,0 +1,171 @@
+{% extends "layout.html" %}
+
+{% block title %}Bookings Calendar | KastomPOS{% endblock %}
+
+{% block content %}
+<style type="text/css">
+    .header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .table-responsive {
+        max-height: 700px;
+        overflow-y: auto;
+    }
+
+    .left-s {
+        position: sticky;
+        left: 0px;
+        z-index: 5;
+        background-color: #f4f6f9 !important;
+    }
+    
+    .calendar-cell {
+        min-width: 100px;
+        text-align: center;
+        vertical-align: middle !important;
+        font-size: 0.85rem;
+    }
+    
+    .booking-link {
+        color: #000 !important;
+        display: block;
+        padding: 5px;
+        text-decoration: none;
+        font-weight: bold;
+    }
+    
+    .booking-link:hover {
+        text-decoration: underline;
+    }
+</style>
+
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">
+                        <button class="pull-left backbtn" title="Back" onclick="window.history.back()">
+                            <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                        </button>
+                        Bookings Calendar
+                    </h1>
+                </div><!-- /.col -->
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item active">Bookings Calendar</li>
+                    </ol>
+                </div><!-- /.col -->
+            </div><!-- /.row -->
+        </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid">
+
+            <div class="row">
+                <div class="col-md-12 col-sm-12">
+                    <div class="card card-outline card-primary">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <span class="badge" style="background-color: #0cb906; color: white;">&nbsp;</span> Currently occupying
+                                    <span class="badge ml-3" style="background-color: orangered; color: white;">&nbsp;</span> Pending check-in
+                                    <span class="badge ml-3" style="background-color: #017870; color: white;">&nbsp;</span> Already checked-out
+                                    <span class="badge ml-3" style="background-color: #ffbf00; color: white;">&nbsp;</span> No-Show
+                                </div>
+
+                                <div class="col-12 mt-3 pt-2" style="border-top: 1px solid #6c757d1f">
+                                    <form class="form-horizontal" method="GET" action="/admin/rooms/bookings-calendar">
+                                        <h5>Filter by Month and Year</h5>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <select class="form-control" name="month" required>
+                                                    <option value="">Select Month *</option>
+                                                    {% for m in range(1, 13) %}
+                                                    <option value="{{ m }}" {% if m == current_month %}selected{% endif %}>
+                                                        {{ month_names[m-1] }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <select class="form-control" name="year" required>
+                                                    <option value="">Select Year *</option>
+                                                    {% for y in range(current_year - 2, current_year + 3) %}
+                                                    <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>
+                                                        {{ y }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="submit" class="btn btn-primary">Filter <i class="fa fa-filter"></i></button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-12 col-sm-12">
+                    <div class="card card-outline card-success">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <thead>
+                                        <tr style="background-color: #f8f9fa">
+                                            <th class="header left-s calendar-cell" style="background-color: #e9ecef !important; min-width: 150px;">ROOMS</th>
+                                            {% for day in days_in_month %}
+                                            <th class="header calendar-cell {% if day.date == today %}bg-warning{% endif %}">
+                                                {{ day.day }} <br />
+                                                <small>{{ day.weekday }}</small>
+                                            </th>
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for room_type, rooms in rooms_by_type.items() %}
+                                        <tr style="background-color: #dee2e6; text-align: center;">
+                                            <th colspan="{{ days_in_month|length + 1 }}">{{ room_type }}</th>
+                                        </tr>
+                                        {% for room in rooms %}
+                                        <tr>
+                                            <th class="left-s calendar-cell" style="color: #d81b60;">{{ room.room_number }}</th>
+                                            {% for day in days_in_month %}
+                                                {% set booking = calendar_data[room.id][day.day] %}
+                                                {% if booking %}
+                                                    {% if booking.is_start %}
+                                                        <td class="calendar-cell" style="background-color: {{ booking.color }};" colspan="{{ booking.colspan }}">
+                                                            <a href="/admin/rooms/bookings" class="booking-link" title="{{ booking.customer_name }} ({{ booking.duration }} nights)">
+                                                                {{ booking.customer_name[:15] }}{% if booking.customer_name|length > 15 %}...{% endif %}
+                                                                <br/>
+                                                                <small>({{ booking.duration }}d)</small>
+                                                            </a>
+                                                        </td>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <td class="calendar-cell"></td>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </tr>
+                                        {% endfor %}
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

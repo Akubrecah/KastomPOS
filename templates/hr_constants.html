@@ -1,0 +1,275 @@
+{% extends "layout.html" %}
+
+{% block title %}Constants | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    .nv2:hover {
+        background-color: #f4f6f9 !important;
+    }
+    .nav-link.active-constant {
+        background-color: #007bff !important;
+        color: white !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="goBack()">
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                    </button>
+                    Constants
+                </h1>
+                <script>
+                    function goBack() {
+                        window.history.back();
+                    }
+                </script>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Constants</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar for Constants -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body p-0">
+                        <ul class="nav flex-column nav-pills">
+                            <li class="nav-item nv2">
+                                <a href="#" class="nav-link constant-nav active-constant" onclick="load_constants('warnings', this)">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i> Warning Types
+                                </a>
+                            </li>
+                            <li class="nav-item nv2">
+                                <a href="#" class="nav-link constant-nav" onclick="load_constants('awards', this)">
+                                    <i class="fas fa-certificate mr-2"></i> Award Types
+                                </a>
+                            </li>
+                            <li class="nav-item nv2">
+                                <a href="#" class="nav-link constant-nav" onclick="load_constants('terminations', this)">
+                                    <i class="fas fa-user-minus mr-2"></i> Termination Types
+                                </a>
+                            </li>
+                            <li class="nav-item nv2">
+                                <a href="#" class="nav-link constant-nav" onclick="load_constants('documents', this)">
+                                    <i class="fas fa-file-alt mr-2"></i> Document Types
+                                </a>
+                            </li>
+                            <li class="nav-item nv2">
+                                <a href="#" class="nav-link constant-nav" onclick="load_constants('designations', this)">
+                                    <i class="fas fa-users-cog mr-2"></i> Designations
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Content Area -->
+            <div class="col-md-9" id="constant_content">
+                <div class="row">
+                    <!-- Form Column -->
+                    <div class="col-md-5">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title" id="form_title">Add New Warning Type</h3>
+                            </div>
+                            <div class="card-body">
+                                <form id="constant_form">
+                                    <input type="hidden" id="category" name="category" value="warnings">
+                                    <div class="form-group">
+                                        <label id="label_name">Warning Type Name</label>
+                                        <input type="text" name="name" id="constant_name" class="form-control" placeholder="Enter name" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Description (Optional)</label>
+                                        <textarea name="description" id="constant_description" class="form-control" rows="2"></textarea>
+                                    </div>
+                                    <button type="submit" id="submit_btn" class="btn btn-primary">Save Constant</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- List Column -->
+                    <div class="col-md-7">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title" id="list_title">Warning Type List</h3>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover table-striped mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 100px;">Action</th>
+                                                <th>Name</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="constant_list_body">
+                                            <tr>
+                                                <td colspan="2" class="text-center py-4">
+                                                    <i class="fas fa-spinner fa-spin mr-2"></i> Loading...
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let current_category = 'warnings';
+
+    $(document).ready(function() {
+        load_constants('warnings');
+
+        $('#constant_form').on('submit', function(e) {
+            e.preventDefault();
+            save_constant();
+        });
+    });
+
+    function load_constants(category, element) {
+        current_category = category;
+        if (element) {
+            $('.constant-nav').removeClass('active-constant');
+            $(element).addClass('active-constant');
+        }
+
+        // Update UI labels
+        let title = category.charAt(0).toUpperCase() + category.slice(1);
+        // Handle plural/singular for label
+        let singular = title.endsWith('s') ? title.slice(0, -1) : title;
+        if (category === 'designations') singular = 'Designation';
+        
+        $('#form_title').text('Add New ' + singular);
+        $('#list_title').text(singular + ' List');
+        $('#label_name').text(singular + ' Name');
+        $('#category').val(category);
+        $('#constant_name').val('');
+        $('#constant_description').val('');
+
+        $('#constant_list_body').html('<tr><td colspan="2" class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i> Loading...</td></tr>');
+
+        $.ajax({
+            url: '/api/admin/hr/get-constants',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ category: category }),
+            success: function(response) {
+                render_list(response);
+            },
+            error: function() {
+                toastr.error('Failed to load constants');
+            }
+        });
+    }
+
+    function render_list(data) {
+        let html = '';
+        if (data.length === 0) {
+            html = '<tr><td colspan="2" class="text-center py-3 text-muted">No entries found</td></tr>';
+        } else {
+            data.forEach(function(item) {
+                html += '<tr>';
+                html += '<td>';
+                html += '<button class="btn btn-xs btn-rgp mr-1" onclick="edit_constant(' + item.id + ', \'' + item.name + '\', \'' + (item.description || '') + '\')"><i class="fa fa-edit"></i></button>';
+                html += '<button class="btn btn-xs btn-rgd" onclick="delete_constant(' + item.id + ')"><i class="fa fa-trash"></i></button>';
+                html += '</td>';
+                html += '<td>' + item.name + '</td>';
+                html += '</tr>';
+            });
+        }
+        $('#constant_list_body').html(html);
+    }
+
+    function save_constant() {
+        let name = $('#constant_name').val();
+        let description = $('#constant_description').val();
+        let category = $('#category').val();
+
+        $('#submit_btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Saving...');
+
+        $.ajax({
+            url: '/api/admin/hr/add-constant',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                category: category,
+                name: name,
+                description: description
+            }),
+            success: function(response) {
+                toastr.success('Saved successfully');
+                load_constants(category);
+                $('#submit_btn').prop('disabled', false).text('Save Constant');
+            },
+            error: function() {
+                toastr.error('Failed to save constant');
+                $('#submit_btn').prop('disabled', false).text('Save Constant');
+            }
+        });
+    }
+
+    function delete_constant(id) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/api/admin/hr/delete-constant',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ id: id }),
+                    success: function() {
+                        toastr.success('Deleted successfully');
+                        load_constants(current_category);
+                    },
+                    error: function() {
+                        toastr.error('Failed to delete');
+                    }
+                });
+            }
+        });
+    }
+
+    function edit_constant(id, name, description) {
+        // Simple edit logic: populate form and change button text/behavior
+        // For a full ERP, we might want a separate update endpoint, 
+        // but for now let's just make it easy to overwrite or add new.
+        $('#constant_name').val(name);
+        $('#constant_description').val(description);
+        $('#constant_name').focus();
+        toastr.info('You can now update the name and save as new or implement an update endpoint.');
+    }
+</script>
+{% endblock %}

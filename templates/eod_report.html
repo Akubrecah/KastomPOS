@@ -1,0 +1,68 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="mb-8 flex justify-between items-end">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900">End of Day Report</h1>
+            <p class="text-slate-500 font-bold uppercase tracking-widest text-xs mt-1">{{ date.strftime('%d %B %Y') }}</p>
+        </div>
+        <button onclick="window.print()" class="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 no-print">
+            <i class="fas fa-print"></i> Print Z-Report
+        </button>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="grid grid-cols-2 gap-6 mb-8">
+        <div class="bg-emerald-600 text-white p-6 rounded-3xl shadow-xl shadow-emerald-200">
+            <p class="text-emerald-100 text-xs font-black uppercase tracking-wider mb-1">Total Net Sales</p>
+            <h2 class="text-4xl font-black">{{ settings.currency }} {{ "{:,.2f}".format(total_sales) }}</h2>
+        </div>
+        <div class="bg-white border p-6 rounded-3xl shadow-sm">
+            <p class="text-slate-400 text-xs font-black uppercase tracking-wider mb-1">Voided Entries</p>
+            <h2 class="text-4xl font-black text-red-500">{{ voids_count }}</h2>
+            <p class="text-[10px] text-slate-400 mt-2">Requires supervisor audit</p>
+        </div>
+    </div>
+
+    <!-- Payment Breakdown -->
+    <div class="bg-white rounded-3xl border shadow-sm overflow-hidden mb-8">
+        <div class="p-6 border-b">
+            <h3 class="font-bold text-slate-900">Cashier Summary Retrieval</h3>
+        </div>
+        <div class="p-6 space-y-4">
+            {% for method, amount in payments %}
+            <div class="flex justify-between items-center pb-4 border-b border-slate-50 last:border-0 last:pb-0">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-500">
+                        <i class="fas {% if method == 'cash' %}fa-money-bill-wave{% elif method == 'mpesa' %}fa-mobile-alt{% else %}fa-credit-card{% endif %}"></i>
+                    </div>
+                    <div>
+                        <p class="font-bold text-slate-900 capitalize">{{ method }}</p>
+                        <p class="text-[10px] text-slate-400">Settled Transactions</p>
+                    </div>
+                </div>
+                <span class="text-lg font-black text-slate-900">{{ settings.currency }} {{ "{:,.2f}".format(amount) }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="text-center p-8 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+        <i class="fas fa-shield-check text-slate-300 text-3xl mb-4"></i>
+        <p class="text-xs text-slate-500 font-medium">This is a system-generated X/Z report. All voided transactions have been logged with staff ID for reconciliation. Please ensure physical cash matches the 'Cash' total above.</p>
+    </div>
+</div>
+
+<style>
+    @media print {
+        .no-print { display: none; }
+        .ml-64 { margin-left: 0 !important; }
+        aside { display: none !important; }
+        header { display: none !important; }
+        .p-8 { padding: 0 !important; }
+        body { background: white; }
+    }
+</style>
+{% endblock %}

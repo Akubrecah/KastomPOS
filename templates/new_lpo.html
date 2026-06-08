@@ -1,0 +1,300 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+    .td { width: 80px; }
+    .item_div { background-color: #1ABB9C; }
+    #item_description { padding: 15px; color: #fff; }
+    .money { font-size: 25px !important; font-weight: bold; }
+    .tdh { width: 60px; display: none; }
+    .hide { display: none; }
+    .noHover { pointer-events: none; }
+    form { padding: 10px !important; }
+    .select2 { width: 100% !important; }
+</style>
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="window.history.back()">
+                        <i class="fa fa-arrow-left" aria-hidden="true"> </i>
+                    </button>
+                    New LPO
+                </h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">New LPO</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12 col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">LPO Details</h3>
+                        <div class="card-tools">
+                            <span class="badge badge-info">Date: {{ today_date }}</span>
+                            <span class="badge badge-info">Time: {{ today_time }}</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" id="place_order_form" action="/admin/save-direct-purchase">
+                            <input type="hidden" name="order_type" value="lpo" required readonly>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <label>Supplier name <i class="text-danger">*</i></label>
+                                            <select class="form-control select2 input-sm" name="supplier_id" required>
+                                                <option value="">Select supplier</option>
+                                                {% for supplier in suppliers %}
+                                                <option value="{{ supplier.id }}">{{ supplier.phone }} - {{ supplier.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-12">
+                                            <label>Store/Shop <i class="text-danger">*</i> <small>(Intended receiving store/shop)</small></label>
+                                            <select class="form-control input-sm" name="store_id" id="store_id" required>
+                                                <option value="">Select store/shop</option>
+                                                {% for store in stores %}
+                                                <option value="{{ store.id }}">{{ store.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-12">
+                                            <label>LPO Number:</label>
+                                            <input type="text" name="bill_no" class="form-control input-sm" placeholder="Enter LPO No. here">
+                                        </div>
+
+                                        <div class="col-md-6 col-sm-12 col-xs-12">
+                                            <label for="">LPO date <span class="text text-danger">*</span> </label>
+                                            <input type="date" class="form-control input-sm" name="order_date" value="{{ today_date }}" required />
+                                        </div>
+
+                                        <div class="col-md-6 col-sm-12 col-xs-12">
+                                            <label for="">Expiry/Due date </label>
+                                            <input type="date" class="form-control input-sm" name="payment_due" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 text-right">
+                                    <p>
+                                        <a href="#" data-toggle="modal" data-target="#addSupplier" class="btn btn-default" style="border: 1px solid #1ABB9C;">Register supplier <span class="fa fa-user"></span></a>
+                                        <a href="/admin/inventory" class="btn btn-default" style="border: 1px solid #1ABB9C;">Register a new item <span class="fa fa-plus"></span></a>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="row" style="margin-top: 30px;">
+                                <div class="col-md-12 table-responsive">
+                                    <table class="table table-condensed table-bordered table-sm" id="order_table">
+                                        <thead>
+                                            <tr style="background-color: aliceblue;">
+                                                <td style="min-width: 350px;"><b>Item</b></td>
+                                                <td style="min-width: 280px;"><b>Description</b></td>
+                                                <td style="min-width: 100px;"><b>Qty</b></td>
+                                                <td style="min-width: 130px;"><b>Buying Price</b></td>
+                                                <td style="min-width: 100px"><b>Tax</b></td>
+                                                <td style="min-width: 100px"><b>Total</b></td>
+                                                <td>
+                                                    <button type="button" class="btn btn-default btn-xs" onclick="add_row()"><span class="fa fa-plus"></span></button>
+                                                </td>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr id="row1">
+                                                <td>
+                                                    <select name="item[]" class="select2 form-control" onchange="set_item(1)" id="item_1" required>
+                                                        <option value="">Select item</option>
+                                                        {% for p in products %}
+                                                        <option value="{{ p.id }}" data-price="{{ p.cost_price or 0 }}">{{ p.name }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </td>
+                                                <td><textarea class="form-control" rows="1" name="item_description[]" placeholder="Write here..."></textarea></td>
+                                                <td>
+                                                    <input type="number" step='0.01' class="form-control input-sm" onchange="qty(1)" onkeyup="qty(1)" name="qty[]" id="qty_1" value='1' />
+                                                </td>
+                                                <td>
+                                                    <input type="number" step="0.01" class="form-control input-sm" onkeyup="set_amount(1)" onchange="set_amount(1)" name="rate[]" id="rate_1" />
+                                                </td>
+                                                <td>
+                                                    <select class="form-control input-sm" name="tax_id[]" id="tax_1" onchange="qty(1)" required>
+                                                        {% for tax in tax_types %}
+                                                        <option value="{{ tax.rate }}">{{ tax.name }} ({{ tax.rate }}%)</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                    <input type="hidden" name="tax_amount[]" id="taxamount_1" value="0" />
+                                                </td>
+                                                <td>
+                                                    <input type="number" step="0.01" class="form-control input-sm" readonly name="amount[]" id="amount_1" />
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-rgd btn-xs" onclick="delete_row(1)"><span class="fa fa-minus"></span></button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <textarea class="form-control" name="narrative" placeholder="Write something here..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="row" style="margin-top: 30px; padding: 15px; background-color: aliceblue; border-radius: 5px;">
+                                <div class="col-md-6">
+                                    <label>Tax Total: </label>
+                                    <input type="text" readonly name="itemstax" id="itemstax" class="money form-control">
+                                </div>
+                                <div class="col-md-6">
+                                    <label>Grand Total: </label>
+                                    <input type="text" readonly name="total" id="itemstotal" class="money form-control">
+                                </div>
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-md-12">
+                                    <button type="submit" class="btn btn-primary float-right" id="submit_btn">Submit LPO</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal -->
+<div class="modal fade" id="addSupplier" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">Supplier registration form</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <form action="/admin/save-supplier" method="post">
+                    <div class="row">
+                        <div class="col-md-12 col-sm-12">
+                            <label for="">Supplier Full Name <span class="text text-danger">*</span> </label>
+                            <input type="text" name="name" class="form-control" placeholder="Business/Company/Individual's full name" required />
+                        </div>
+                        <div class="col-md-6 col-sm-6 col-xs-6">
+                            <label for="">Phone <span class="text text-danger">*</span> </label>
+                            <input type="text" name="phone" class="form-control" required placeholder="e.g. 070111111.." />
+                        </div>
+                        <div class="col-md-12 mt-3">
+                            <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                            <button type="Submit" class="btn btn-primary float-right">Save Supplier</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var row_count = 1;
+
+    function add_row() {
+        row_count++;
+        var html = `<tr id="row${row_count}">
+            <td>
+                <select name="item[]" class="select2 form-control" id="item_${row_count}" onchange="set_item(${row_count})" required>
+                    <option value="">Select item</option>
+                    {% for p in products %}
+                    <option value="{{ p.id }}" data-price="{{ p.cost_price or 0 }}">{{ p.name }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td><textarea class="form-control" rows="1" name="item_description[]" placeholder="Write here..."></textarea></td>
+            <td><input type="number" step="0.01" class="form-control input-sm" onchange="qty(${row_count})" onkeyup="qty(${row_count})" name="qty[]" id="qty_${row_count}" value='1' /></td>
+            <td><input type="number" step="0.01" class="form-control input-sm" onkeyup="set_amount(${row_count})" onchange="set_amount(${row_count})" name="rate[]" id="rate_${row_count}" /></td>
+            <td>
+                <select class="form-control input-sm" name="tax_id[]" id="tax_${row_count}" onchange="qty(${row_count})" required>
+                    {% for tax in tax_types %}
+                    <option value="{{ tax.rate }}">{{ tax.name }} ({{ tax.rate }}%)</option>
+                    {% endfor %}
+                </select>
+                <input type="hidden" name="tax_amount[]" id="taxamount_${row_count}" value="0" />
+            </td>
+            <td><input type="number" step="0.01" class="form-control input-sm" readonly name="amount[]" id="amount_${row_count}" /></td>
+            <td>
+                <button type="button" class="btn btn-rgd btn-xs" onclick="delete_row(${row_count})"><span class="fa fa-minus"></span></button>
+            </td>
+        </tr>`;
+        
+        $('#order_table tbody').append(html);
+        $('.select2').select2({ theme: 'bootstrap4' });
+        refresh_table();
+    }
+
+    function delete_row(id) {
+        $(`#row${id}`).remove();
+        refresh_table();
+    }
+
+    function set_item(id) {
+        var price = $(`#item_${id} option:selected`).data('price') || 0;
+        $(`#rate_${id}`).val(price);
+        qty(id);
+    }
+
+    function set_amount(id) {
+        qty(id);
+    }
+
+    function qty(id) {
+        var itemqty = Number($(`#qty_${id}`).val());
+        var itemprice = Number($(`#rate_${id}`).val());
+        var itemtax_rate = Number($(`#tax_${id}`).val());
+        
+        var subtotal = itemprice * itemqty;
+        var tax_amount = (subtotal * itemtax_rate / 100);
+        
+        $(`#amount_${id}`).val(subtotal.toFixed(2));
+        $(`#taxamount_${id}`).val(tax_amount.toFixed(2));
+        
+        refresh_table();
+    }
+
+    function refresh_table() {
+        var sumVal = 0;
+        var sumTax = 0;
+        
+        $('input[name="amount[]"]').each(function() {
+            sumVal += Number($(this).val());
+        });
+        
+        $('input[name="tax_amount[]"]').each(function() {
+            sumTax += Number($(this).val());
+        });
+        
+        $("#itemstotal").val(sumVal.toFixed(2));
+        $("#itemstax").val(sumTax.toFixed(2));
+    }
+
+    $(function() {
+        $('.select2').select2({ theme: 'bootstrap4' });
+    });
+</script>
+{% endblock %}

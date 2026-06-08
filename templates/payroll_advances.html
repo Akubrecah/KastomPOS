@@ -1,0 +1,256 @@
+{% extends "layout.html" %}
+
+{% block title %}Salary Advances | KastomPOS{% endblock %}
+
+{% block content %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">
+                        <button class="pull-left backbtn" title="Back" onclick="window.history.back()">
+                            <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                        </button>
+                        Salary Advances
+                    </h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item active">Salary Advances</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Add Advance Form -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-outline card-warning">
+                        <div class="card-body">
+                            <form id="advance_form">
+                                <h5><b>New Advance Payment</b></h5>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label>Store/Branch</label>
+                                        <select name="store_id" class="form-control select2" onchange="loadEmployees(this.value)">
+                                            <option value="">~ Select Store ~</option>
+                                            {% for store in stores %}
+                                            <option value="{{ store.id }}">{{ store.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label>Staff Member</label>
+                                        <select name="employee_id" id="employee_select" class="form-control select2" required>
+                                            <option value="">~ Select Staff ~</option>
+                                            <!-- Loaded via AJAX -->
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label>Amount</label>
+                                        <input type="number" name="amount" class="form-control" placeholder="0.00" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label>Year</label>
+                                        <select name="fiscal_year_id" class="form-control select2" required>
+                                            {% for year in fiscal_years %}
+                                            <option value="{{ year.id }}" {% if year.is_active %}selected{% endif %}>{{ year.year }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label>Month</label>
+                                        <select name="month" class="form-control select2" required>
+                                            <option value="1">JANUARY</option>
+                                            <option value="2">FEBRUARY</option>
+                                            <option value="3">MARCH</option>
+                                            <option value="4">APRIL</option>
+                                            <option value="5" selected>MAY</option>
+                                            <option value="6">JUNE</option>
+                                            <option value="7">JULY</option>
+                                            <option value="8">AUGUST</option>
+                                            <option value="9">SEPTEMBER</option>
+                                            <option value="10">OCTOBER</option>
+                                            <option value="11">NOVEMBER</option>
+                                            <option value="12">DECEMBER</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-10 mt-2">
+                                        <label>Narrative/Reason</label>
+                                        <input type="text" name="narrative" class="form-control" placeholder="Reason for advance...">
+                                    </div>
+                                    <div class="col-md-2 mt-4">
+                                        <button type="submit" class="btn btn-warning btn-block mt-2">Process Advance <i class="fa fa-check ml-1"></i></button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advances List -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-outline card-info">
+                        <div class="card-header">
+                            <h3 class="card-title">Advance Records</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table id="advances_table" class="table table-sm table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Staff</th>
+                                            <th>Month/Year</th>
+                                            <th>Amount</th>
+                                            <th>Disbursed</th>
+                                            <th>Recovered</th>
+                                            <th>Narrative</th>
+                                            <th>Created At</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="advances_body">
+                                        <!-- Loaded via AJAX -->
+                                    </tbody>
+                                    <tfoot>
+                                        <tr style="background: #f4f6f9; font-weight: bold;">
+                                            <td colspan="2">TOTAL</td>
+                                            <td id="total_advances">0.00</td>
+                                            <td colspan="5"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({ theme: 'bootstrap4' });
+        loadAdvances();
+
+        $('#advance_form').on('submit', function(e) {
+            e.preventDefault();
+            saveAdvance();
+        });
+    });
+
+    function loadEmployees(storeId) {
+        if (!storeId) {
+            $('#employee_select').html('<option value="">~ Select Staff ~</option>');
+            return;
+        }
+        $.ajax({
+            url: `/api/admin/payroll/get-store-staff/${storeId}`,
+            type: 'GET',
+            success: function(data) {
+                let html = '<option value="">~ Select Staff ~</option>';
+                data.forEach(function(staff) {
+                    html += `<option value="${staff.id}">${staff.name}</option>`;
+                });
+                $('#employee_select').html(html);
+            }
+        });
+    }
+
+    function saveAdvance() {
+        let formData = $('#advance_form').serialize();
+        $.ajax({
+            url: '/api/admin/payroll/save-advance',
+            type: 'POST',
+            data: formData,
+            success: function(obj) {
+                if (obj.resp == '1') {
+                    toastr.success(obj.message);
+                    $('#advance_form')[0].reset();
+                    $('.select2').val('').trigger('change');
+                    loadAdvances();
+                } else {
+                    toastr.error(obj.message);
+                }
+            }
+        });
+    }
+
+    function loadAdvances() {
+        $.ajax({
+            url: '/api/admin/payroll/get-advances',
+            type: 'GET',
+            success: function(data) {
+                let html = '';
+                let total = 0;
+                data.forEach(function(item) {
+                    html += `<tr>
+                        <td>${item.staff_name}</td>
+                        <td>${item.month_name} ${item.year}</td>
+                        <td>${item.amount.toLocaleString()}</td>
+                        <td>
+                            <span class="badge badge-${item.is_disbursed ? 'success' : 'secondary'}">${item.is_disbursed ? 'Yes' : 'No'}</span>
+                        </td>
+                        <td>
+                            <span class="badge badge-${item.is_recovered ? 'success' : 'secondary'}">${item.is_recovered ? 'Yes' : 'No'}</span>
+                        </td>
+                        <td>${item.narrative || '-'}</td>
+                        <td>${item.created_at}</td>
+                        <td>
+                            ${!item.is_disbursed ? `<button class="btn btn-xs btn-outline-success" onclick="disburseAdvance(${item.id})">Disburse</button>` : ''}
+                            <button class="btn btn-xs btn-outline-danger" onclick="deleteAdvance(${item.id})"><i class="fa fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+                    total += item.amount;
+                });
+                $('#advances_body').html(html);
+                $('#total_advances').text(total.toLocaleString());
+                
+                if ($.fn.DataTable.isDataTable('#advances_table')) {
+                    $('#advances_table').DataTable().destroy();
+                }
+                $('#advances_table').DataTable({ responsive: true });
+            }
+        });
+    }
+
+    function disburseAdvance(id) {
+        if (confirm('Mark this advance as disbursed?')) {
+            $.ajax({
+                url: `/api/admin/payroll/disburse-advance/${id}`,
+                type: 'POST',
+                success: function(obj) {
+                    if (obj.resp == '1') {
+                        toastr.success(obj.message);
+                        loadAdvances();
+                    }
+                }
+            });
+        }
+    }
+
+    function deleteAdvance(id) {
+        if (confirm('Delete this advance record?')) {
+            $.ajax({
+                url: `/api/admin/payroll/delete-advance/${id}`,
+                type: 'POST',
+                success: function(obj) {
+                    if (obj.resp == '1') {
+                        toastr.success(obj.message);
+                        loadAdvances();
+                    }
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

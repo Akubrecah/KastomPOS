@@ -1,0 +1,270 @@
+{% extends "layout.html" %}
+
+{% block title %}Room Occupancy Report | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    form { padding: 10px !important; }
+    .fa-ian { color: #393B3D !important; }
+    .select2 { width: 100% !important; }
+    .card-header { padding: .50rem 1.25rem !important; }
+
+    @media print {
+        .no-print, .main-sidebar, .main-header, .main-footer, .content-header .breadcrumb { display: none !important; }
+        .content-wrapper { margin-left: 0 !important; }
+        .card-tools { display: none !important; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Content Header -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="backbtn" title="Back" onclick="window.history.back()">
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                    </button>
+                    Occupancy Report
+                </h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/reports/room-sales">Room Sales</a></li>
+                    <li class="breadcrumb-item active">Room Occupancy</li>
+                </ol>
+            </div>
+        </div>
+        <!-- 3-Tab Page Switch -->
+        <div class="row">
+            <div class="col-12">
+                <ul class="nav nav-tabs" id="roomReportTabs">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/reports/room-sales">
+                            <i class="fa fa-bed mr-1"></i> Room Bookings Summary
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/admin/reports/room-occupancy">
+                            <i class="fa fa-pie-chart mr-1"></i> Occupancy Report
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/reports/room-collections">
+                            <i class="fa fa-money mr-1"></i> Room Collections
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+
+        <!-- Filter Card -->
+        <div class="card no-print mb-3">
+            <div class="card-body">
+                <form method="get" action="/admin/reports/room-occupancy">
+                    <div class="row">
+                        <div class="col-md-12 text-info mb-2">
+                            Filter Rooms
+                        </div>
+                        <div class="col-md-4">
+                            <label>Org/Store/Shop <i class="fa fa-building fa-ian"></i> <span class="text-danger">*</span></label>
+                            <select class="form-control select2" name="store_id" required>
+                                <option value="All" {% if store_id == 'All' %}selected{% endif %}>All Stores</option>
+                                {% for store in stores %}
+                                <option value="{{ store.id }}" {% if store_id == store.id|string %}selected{% endif %}>{{ store.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label>Room Status <i class="fa fa-info-circle fa-ian"></i> <span class="text-danger">*</span></label>
+                            <select class="form-control select2" name="status_filter" required>
+                                <option value="All" {% if status_filter == 'All' %}selected{% endif %}>All Statuses</option>
+                                <option value="available" {% if status_filter == 'available' %}selected{% endif %}>Available</option>
+                                <option value="occupied" {% if status_filter == 'occupied' %}selected{% endif %}>Occupied</option>
+                                <option value="maintenance" {% if status_filter == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                                <option value="cleaning" {% if status_filter == 'cleaning' %}selected{% endif %}>Cleaning</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" style="margin-top: 30px;" class="btn btn-rgp">Filter <i class="fa fa-filter"></i></button>
+                            <button type="button" style="margin-top: 30px;" onclick="window.print()" class="btn btn-rgd ml-2">Print <i class="fa fa-print"></i></button>
+                            <button type="button" style="margin-top: 30px;" onclick="exportCSV()" class="btn btn-rgs ml-2">Export CSV <i class="fa fa-file-excel-o"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="row no-print mb-3">
+            <div class="col-lg col-md-4 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3>{{ total_rooms }}</h3>
+                        <p class="font-weight-bold">Total Rooms</p>
+                    </div>
+                    <div class="icon"><i class="fa fa-bed"></i></div>
+                    <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <div class="col-lg col-md-4 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3>{{ occupancy_rate }}%</h3>
+                        <p class="font-weight-bold">Occupancy Rate</p>
+                    </div>
+                    <div class="icon"><i class="fa fa-pie-chart"></i></div>
+                    <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <div class="col-lg col-md-4 col-4">
+                <div class="small-box bg-primary text-center py-2" style="height: calc(100% - 1rem); display: flex; flex-direction: column; justify-content: center;">
+                    <h3>{{ occupied_rooms }}</h3>
+                    <p class="mb-0 font-weight-bold">Occupied</p>
+                </div>
+            </div>
+            <div class="col-lg col-md-4 col-4">
+                <div class="small-box bg-secondary text-center py-2" style="height: calc(100% - 1rem); display: flex; flex-direction: column; justify-content: center;">
+                    <h3>{{ available_rooms }}</h3>
+                    <p class="mb-0 font-weight-bold">Available</p>
+                </div>
+            </div>
+            <div class="col-lg col-md-4 col-4">
+                <div class="small-box bg-warning text-center py-2" style="height: calc(100% - 1rem); display: flex; flex-direction: column; justify-content: center;">
+                    <h3>{{ maintenance_rooms + cleaning_rooms }}</h3>
+                    <p class="mb-0 font-weight-bold">Maint/Clean</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data table -->
+        <div class="row">
+            <div class="col-md-12 col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title font-weight-bold">Room Occupancy Details</h3>
+                        <div class="card-tools mr-2 mt-1 no-print">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0 table-responsive">
+                        <table id="occupancyTable" class="table table-bordered table-striped table-hover table-sm m-0">
+                            <thead>
+                                <tr>
+                                    <th>Room No.</th>
+                                    <th>Type</th>
+                                    <th>Category</th>
+                                    <th>Price/Night</th>
+                                    <th>Status</th>
+                                    <th>Guest Name</th>
+                                    <th>Phone</th>
+                                    <th>Check In</th>
+                                    <th>Check Out</th>
+                                    <th>Nights</th>
+                                    <th>Meal Plan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in rooms %}
+                                <tr>
+                                    <td><strong>{{ r.room_number }}</strong></td>
+                                    <td>{{ r.room_type }}</td>
+                                    <td>{{ r.category|default('Standard') }}</td>
+                                    <td class="text-right">{{ r.price_per_night|format_currency }}</td>
+                                    <td class="text-center">
+                                        {% if r.status == 'available' %}
+                                        <span class="badge badge-success">Available</span>
+                                        {% elif r.status == 'occupied' %}
+                                        <span class="badge badge-primary">Occupied</span>
+                                        {% elif r.status == 'maintenance' %}
+                                        <span class="badge badge-danger">Maintenance</span>
+                                        {% elif r.status == 'cleaning' %}
+                                        <span class="badge badge-warning text-dark">Cleaning</span>
+                                        {% else %}
+                                        <span class="badge badge-secondary">{{ r.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ r.guest_name }}</td>
+                                    <td>{{ r.guest_phone }}</td>
+                                    <td>{{ r.check_in }}</td>
+                                    <td>{{ r.check_out }}</td>
+                                    <td>{{ r.nights }}</td>
+                                    <td>{{ r.booking_type }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="11" class="text-center py-4 text-muted">
+                                        <i class="fa fa-info-circle fa-2x d-block mb-2 text-warning"></i>
+                                        No room occupancy data found matching the criteria.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /.data table -->
+
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(function () {
+        $('.select2').select2({ theme: 'bootstrap4', width: '100%' });
+
+        $("#occupancyTable").DataTable({
+            "responsive": true,
+            "autoWidth": false,
+            "order": [[0, "asc"]],
+            "language": {
+                "search": "Search occupancy:",
+                "lengthMenu": "Show _MENU_ entries per page",
+                "info": "Showing _START_ to _END_ of _TOTAL_ rooms",
+                "paginate": {
+                    "next": "<i class='fas fa-angle-right'></i>",
+                    "previous": "<i class='fas fa-angle-left'></i>"
+                }
+            }
+        });
+    });
+
+    function exportCSV() {
+        var csv = [];
+        csv.push('"KastomPOS - Room Occupancy Report"');
+        csv.push('');
+
+        var headers = [];
+        $('#occupancyTable thead th').each(function () { headers.push('"' + $(this).text().trim().replace(/"/g, '""') + '"'); });
+        csv.push(headers.join(','));
+
+        $('#occupancyTable tbody tr').each(function () {
+            var row = [];
+            $(this).find('td').each(function () { row.push('"' + $(this).text().trim().replace(/"/g, '""') + '"'); });
+            if (row.length > 0) csv.push(row.join(','));
+        });
+
+        var csvContent = "data:text/csv;charset=utf-8,\uFEFF" + csv.join("\n");
+        var link = document.createElement("a");
+        link.setAttribute("href", encodeURI(csvContent));
+        link.setAttribute("download", "Room_Occupancy_Report.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style type="text/css">
+    .backbtn {
+        border-radius: 10rem;
+        border: 1px solid #b10000;
+        font-size: 1.2rem;
+        margin: 5px;
+        padding-right: 1.3rem;
+        color: #00817a;
+        background-color: transparent;
+    }
+
+    .backbtn:hover {
+        background-color: #b10000 !important;
+        color: white !important;
+    }
+</style>
+
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">
+                        <button class="pull-left backbtn" title="Back" onclick="goBack()"><i class="fa fa-arrow-left" aria-hidden="true"> </i></button>
+                        Online Bookings</h1>
+                    <script>
+                        function goBack() {
+                            window.history.back();
+                        }
+                    </script>
+                </div><!-- /.col -->
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item active">Online Bookings</li>
+                    </ol>
+                </div><!-- /.col -->
+            </div><!-- /.row -->
+        </div><!-- /.container-fluid -->
+    </div>
+
+    <section class="content">
+        <div class="container-fluid" style="width: 100% !important;">
+            <div class="row">
+                <div class="col-md-12 col-sm-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Online Bookings List</h3>
+                            <a href="/online-booking" target="_blank" class="btn btn-xs btn-dark pull-right">Book Now <i class="fa fa-external-link"></i></a>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="table-responsive">
+                                        <table id="online_bookings_table" class="table table-striped table-hover table-sm">
+                                            <thead>
+                                                <tr class="headings">
+                                                    <th>Bill No</th>
+                                                    <th>Customer Name</th>
+                                                    <th>Room No.</th>
+                                                    <th>Status</th>
+                                                    <th>Period</th>
+                                                    <th>Net Amount</th>
+                                                    <th>Timestamp</th>
+                                                    <th class=" no-link last"><span class="nobr">Action</span></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Data will be populated via DataTables if needed, or Jinja loop -->
+                                                {% for booking in bookings %}
+                                                <tr>
+                                                    <td>{{ "%04d"|format(booking.id) }}</td>
+                                                    <td>{{ booking.customer_name }}</td>
+                                                    <td>{{ booking.room.room_number if booking.room else 'N/A' }}</td>
+                                                    <td>
+                                                        <span class="badge badge-info">Online</span>
+                                                    </td>
+                                                    <td>{{ booking.nights }} Night(s)</td>
+                                                    <td>{{ currency }} {{ booking.total_amount|format_currency }}</td>
+                                                    <td>{{ booking.created_at.strftime('%d %b %Y %H:%M') }}</td>
+                                                    <td>
+                                                        <button class="btn btn-xs btn-info" onclick="get_online_details({{ booking.id }})"><i class="fa fa-eye"></i></button>
+                                                        <button class="btn btn-xs btn-danger" onclick="void_booking({{ booking.id }})"><i class="fa fa-trash"></i></button>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div id="generalModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4>More Information</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body" id="generalInfo">
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#online_bookings_table').DataTable({
+            "responsive": true,
+            "autoWidth": false,
+            "order": [[6, 'desc']]
+        });
+    });
+
+    function get_online_details(id) {
+        $.ajax({
+            url: '/api/admin/rooms/booking-details',
+            type: 'POST',
+            data: { id: id },
+            success: function(resp) {
+                $('#generalInfo').html(resp);
+                $('#generalModal').modal('show');
+            }
+        });
+    }
+
+    function void_booking(id) {
+        if(confirm("Are you sure you want to void this booking?")) {
+            $.ajax({
+                url: '/api/admin/rooms/void-booking',
+                type: 'POST',
+                data: { id: id },
+                success: function(resp) {
+                    if (resp.resp == "1") {
+                        toastr.success("Booking voided successfully");
+                        setTimeout(function() { location.reload(); }, 1500);
+                    } else {
+                        toastr.error("Error voiding booking");
+                    }
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

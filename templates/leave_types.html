@@ -1,0 +1,179 @@
+{% extends "layout.html" %}
+
+{% block title %}Leave Types | KastomPOS{% endblock %}
+
+{% block content %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">Leave Types</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item active">Leave Types</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Form -->
+                <div class="col-md-4">
+                    <div class="card card-outline card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title" id="form_title">Add Leave Type</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="leave_type_form">
+                                <input type="hidden" name="id" id="type_id">
+                                <div class="form-group">
+                                    <label>Leave Name</label>
+                                    <input type="text" name="name" id="type_name" class="form-control" placeholder="e.g. Annual Leave" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Days Per Year</label>
+                                    <input type="number" name="days_per_year" id="type_days" class="form-control" value="21" required>
+                                </div>
+                                <div class="form-group">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="type_status" name="is_active" checked>
+                                        <label class="custom-control-label" for="type_status">Is Active</label>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block">Save Leave Type <i class="fa fa-save ml-1"></i></button>
+                                <button type="button" class="btn btn-default btn-block mt-2" onclick="resetForm()">Cancel</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- List -->
+                <div class="col-md-8">
+                    <div class="card card-outline card-info">
+                        <div class="card-header">
+                            <h3 class="card-title">Existing Leave Types</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table id="types_table" class="table table-sm table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Name</th>
+                                            <th>Days/Year</th>
+                                            <th>Status</th>
+                                            <th>Created At</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="types_body">
+                                        <!-- Loaded via AJAX -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        loadLeaveTypes();
+
+        $('#leave_type_form').on('submit', function(e) {
+            e.preventDefault();
+            saveLeaveType();
+        });
+    });
+
+    function saveLeaveType() {
+        let formData = $('#leave_type_form').serialize();
+        let isEdit = $('#type_id').val() !== '';
+        let url = isEdit ? '/api/admin/hr/update-leave-type' : '/api/admin/hr/add-leave-type';
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: formData,
+            success: function(obj) {
+                if (obj.resp == '1') {
+                    toastr.success(obj.message);
+                    resetForm();
+                    loadLeaveTypes();
+                } else {
+                    toastr.error(obj.message);
+                }
+            }
+        });
+    }
+
+    function loadLeaveTypes() {
+        $.ajax({
+            url: '/api/admin/hr/get-leave-types',
+            type: 'GET',
+            success: function(data) {
+                let html = '';
+                data.forEach(function(item, idx) {
+                    html += `<tr>
+                        <td>${idx + 1}</td>
+                        <td>${item.name}</td>
+                        <td>${item.days_per_year}</td>
+                        <td>
+                            <span class="badge badge-${item.is_active ? 'success' : 'danger'}">${item.is_active ? 'Active' : 'Inactive'}</span>
+                        </td>
+                        <td>${item.timestamp}</td>
+                        <td>
+                            <button class="btn btn-xs btn-outline-info" onclick='editType(${JSON.stringify(item)})'><i class="fa fa-edit"></i></button>
+                            <button class="btn btn-xs btn-outline-danger" onclick="deleteType(${item.id})"><i class="fa fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+                });
+                $('#types_body').html(html);
+                if ($.fn.DataTable.isDataTable('#types_table')) {
+                    $('#types_table').DataTable().destroy();
+                }
+                $('#types_table').DataTable({ responsive: true });
+            }
+        });
+    }
+
+    function editType(item) {
+        $('#form_title').text('Edit Leave Type');
+        $('#type_id').val(item.id);
+        $('#type_name').val(item.name);
+        $('#type_days').val(item.days_per_year);
+        $('#type_status').prop('checked', item.is_active);
+    }
+
+    function resetForm() {
+        $('#form_title').text('Add Leave Type');
+        $('#type_id').val('');
+        $('#leave_type_form')[0].reset();
+    }
+
+    function deleteType(id) {
+        if (confirm('Delete this leave type?')) {
+            $.ajax({
+                url: `/api/admin/hr/delete-leave-type/${id}`,
+                type: 'POST',
+                success: function(obj) {
+                    if (obj.resp == '1') {
+                        toastr.success(obj.message);
+                        loadLeaveTypes();
+                    }
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

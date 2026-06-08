@@ -1,0 +1,227 @@
+{% extends "layout.html" %}
+
+{% block title %}Trial Balance | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    form {
+        padding: 10px !important;
+    }
+
+    .custom_nav_theme {
+        color: black !important;
+        border-bottom: 1px grey solid;
+    }
+
+    .tb_title {
+        height: 30px;
+        background: #2A3F54;
+        position: relative;
+        color: #fff;
+        font-weight: bold;
+        border: none;
+        width: 200px;
+        text-align: left;
+        padding-left: 10px;
+        line-height: 30px;
+    }
+
+    .tb_title:hover,
+    .tb_title:active {
+        color: #A6A6A6;
+    }
+
+    .tb_title:before {
+        content: '';
+        position: absolute;
+        right: 0;
+        border-top: 30px solid white;
+        border-left: 30px solid #2A3F54;
+        width: 0;
+        top: 0;
+    }
+
+    .fa-ian {
+        color: #393B3D !important;
+    }
+
+    .select2-container--bootstrap4 .select2-selection--single {
+        height: calc(2.25rem + 2px) !important;
+    }
+
+    .card-header {
+        padding: .50rem 1.25rem !important;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0,0,0,.125);
+    }
+    
+    .card-title {
+        font-weight: 600;
+        color: #444;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="goBack()">
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                    </button>
+                    Trial Balance
+                </h1>
+                <script>
+                    function goBack() {
+                        window.history.back();
+                    }
+                </script>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Trial Balance</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h3 class="card-title">Filter By Date</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="filterForm" method="POST" action="/admin/accounting/trial-balance-report" target="_blank">
+                            <div class="row">
+                                <div class="col-md-4 col-sm-6 mb-3">
+                                    <label>Store/Shop <span class="text-danger">*</span></label>
+                                    <select class="form-control select2" name="org_id" required id="org_id">
+                                        <option value="All">All Stores</option>
+                                        {% for store in stores %}
+                                        <option value="{{ store.id }}">{{ store.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-md-4 col-sm-6 mb-3">
+                                    <label>As At Date <span class="text-danger">*</span></label>
+                                    <input type="date" name="sheet_date" id="sheet_date" class="form-control" value="{{ today }}" required />
+                                </div>
+
+                                <div class="col-md-4 col-sm-12">
+                                    <div style="margin-top: 32px;">
+                                        <button type="button" class="btn btn-primary" onclick="get_data()">
+                                            Query <i class="fa fa-search"></i>
+                                        </button>
+                                        <button type="submit" class="btn btn-rgp ml-1">
+                                            Query & Print <i class="fa fa-file-pdf-o"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-12">
+                <div class="card shadow-sm mt-3">
+                    <div class="card-body" id="table-data">
+                        <div class="text-center text-muted py-5">
+                            <i class="fa fa-info-circle fa-3x mb-3"></i>
+                            <p>Select filters and click Query to view the Trial Balance report.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function get_data() {
+        var org_id = $('#org_id').val();
+        var sheet_date = $('#sheet_date').val();
+        
+        if (!sheet_date) {
+            Swal.fire('Error', 'Please select a date', 'error');
+            return;
+        }
+
+        $('#table-data').html('<div class="text-center py-5"><i class="fa fa-spinner fa-spin fa-3x"></i><p class="mt-2">Generating Report...</p></div>');
+
+        $.ajax({
+            url: "/api/admin/accounting/get-trial-balance",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+                org_id: org_id,
+                sheet_date: sheet_date
+            }),
+            success: function(response) {
+                if (response.error) {
+                    $('#table-data').html('<div class="alert alert-danger">' + response.error + '</div>');
+                    return;
+                }
+
+                var html = '<div class="table-responsive">';
+                html += '<table class="table table-bordered table-striped table-hover">';
+                html += '<thead class="thead-dark">';
+                html += '<tr>';
+                html += '<th>Account Code</th>';
+                html += '<th>Account Name</th>';
+                html += '<th class="text-right">Debit</th>';
+                html += '<th class="text-right">Credit</th>';
+                html += '</tr>';
+                html += '</thead>';
+                html += '<tbody>';
+
+                if (response.data.length === 0) {
+                    html += '<tr><td colspan="4" class="text-center text-muted">No transactions found for the selected period.</td></tr>';
+                } else {
+                    response.data.forEach(function(item) {
+                        html += '<tr>';
+                        html += '<td>' + (item.code || '-') + '</td>';
+                        html += '<td>' + item.name + '</td>';
+                        html += '<td class="text-right text-success">' + (item.debit > 0 ? item.debit.toLocaleString(undefined, {minimumFractionDigits: 2}) : '-') + '</td>';
+                        html += '<td class="text-right text-danger">' + (item.credit > 0 ? item.credit.toLocaleString(undefined, {minimumFractionDigits: 2}) : '-') + '</td>';
+                        html += '</tr>';
+                    });
+                }
+
+                html += '</tbody>';
+                html += '<tfoot>';
+                html += '<tr class="bg-light font-weight-bold">';
+                html += '<td colspan="2" class="text-right">TOTAL</td>';
+                html += '<td class="text-right">' + response.total_debit.toLocaleString(undefined, {minimumFractionDigits: 2}) + '</td>';
+                html += '<td class="text-right">' + response.total_credit.toLocaleString(undefined, {minimumFractionDigits: 2}) + '</td>';
+                html += '</tr>';
+                html += '</tfoot>';
+                html += '</table>';
+                html += '</div>';
+
+                $('#table-data').html(html);
+            },
+            error: function() {
+                $('#table-data').html('<div class="alert alert-danger">An error occurred while fetching data.</div>');
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        $('.select2').select2({
+            theme: 'bootstrap4',
+            width: '100%'
+        });
+    });
+</script>
+{% endblock %}

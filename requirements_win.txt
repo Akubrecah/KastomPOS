@@ -1,0 +1,3 @@
+# Windows-only packaging dependencies
+# Do NOT add packages already in requirements.txt here — it causes version conflicts
+pyinstaller>=6.5.0

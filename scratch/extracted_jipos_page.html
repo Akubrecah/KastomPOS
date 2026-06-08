@@ -1,0 +1,29 @@
+<!DOCTYPE html>")
+24:                 if html_start != -1:
+25:                     html_content = content[html_start:]
+26:                     # If there are trailing tags or markdown wrappers, keep it clean
+27:                     html_end = html_content.rfind("</html>")
+28:                     if html_end != -1:
+29:                         html_content = html_content[:html_end+7]
+30:                     
+31:                     output_file = "/Users/Akubrecah/Desktop/KastomPOS/scratch/extracted_jipos_page.html"
+32:                     with open(output_file, 'w', enc
+<truncated 286 bytes>
+: if not found:
+40:     print("No direct content match found in 'content' field. Searching all values recursively...")
+41:     # Let's search inside any string value in the JSON
+42:     with open(transcript_path, 'r', encoding='utf-8') as f:
+43:         for i, line in enumerate(f):
+44:             if "Room Sale Report | JiPOS" in line:
+45:                 print(f"Found 'Room Sale Report | JiPOS' raw substring on line {i} of transcript!")
+46:                 try:
+47:                     data = json.loads(line)
+48:                     # Let's pretty print the keys and structure
+49:                     print(f"Keys: {list(data.keys())}")
+50:                     # Let's find where the HTML is
+51:                     raw_str = json.dumps(data)
+52:                     html_start = raw_str.find("<!DOCTYPE html>")
+53:                     if html_start != -1:
+54:                         # unescape or get raw
+55:                         # We can extract the HTML from the raw line using regex
+56:                         matches = re.findall(r'<!DOCTYPE html>.*?</html>

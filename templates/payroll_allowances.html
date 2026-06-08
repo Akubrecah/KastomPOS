@@ -1,0 +1,263 @@
+{% extends "layout.html" %}
+
+{% block title %}Allowance Types | KastomPOS{% endblock %}
+
+{% block styles %}
+
+{% endblock %}
+
+{% block content %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">
+                        <button class="pull-left backbtn" title="Back" onclick="window.history.back()">
+                            <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                        </button>
+                        Allowance Types
+                    </h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item active">Allowance Types</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Form Column -->
+                <div class="col-md-5">
+                    <div class="card card-outline card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">Add Allowance Type</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="allowance_form">
+                                <div class="form-group">
+                                    <label>Allowance Type Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="name" class="form-control" required placeholder="e.g. House Allowance">
+                                </div>
+                                <div class="form-group">
+                                    <label>Is Taxable?</label>
+                                    <div class="custom-control custom-radio">
+                                        <input class="custom-control-input" type="radio" id="taxable_yes" name="is_taxable" value="1" checked>
+                                        <label for="taxable_yes" class="custom-control-label">Yes</label>
+                                    </div>
+                                    <div class="custom-control custom-radio">
+                                        <input class="custom-control-input" type="radio" id="taxable_no" name="is_taxable" value="0">
+                                        <label for="taxable_no" class="custom-control-label">No</label>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="custom-control custom-checkbox">
+                                        <input class="custom-control-input" type="checkbox" id="is_active" name="is_active" value="1" checked>
+                                        <label for="is_active" class="custom-control-label">Active</label>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Narrative</label>
+                                    <textarea name="narrative" class="form-control" rows="3" placeholder="Enter notes..."></textarea>
+                                </div>
+                                <div class="mt-3">
+                                    <button type="submit" id="save_btn" class="btn btn-primary float-right"><i class="fa fa-save mr-1"></i> Save Allowance</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- List Column -->
+                <div class="col-md-7">
+                    <div class="card card-outline card-info">
+                        <div class="card-header">
+                            <h3 class="card-title">Allowance List</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table id="allowance_table" class="table table-sm table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Allowance Name</th>
+                                            <th>Taxable</th>
+                                            <th>Status</th>
+                                            <th>Timestamp</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="allowance_list_body">
+                                        <!-- Loaded via AJAX -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Edit Allowance Type</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="edit_allowance_form">
+                    <input type="hidden" name="id" id="edit_id">
+                    <div class="form-group">
+                        <label>Allowance Type Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" id="edit_name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Is Taxable?</label>
+                        <div class="custom-control custom-radio">
+                            <input class="custom-control-input" type="radio" id="edit_taxable_yes" name="is_taxable" value="1">
+                            <label for="edit_taxable_yes" class="custom-control-label">Yes</label>
+                        </div>
+                        <div class="custom-control custom-radio">
+                            <input class="custom-control-input" type="radio" id="edit_taxable_no" name="is_taxable" value="0">
+                            <label for="edit_taxable_no" class="custom-control-label">No</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="custom-control custom-checkbox">
+                            <input class="custom-control-input" type="checkbox" id="edit_is_active" name="is_active" value="1">
+                            <label for="edit_is_active" class="custom-control-label">Active</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Narrative</label>
+                        <textarea name="narrative" id="edit_narrative" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" id="update_btn" class="btn btn-primary float-right">Update</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        load_allowances();
+
+        $('#allowance_form').on('submit', function(e) {
+            e.preventDefault();
+            save_allowance();
+        });
+
+        $('#edit_allowance_form').on('submit', function(e) {
+            e.preventDefault();
+            update_allowance();
+        });
+    });
+
+    function load_allowances() {
+        $.ajax({
+            url: '/api/admin/payroll/get-allowances',
+            type: 'GET',
+            success: function(data) {
+                let html = '';
+                data.forEach(function(item) {
+                    html += `<tr>
+                        <td>${item.name}</td>
+                        <td>${item.is_taxable ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-danger">No</span>'}</td>
+                        <td>${item.is_active ? '<span class="text-success">Active</span>' : '<span class="text-danger">Inactive</span>'}</td>
+                        <td>${item.timestamp}</td>
+                        <td>
+                            <button class="btn btn-xs btn-rgs" onclick='edit_allowance(${JSON.stringify(item)})'><i class="fa fa-edit"></i> Edit</button>
+                            <button class="btn btn-xs btn-rgd" onclick="delete_allowance(${item.id})"><i class="fa fa-trash"></i> Delete</button>
+                        </td>
+                    </tr>`;
+                });
+                $('#allowance_list_body').html(html);
+                if ($.fn.DataTable.isDataTable('#allowance_table')) {
+                    $('#allowance_table').DataTable().destroy();
+                }
+                $('#allowance_table').DataTable({ responsive: true });
+            }
+        });
+    }
+
+    function save_allowance() {
+        let formData = $('#allowance_form').serialize();
+        $('#save_btn').prop('disabled', true);
+        $.ajax({
+            url: '/api/admin/payroll/add-allowance',
+            type: 'POST',
+            data: formData,
+            success: function(obj) {
+                if (obj.resp == '1') {
+                    toastr.success(obj.message);
+                    $('#allowance_form')[0].reset();
+                    load_allowances();
+                } else {
+                    toastr.error(obj.message);
+                }
+                $('#save_btn').prop('disabled', false);
+            }
+        });
+    }
+
+    function edit_allowance(item) {
+        $('#edit_id').val(item.id);
+        $('#edit_name').val(item.name);
+        if (item.is_taxable) $('#edit_taxable_yes').prop('checked', true);
+        else $('#edit_taxable_no').prop('checked', true);
+        $('#edit_is_active').prop('checked', item.is_active);
+        $('#edit_narrative').val(item.narrative);
+        $('#editModal').modal('show');
+    }
+
+    function update_allowance() {
+        let formData = $('#edit_allowance_form').serialize();
+        $('#update_btn').prop('disabled', true);
+        $.ajax({
+            url: '/api/admin/payroll/update-allowance',
+            type: 'POST',
+            data: formData,
+            success: function(obj) {
+                if (obj.resp == '1') {
+                    toastr.success(obj.message);
+                    $('#editModal').modal('hide');
+                    load_allowances();
+                } else {
+                    toastr.error(obj.message);
+                }
+                $('#update_btn').prop('disabled', false);
+            }
+        });
+    }
+
+    function delete_allowance(id) {
+        if (confirm('Are you sure you want to delete this allowance type?')) {
+            $.ajax({
+                url: '/api/admin/payroll/delete-allowance',
+                type: 'POST',
+                data: { id: id },
+                success: function(obj) {
+                    if (obj.resp == '1') {
+                        toastr.success(obj.message);
+                        load_allowances();
+                    } else {
+                        toastr.error(obj.message);
+                    }
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="goBack()"><i class="fa fa-arrow-left" aria-hidden="true"></i></button>
+                    Payment Schedules
+                </h1>
+                <script>
+                    function goBack() {
+                        window.history.back();
+                    }
+                </script>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Payment Schedules</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">List</h3>
+                        <div class="card-tools">
+                            <a href="#" data-toggle="modal" data-target="#createSchedule" class="btn btn-dark btn-sm">Create a Schedule</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="col-md-12">
+                            <table id="example1" class="table table-striped table-sm">
+                                <thead>
+                                    <tr class="headings">
+                                        <th>#</th>
+                                        <th>Reference</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Total Amount</th>
+                                        <th>Narrative</th>
+                                        <th>Created By</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for schedule in schedules %}
+                                    <tr>
+                                        <td>{{ loop.index }}.</td>
+                                        <td><code>{{ schedule.reference }}</code></td>
+                                        <td>
+                                            {{ schedule.status }}
+                                            {% if schedule.status == 'Completed' %}
+                                            <span class="badge badge-success">Paid <i class="fa fa-check-circle"></i></span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ schedule.date }}</td>
+                                        <th class="text-danger">{{ "{:,.2f}".format(schedule.amount) }}</th>
+                                        <td>{{ schedule.narrative or '' }}</td>
+                                        <td>{{ schedule.created_by.name if schedule.created_by else 'Admin' }}</td>
+                                        <td>
+                                            <button type="button" class="btn btn-xs btn-rgp">View More <i class="fa fa-eye"></i></button>
+                                            <button type="button" class="btn btn-xs btn-secondary">Print <i class="fa fa-print"></i></button>
+                                            <a href="#" class="btn btn-xs btn-rgs">.CSV <i class="fa fa-file-excel-o"></i></a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Create Schedule Modal -->
+<div class="modal fade" id="createSchedule" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <p><i class="fa fa-info-circle"></i> Enter your details below </p>
+                    </div>
+                </div>
+                <form method="POST" action="/admin/create-payment-schedule">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <label>Pending Purchase Orders <i class="text-danger">*</i> <small>(You can select multiple POs)</small></label>
+                            <select class="form-control select2" name="orderids[]" multiple required>
+                                <option value="">Select purchase order(s)</option>
+                                {% for po in pending_pos %}
+                                <option value="{{ po.id }}">{{ po.supplier.name }} - {{ po.bill_no }} ({{ settings.currency }} {{ po.amount }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-12 mt-2">
+                            <label>Schedule Date <i class="text-danger">*</i></label>
+                            <input type="date" class="form-control" name="schedule_date" required />
+                        </div>
+                        <div class="col-md-12 mt-2">
+                            <label>Narrative</label>
+                            <textarea class="form-control" name="narrative" placeholder="Write something here..."></textarea>
+                        </div>
+                        <div class="col-md-12 mt-3">
+                            <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-dark float-right">Submit <i class="fa fa-save"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $(function () {
+    $("#example1").DataTable({
+      "responsive": true,
+      "autoWidth": false,
+    });
+    $('.select2').select2({
+      theme: 'bootstrap4'
+    });
+  });
+</script>
+{% endblock %}

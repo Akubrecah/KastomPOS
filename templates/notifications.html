@@ -1,0 +1,133 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Content Header -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">System Notifications</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/" class="text-teal">Home</a></li>
+                    <li class="breadcrumb-item active">Notifications</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+        <!-- Notification metrics row -->
+        <div class="row">
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box shadow-sm">
+                    <span class="info-box-icon bg-warning elevation-1 text-white"><i class="fas fa-exclamation-triangle"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Stock Alerts</span>
+                        <span class="info-box-number font-weight-bold" id="metric-stock-count">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box shadow-sm">
+                    <span class="info-box-icon bg-info elevation-1 text-white"><i class="fas fa-money-bill-wave"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Finance Approvals</span>
+                        <span class="info-box-number font-weight-bold" id="metric-finance-count">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box shadow-sm">
+                    <span class="info-box-icon bg-teal elevation-1 text-white"><i class="fas fa-calendar-alt"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">HR Pending Action</span>
+                        <span class="info-box-number font-weight-bold" id="metric-hr-count">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="info-box shadow-sm">
+                    <span class="info-box-icon bg-success elevation-1 text-white"><i class="fas fa-bell"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Total Warnings</span>
+                        <span class="info-box-number font-weight-bold">{{ notifications|length }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-outline card-teal mt-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title font-weight-bold">Recent Alerts</h3>
+                <div class="card-tools ml-auto">
+                    <button class="btn btn-rgd btn-sm" onclick="location.reload()" style="font-weight: bold; border-radius: 4px;">
+                        <i class="fas fa-sync-alt mr-1"></i> Refresh Status
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead>
+                            <tr class="text-teal font-weight-bold" style="border-bottom: 2px solid #00817a;">
+                                <th style="width: 80px;">Category</th>
+                                <th style="width: 150px;">Alert Source</th>
+                                <th>Details</th>
+                                <th style="width: 120px;" class="text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if notifications %}
+                                {% for n in notifications %}
+                                <tr data-category="{{ n.category }}">
+                                    <td>
+                                        <span class="badge {{ n.badge_class }} px-2 py-1" style="font-size: 11px;">
+                                            <i class="fas fa-{{ n.icon }} mr-1"></i> {{ n.category }}
+                                        </span>
+                                    </td>
+                                    <td class="font-weight-bold">{{ n.title }}</td>
+                                    <td class="text-muted">{{ n.description }}</td>
+                                    <td class="text-right">
+                                        <a href="{{ n.link }}" class="btn btn-rgp btn-xs px-2 py-1" style="font-weight: bold; font-size: 11px; border-radius: 3px;">
+                                            Resolve <i class="fas fa-arrow-right ml-1"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-5 text-muted">
+                                        <i class="fas fa-bell-slash fa-3x mb-3 text-teal"></i>
+                                        <p class="mb-0 font-weight-bold">No active warnings or notifications detected.</p>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let stock = 0, finance = 0, hr = 0;
+    document.querySelectorAll("tbody tr[data-category]").forEach(tr => {
+        let cat = tr.getAttribute("data-category");
+        if (cat === "Stock") stock++;
+        else if (cat === "Finance") finance++;
+        else if (cat === "HR") hr++;
+    });
+    document.getElementById("metric-stock-count").innerText = stock;
+    document.getElementById("metric-finance-count").innerText = finance;
+    document.getElementById("metric-hr-count").innerText = hr;
+});
+</script>
+{% endblock %}

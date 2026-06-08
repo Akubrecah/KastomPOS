@@ -1,0 +1,113 @@
+{% extends "layout.html" %}
+
+{% block title %}Time Card Report | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    form { padding: 10px !important; }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">
+                        <button class="pull-left backbtn" title="Back" onclick="window.history.back()">
+                            <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                        </button>
+                        Time Card Report
+                    </h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item active">Time Card Report</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" action="/admin/attendance/time-card-report">
+                        <div class="row">
+                            <div class="col-md-3 col-sm-6 col-12">
+                                <label>Employee</label>
+                                <select name="employee_id" class="form-control select2">
+                                    <option value="">All Employees</option>
+                                    {% for e in staff %}
+                                    <option value="{{ e.id }}" {% if employee_id|string == e.id|string %}selected{% endif %}>{{ e.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3 col-sm-6 col-12">
+                                <label>From Date <i class="text-danger">*</i></label>
+                                <input type="date" class="form-control" name="start_date" value="{{ start_date }}" required />
+                            </div>
+                            <div class="col-md-3 col-sm-6 col-12">
+                                <label>To Date <i class="text-danger">*</i></label>
+                                <input type="date" class="form-control" name="end_date" value="{{ end_date }}" required />
+                            </div>
+                            <div class="col-md-3 col-sm-6 col-12">
+                                <div class="form-group">
+                                    <label class="d-none d-md-block">&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        Generate Report <i class="fa fa-file-text ml-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card card-outline card-warning">
+                <div class="card-header">
+                    <h3 class="card-title">Time Card Summary</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="timecard_table" class="table table-bordered table-striped table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Employee</th>
+                                    <th>Date</th>
+                                    <th>Clock In</th>
+                                    <th>Clock Out</th>
+                                    <th>Total Hours</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- This would be populated by backend logic based on attendance logs -->
+                                <tr>
+                                    <td colspan="7" class="text-center">Search to generate report</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#timecard_table').DataTable({
+            responsive: true,
+            dom: 'Bfrtip',
+            buttons: ['copy', 'csv', 'excel', 'pdf', 'print']
+        });
+        $('.select2').select2({ theme: 'bootstrap4' });
+    });
+</script>
+{% endblock %}

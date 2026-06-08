@@ -1,0 +1,90 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-2xl border border-slate-200" id="receiptContent">
+    <!-- Receipt Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-2xl font-black text-slate-900 mb-1">{{ settings.business_name }}</h1>
+        <p class="text-xs text-slate-500 uppercase tracking-widest font-bold">KRA Fiscal Receipt</p>
+        <div class="mt-4 border-y border-dashed border-slate-200 py-2 text-[10px] text-slate-400 space-y-1">
+            <p>Date: {{ receipt.generated_at.strftime('%d %b %Y, %H:%M') }}</p>
+            <p>Receipt #: {{ receipt.receipt_number }}</p>
+            {% if receipt.kra_control_number %}
+            <p class="text-slate-900 font-black">CU QR: {{ receipt.kra_control_number }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Order Items -->
+    <div class="space-y-4 mb-8">
+        {% for item in order.items %}
+        <div class="flex justify-between items-start">
+            <div class="flex-1">
+                <p class="text-sm font-bold text-slate-900">{{ item.product.name }}</p>
+                <p class="text-[10px] text-slate-500">{{ item.quantity }} x {{ settings.currency }} {{ item.unit_price }}</p>
+                {% if item.note %}
+                <p class="text-[10px] text-amber-600 italic">({{ item.note }})</p>
+                {% endif %}
+            </div>
+            <p class="text-sm font-black text-slate-900">{{ settings.currency }} {{ item.quantity * item.unit_price }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Totals -->
+    <div class="border-t border-dashed border-slate-200 pt-4 space-y-2 mb-8">
+        <div class="flex justify-between text-sm">
+            <span class="text-slate-500 font-bold">SUBTOTAL</span>
+            <span class="font-black text-slate-900">{{ settings.currency }} {{ "{:,.2f}".format(order.total_amount) }}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+            <span class="text-slate-500 font-bold">VAT (16%)</span>
+            <span class="font-black text-slate-900">{{ settings.currency }} {{ "{:,.2f}".format(order.total_amount * 0.16) }}</span>
+        </div>
+        <div class="flex justify-between text-lg pt-2 border-t border-slate-900">
+            <span class="font-black text-slate-900 tracking-tighter">TOTAL AMOUNT</span>
+            <span class="font-black text-slate-900">{{ settings.currency }} {{ "{:,.2f}".format(order.total_amount) }}</span>
+        </div>
+    </div>
+
+    <!-- Payment Info -->
+    <div class="bg-slate-50 p-4 rounded-xl mb-8">
+        <div class="flex justify-between text-[10px] font-bold text-slate-500">
+            <span>PAYMENT METHOD</span>
+            <span class="text-slate-900">{{ order.payments[0].method|upper if order.payments else 'N/A' }}</span>
+        </div>
+        <div class="flex justify-between text-[10px] font-bold text-slate-500 mt-1">
+            <span>CASHIER</span>
+            <span class="text-slate-900">{{ order.payments[0].cashier.name if order.payments else 'N/A' }}</span>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center space-y-4">
+        <div class="flex justify-center">
+            <div class="w-24 h-24 bg-slate-100 flex items-center justify-center rounded-lg border-2 border-slate-200">
+                <i class="fas fa-qrcode text-4xl text-slate-300"></i>
+            </div>
+        </div>
+        <p class="text-[10px] font-bold text-slate-400 italic">Thank you for visiting {{ settings.business_name }}!</p>
+        <p class="text-[8px] text-slate-300">System by KastomPOS AI</p>
+    </div>
+</div>
+
+<div class="mt-8 flex justify-center gap-4 no-print">
+    <button onclick="window.print()" class="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-800 transition">
+        <i class="fas fa-print"></i> Print Receipt
+    </button>
+    <a href="/billing" class="bg-white border text-slate-600 px-8 py-3 rounded-xl font-bold hover:bg-slate-50 transition">
+        New Order
+    </a>
+</div>
+
+<style>
+    @media print {
+        .no-print { display: none; }
+        body { background: white; padding: 0; }
+        .max-w-md { box-shadow: none; border: none; width: 80mm; margin: 0 auto; }
+    }
+</style>
+{% endblock %}

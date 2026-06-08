@@ -1,0 +1,36 @@
+# Ruff configuration file
+
+# Exclude a variety of common directories and utility scripts.
+exclude = [
+    ".git",
+    ".shared",
+    ".agent",
+    ".agents",
+    ".venv",
+    "venv",
+    "scratch",
+    "node_modules",
+    "__pycache__",
+    "seed_data.py",
+    "seed_accounts.py",
+    "build_exe.py",
+    "skill-creator",
+]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+[lint]
+# Enable Pyflakes (F) and a subset of the pycodestyle (E) codes by default.
+select = ["E4", "E7", "E9", "F"]
+# Ignore stylistic legacy issues to prevent checklist blocking on legacy code.
+ignore = [
+    "E701",  # Multiple statements on one line (colon)
+    "E722",  # Do not use bare `except`
+    "E402",  # Module level import not at top of file (needed for sys._MEIPASS path bootstrap)
+]
+
+# Allow fix, even with exit-code behavior.
+fixable = ["ALL"]
+unfixable = []

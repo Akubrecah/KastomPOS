@@ -1,0 +1,137 @@
+{% extends "layout.html" %}
+
+{% block title %}Workflows | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    form { padding: 10px !important; }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">
+                        <button class="pull-left backbtn" title="Back" onclick="window.history.back()">
+                            <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                        </button>
+                        Workflows
+                    </h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item active">Workflows</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card card-outline card-primary">
+                <div class="card-header">
+                    <h3 class="card-title">Workflow Configuration</h3>
+                    <div class="card-tools">
+                        <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addWorkflowModal">
+                            <i class="fa fa-plus"></i> Add Workflow
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="workflow_table" class="table table-bordered table-striped table-sm">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Module Name</th>
+                                    <th>Is Active</th>
+                                    <th>Workflow States</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Mock data for now -->
+                                <tr>
+                                    <td>1</td>
+                                    <td>Leave Application</td>
+                                    <td><span class="badge badge-success">Yes</span></td>
+                                    <td>HOD Approval -> HR Approval</td>
+                                    <td>
+                                        <button class="btn btn-xs btn-rgp" title="Edit"><i class="fa fa-edit"></i></button>
+                                        <button class="btn btn-xs btn-rgd" title="Delete"><i class="fa fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+<!-- Modal for Adding Workflow -->
+<div class="modal fade" id="addWorkflowModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Workflow</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="workflowForm">
+                    <div class="form-group">
+                        <label>Module <i class="text-danger">*</i></label>
+                        <select class="form-control select2" required>
+                            <option value="">Select Module</option>
+                            <option>Leave Application</option>
+                            <option>Payroll Processing</option>
+                            <option>Stock Adjustment</option>
+                            <option>Expense Payment</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Is Active</label>
+                        <select class="form-control">
+                            <option value="1">Yes</option>
+                            <option value="0">No</option>
+                        </select>
+                    </div>
+                    <hr>
+                    <h6>Workflow Steps</h6>
+                    <div id="stepsContainer">
+                        <div class="input-group mb-2">
+                            <input type="text" class="form-control" placeholder="Step Name (e.g. HOD Approval)">
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-success"><i class="fa fa-plus"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="submit" form="workflowForm" class="btn btn-primary">Save Workflow</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#workflow_table').DataTable({
+            responsive: true,
+            autoWidth: false
+        });
+        $('.select2').select2({ theme: 'bootstrap4' });
+    });
+</script>
+{% endblock %}

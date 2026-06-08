@@ -1,0 +1,153 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style type="text/css">
+    .backbtn {
+        border-radius: 10rem;
+        border: 1px solid #b10000;
+        font-size: 1.2rem;
+        margin: 5px;
+        padding-right: 1.3rem;
+        color: #00817a;
+        background-color: transparent;
+    }
+
+    .backbtn:hover {
+        background-color: #b10000 !important;
+        color: white !important;
+    }
+
+    .my-btn {
+        background-color: #E1E1E1;
+        border-radius: 0px;
+        border-top: none;
+        border-right: none;
+        color: black !important;
+        font-weight: bold;
+    }
+
+    #active {
+        border: unset !important;
+        color: #fff !important;
+        background: #017870 !important;
+    }
+</style>
+
+    <!-- Content Header (Page header) -->
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">
+                        <button class="pull-left backbtn" title="Back" onclick="goBack()"><i class="fa fa-arrow-left" aria-hidden="true"> </i></button>
+                        Bookings</h1>
+                    <script>
+                        function goBack() {
+                            window.history.back();
+                        }
+                    </script>
+                </div><!-- /.col -->
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/admin">Home</a></li>
+                        <li class="breadcrumb-item active">Bookings</li>
+                    </ol>
+                </div><!-- /.col -->
+            </div><!-- /.row -->
+        </div><!-- /.container-fluid -->
+    </div>
+    <!-- /.content-header -->
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="container-fluid" style="width: 100% !important;">
+
+            <div class="row">
+                <div class="col-md-12 col-sm-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <form method="GET">
+                                <div class="row">
+                                    <div class="col-md-2 col-sm-6 col-xs-12">
+                                        <label>Sale Option *</label>
+                                        <select class="form-control" name="due" required>
+                                            <option value="All" {% if due == 'All' %}selected{% endif %}>All Sales (Paid & Due)</option>
+                                            <option value="Due" {% if due == 'Due' %}selected{% endif %}>Due sales</option>
+                                            <option value="Paid" {% if due == 'Paid' %}selected{% endif %}>Paid/Settled</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 col-sm-6 col-xs-12">
+                                        <label>From Date <i class="text-danger">*</i></label>
+                                        <input type="date" class="form-control" name="from_date" value="{{ from_date }}" required />
+                                    </div>
+                                    <div class="col-md-3 col-sm-6 col-xs-12">
+                                        <label>To Date <i class="text-danger">*</i></label>
+                                        <input type="date" class="form-control" name="to_date" value="{{ to_date }}" required />
+                                    </div>
+                                    <div class="col-md-2" style="padding-top: 10px">
+                                        <button type="submit" class="btn btn-primary mt-4">Filter <i class="fa fa-filter"></i></button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-12 col-sm-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Bookings List</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table id="bookings_table" class="table table-striped table-hover table-sm">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th>Bill No</th>
+                                            <th>Customer Name</th>
+                                            <th>Room No.</th>
+                                            <th>Nights</th>
+                                            <th>Trans. Date</th>
+                                            <th>Date Range</th>
+                                            <th>Net Amount</th>
+                                            <th>Room Balance</th>
+                                            <th>Status</th>
+                                            <th class="no-link last">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for booking in bookings %}
+                                        <tr>
+                                            <td>#{{ "%04d" % booking.id }}</td>
+                                            <td>{{ booking.customer_name }}</td>
+                                            <td>{{ booking.room.room_number if booking.room else 'N/A' }}</td>
+                                            <td>{{ booking.nights }}</td>
+                                            <td>{{ booking.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
+                                            <td>{{ booking.from_date.strftime('%d/%m') }} - {{ booking.to_date.strftime('%d/%m') }}</td>
+                                            <td>{{ currency }} {{ booking.total_amount|format_currency }}</td>
+                                            <td>{{ currency }} {{ booking.balance|format_currency }}</td>
+                                            <td><span class="badge badge-info">{{ booking.status|capitalize }}</span></td>
+                                            <td>
+                                                <button class="btn btn-xs btn-outline-info">View</button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+<script>
+    $(function () {
+        $("#bookings_table").DataTable({
+            "responsive": true,
+            "autoWidth": false,
+        });
+    });
+</script>
+{% endblock %}

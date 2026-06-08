@@ -1,0 +1,232 @@
+{% extends "layout.html" %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="window.history.back()"><i class="fa fa-arrow-left"></i></button>
+                    Move/Transfer Stock
+                </h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Move/Transfer Stock</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-9">
+                <div class="card card-primary card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">Direct Stock Transfer</h3>
+                    </div>
+                    <div class="card-body">
+                        <form action="/admin/stock-transfer/process" method="post">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label>From Store <span class="text-danger">*</span></label>
+                                    <select name="from_store_id" id="from_store_id" class="form-control select2" required onchange="loadFromItems()">
+                                        <option value="">Select store</option>
+                                        {% for store in stores %}
+                                        <option value="{{ store.id }}">{{ store.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label>To Store <span class="text-danger">*</span></label>
+                                    <select name="to_store_id" id="to_store_id" class="form-control select2" required>
+                                        <option value="">Select store</option>
+                                        {% for store in stores %}
+                                        <option value="{{ store.id }}">{{ store.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <div class="row">
+                                <div class="col-md-12 table-responsive">
+                                    <table class="table table-bordered table-sm" id="transfer_table">
+                                        <thead>
+                                            <tr class="bg-light">
+                                                <th style="width: 40%;">Item</th>
+                                                <th>Current Stock</th>
+                                                <th>Transfer Qty</th>
+                                                <th>Note</th>
+                                                <th style="width: 50px;"><button type="button" class="btn btn-xs btn-primary" onclick="addRow()"><i class="fa fa-plus"></i></button></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr id="row1">
+                                                <td>
+                                                    <select name="items[]" id="item_1" class="form-control select2 item-select" required onchange="getItemStock(1)">
+                                                        <option value="">Select item</option>
+                                                    </select>
+                                                </td>
+                                                <td><b id="stock_1">0</b></td>
+                                                <td><input type="number" name="qty[]" id="qty_1" class="form-control form-control-sm" step="0.01" min="0.01" value="1" required></td>
+                                                <td><input type="text" name="notes[]" class="form-control form-control-sm"></td>
+                                                <td><button type="button" class="btn btn-xs btn-rgd" onclick="removeRow(1)"><i class="fa fa-minus"></i></button></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <label>Issued to?</label>
+                                    <select name="issued_to_id" class="form-control select2">
+                                        <option value="">~Select User~</option>
+                                        {% for user in users %}
+                                        <option value="{{ user.id }}">{{ user.username }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6 text-right" style="padding-top: 32px;">
+                                    <button type="submit" class="btn btn-primary">Submit Transfer <i class="fa fa-check-circle ml-1"></i></button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Check Availability</h3></div>
+                    <div class="card-body">
+                        <label>Store</label>
+                        <select id="check_store_id" class="form-control select2" onchange="loadCheckItems()">
+                            <option value="">Select store</option>
+                            {% for store in stores %}
+                            <option value="{{ store.id }}">{{ store.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <label class="mt-2">Item</label>
+                        <select id="check_item_id" class="form-control select2" onchange="checkStock()">
+                            <option value="">Select item</option>
+                        </select>
+                        <label class="mt-2">Quantity</label>
+                        <input type="text" id="check_qty" class="form-control" readonly>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Recent Movements</h3></div>
+                    <div class="card-body">
+                        <table id="movementsTable" class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Ref#</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Items</th>
+                                    <th>Issued To</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for move in movements %}
+                                <tr>
+                                    <td><code>{{ move.reference }}</code></td>
+                                    <td>{{ move.from_store.name }}</td>
+                                    <td>{{ move.to_store.name }}</td>
+                                    <td>{{ move.items|length }} items</td>
+                                    <td>{{ move.issued_to.username if move.issued_to else '-' }}</td>
+                                    <td>{{ move.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    let rowCount = 1;
+
+    $(document).ready(function() {
+        $('.select2').select2();
+        $('#movementsTable').DataTable({ "order": [[5, 'desc']] });
+    });
+
+    function loadFromItems() {
+        let storeId = $('#from_store_id').val();
+        if(!storeId) return;
+        $.get('/admin/store-items-json/' + storeId, function(data) {
+            let options = '<option value="">Select item</option>';
+            data.forEach(item => {
+                options += `<option value="${item.product_id}" data-stock="${item.quantity}">${item.product_name}</option>`;
+            });
+            $('.item-select').html(options);
+        });
+    }
+
+    function getItemStock(rowId) {
+        let selected = $('#item_' + rowId + ' option:selected');
+        let stock = selected.data('stock') || 0;
+        $('#stock_' + rowId).text(stock);
+        $('#qty_' + rowId).attr('max', stock);
+    }
+
+    function addRow() {
+        rowCount++;
+        let options = $('#item_1').html();
+        let newRow = `
+            <tr id="row${rowCount}">
+                <td>
+                    <select name="items[]" id="item_${rowCount}" class="form-control select2 item-select" required onchange="getItemStock(${rowCount})">
+                        ${options}
+                    </select>
+                </td>
+                <td><b id="stock_${rowCount}">0</b></td>
+                <td><input type="number" name="qty[]" id="qty_${rowCount}" class="form-control form-control-sm" step="0.01" min="0.01" value="1" required></td>
+                <td><input type="text" name="notes[]" class="form-control form-control-sm"></td>
+                <td><button type="button" class="btn btn-xs btn-rgd" onclick="removeRow(${rowCount})"><i class="fa fa-minus"></i></button></td>
+            </tr>`;
+        $('#transfer_table tbody').append(newRow);
+        $(`#item_${rowCount}`).select2();
+    }
+
+    function removeRow(id) {
+        if($('#transfer_table tbody tr').length > 1) {
+            $(`#row${id}`).remove();
+        }
+    }
+
+    function loadCheckItems() {
+        let storeId = $('#check_store_id').val();
+        $.get('/admin/store-items-json/' + storeId, function(data) {
+            let options = '<option value="">Select item</option>';
+            data.forEach(item => { options += `<option value="${item.product_id}" data-stock="${item.quantity}">${item.product_name}</option>`; });
+            $('#check_item_id').html(options);
+        });
+    }
+
+    function checkStock() {
+        let stock = $('#check_item_id option:selected').data('stock') || 0;
+        $('#check_qty').val(stock);
+    }
+</script>
+{% endblock %}

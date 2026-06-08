@@ -1,0 +1,232 @@
+{% extends "layout.html" %}
+
+{% block title %}Items Sale Report | KastomPOS{% endblock %}
+
+{% block extra_css %}
+<style>
+    form {
+        padding: 10px !important;
+    }
+    .card-header {
+        padding: .50rem 1.25rem !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Content Header -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="window.history.back()">
+                        <i class="fa fa-arrow-left" aria-hidden="true"> </i>
+                    </button>
+                    Items Sale Report
+                </h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/admin">Home</a></li>
+                    <li class="breadcrumb-item active">Items Sale Report</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+
+        <!-- Alert row -->
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12"></div>
+        </div>
+
+        <!-- Filter Card -->
+        <div class="row">
+            <div class="col-md-6 col-sm-12">
+                <div class="card">
+                    <div class="card-body">
+                        <form method="get" action="/admin/reports/item-sales" id="filterForm">
+                            <div class="row">
+                                <div class="col-md-12 text-info">
+                                    Filter by date range
+                                </div>
+
+                                <!-- Store -->
+                                <div class="col-md-12">
+                                    <label>Org/Store/Shop <i class="fa fa-building"></i> *</label>
+                                    <select class="form-control" name="store_id" id="store_id">
+                                        <option value="">~Select store~</option>
+                                        {% for store in stores %}
+                                        <option value="{{ store.id }}"
+                                            {% if selected_store == store.id|string %}selected{% endif %}>
+                                            {{ store.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <!-- Date Range -->
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label>Date and time range <i class="text-danger">*</i></label>
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="far fa-clock"></i></span>
+                                            </div>
+                                            <input type="text" class="form-control float-right"
+                                                name="date_range" id="reservationtime"
+                                                value="{{ date_range_value }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Hidden fields -->
+                                <input type="hidden" name="from_date" id="from_date" value="{{ from_date }}">
+                                <input type="hidden" name="to_date"   id="to_date"   value="{{ to_date }}">
+                                <input type="hidden" name="filtered"  value="1">
+
+                                <!-- Buttons -->
+                                <div class="col-md-12">
+                                    <button type="submit" class="btn btn-sm btn-primary">
+                                        Filter <i class="fa fa-filter"></i>
+                                    </button>
+                                    <button type="button" onclick="printReport()"
+                                        class="btn btn-sm btn-danger no-print">
+                                        Print <i class="fa fa-print"></i>
+                                    </button>
+                                    <a href="/admin/reports/item-sales/csv?from_date={{ from_date }}&to_date={{ to_date }}&store_id={{ selected_store }}"
+                                        class="btn btn-sm btn-rgs no-print">
+                                        CSV <i class="fa fa-file-excel-o"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Table -->
+        <div class="row">
+            <div class="col-md-12 col-sm-12">
+                <div class="card card-warning">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12 table-responsive">
+                                <table id="example1" class="table table-striped table-hover table-sm">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th>Item Name</th>
+                                            <th>Item Code</th>
+                                            <th>Quantity Sold</th>
+                                            <th>Cost of Sale</th>
+                                            <th>Sale Value</th>
+                                            <th>Estimate Profit</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in item_sales %}
+                                        <tr>
+                                            <td>{{ item.name }}</td>
+                                            <td>{{ item.sku or '-' }}</td>
+                                            <td>{{ item.qty_sold }}</td>
+                                            <td>{{ "{:,.2f}".format(item.cost_of_sale or 0) }}</td>
+                                            <td>{{ "{:,.2f}".format(item.sale_value or 0) }}</td>
+                                            <td>{{ "{:,.2f}".format(item.est_profit or 0) }}</td>
+                                            <td>
+                                                <a href="/admin/items/{{ item.product_id }}"
+                                                    class="btn btn-xs btn-info"
+                                                    title="View Item">
+                                                    <i class="fa fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted">
+                                                No data found for the selected period.
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="headings">
+                                            <th></th>
+                                            <th></th>
+                                            <th>{{ totals.qty_sold }}</th>
+                                            <th>{{ "{:,.2f}".format(totals.cost_of_sale or 0) }}</th>
+                                            <th>{{ "{:,.2f}".format(totals.sale_value or 0) }}</th>
+                                            <th>{{ "{:,.2f}".format(totals.est_profit or 0) }}</th>
+                                            <th></th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(function () {
+    // Init daterangepicker
+    $('#reservationtime').daterangepicker({
+        timePicker: true,
+        timePickerIncrement: 30,
+        locale: {
+            format: 'MM/DD/YYYY hh:mm A'
+        }
+    }, function(start, end) {
+        $('#from_date').val(start.format('YYYY-MM-DD'));
+        $('#to_date').val(end.format('YYYY-MM-DD'));
+    });
+
+    // Sync hidden fields on page load from current value
+    var current = $('#reservationtime').val();
+    if (current) {
+        var picker = $('#reservationtime').data('daterangepicker');
+        if (picker) {
+            $('#from_date').val(picker.startDate.format('YYYY-MM-DD'));
+            $('#to_date').val(picker.endDate.format('YYYY-MM-DD'));
+        }
+    }
+
+    // DataTable
+    $("#example1").DataTable({
+        "responsive": true,
+        "autoWidth": false,
+        "bDestroy": true,
+        "order": [[4, "desc"]]
+    });
+});
+
+function printReport() {
+    window.print();
+}
+</script>
+
+<style>
+@media print {
+    .no-print,
+    .main-sidebar,
+    .main-header,
+    .main-footer,
+    .content-header ol.breadcrumb,
+    .content-wrapper {
+        margin-left: 0 !important;
+    }
+}
+</style>
+{% endblock %}

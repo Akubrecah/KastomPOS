@@ -1,0 +1,238 @@
+{% extends "layout.html" %}
+
+{% block title %}Awards | KastomPOS{% endblock %}
+
+{% block styles %}
+
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="goBack()">
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                    </button>
+                    Awards
+                </h1>
+                <script>
+                    function goBack() { window.history.back(); }
+                </script>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Awards</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <!-- Award Form Card -->
+        <div class="card card-outline card-primary">
+            <div class="card-header">
+                <h3 class="card-title">Award Form</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body" style="display: none;">
+                <form id="award_form">
+                    <div class="row">
+                        <div class="col-md-7 pr-3">
+                            <div class="row">
+                                <div class="col-12 mb-3">
+                                    <label>Staff/Employee <span class="text-danger">*</span></label>
+                                    <select class="form-control select2" name="staff_id" id="staff_id" required>
+                                        <option value="">~Select Employee~</option>
+                                        {% for s in staff %}
+                                        <option value="{{ s.id }}">{{ s.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Award Type/Title <span class="text-danger">*</span></label>
+                                    <select class="form-control select2" name="award_type_id" id="award_type_id" required>
+                                        <option value="">~Select Award Type~</option>
+                                        {% for t in award_types %}
+                                        <option value="{{ t.id }}">{{ t.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Award Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="award_date" id="award_date" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Gift</label>
+                                    <input type="text" class="form-control" name="gift" id="gift" placeholder="Gift">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Cash</label>
+                                    <input type="number" step="0.01" class="form-control" name="cash" id="cash" placeholder="Cash amount">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-5 pl-3">
+                            <div class="row">
+                                <div class="col-12 mb-3">
+                                    <label>Description</label>
+                                    <textarea class="form-control" rows="4" name="description" id="description" placeholder="Type description here..."></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label>Attachment</label>
+                                    <input type="file" class="form-control-file" name="attachment" id="attachment">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 pt-4">
+                            <button type="submit" class="btn btn-primary float-right">
+                                <i class="fa fa-check-square mr-1"></i> Save Award
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Award List Card -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h3 class="card-title">Award List</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="award_table" class="table table-striped table-sm">
+                        <thead>
+                            <tr>
+                                <th>Full name</th>
+                                <th>Award Title</th>
+                                <th>Gift</th>
+                                <th>Cash</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data populated via AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({ theme: 'bootstrap4' });
+        load_awards();
+
+        $('#award_form').on('submit', function(e) {
+            e.preventDefault();
+            save_award();
+        });
+    });
+
+    function load_awards() {
+        $.ajax({
+            url: '/api/admin/hr/get-awards',
+            type: 'GET',
+            success: function(response) {
+                render_table(response);
+            },
+            error: function() {
+                toastr.error('Failed to load awards');
+            }
+        });
+    }
+
+    function render_table(data) {
+        let html = '';
+        data.forEach(function(item) {
+            html += '<tr>';
+            html += '<td>' + item.staff_name + '</td>';
+            html += '<td>' + item.award_title + '</td>';
+            html += '<td>' + (item.gift || '-') + '</td>';
+            html += '<td>' + item.cash.toLocaleString() + '</td>';
+            html += '<td>' + item.award_date + '</td>';
+            html += '<td>';
+            html += '<button class="btn btn-xs btn-rgp mr-1" onclick="delete_award(' + item.id + ')"><i class="fa fa-trash text-danger"></i></button>';
+            html += '</td>';
+            html += '</tr>';
+        });
+        
+        // Destroy existing DataTable if it exists
+        if ($.fn.DataTable.isDataTable('#award_table')) {
+            $('#award_table').DataTable().destroy();
+        }
+        
+        $('#award_table tbody').html(html);
+        $('#award_table').DataTable({
+            "responsive": true,
+            "autoWidth": false
+        });
+    }
+
+    function save_award() {
+        // Handle file upload separately or use FormData
+        let formData = new FormData($('#award_form')[0]);
+
+        $.ajax({
+            url: '/api/admin/hr/add-award',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.error) {
+                    toastr.error(response.error);
+                } else {
+                    toastr.success('Award saved successfully');
+                    load_awards();
+                    $('#award_form')[0].reset();
+                    $('.select2').val('').trigger('change');
+                    $('.card-body').slideUp();
+                }
+            },
+            error: function() {
+                toastr.error('Failed to save award');
+            }
+        });
+    }
+
+    function delete_award(id) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This award will be permanently removed.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/api/admin/hr/delete-award',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ id: id }),
+                    success: function() {
+                        toastr.success('Award deleted');
+                        load_awards();
+                    }
+                });
+            }
+        });
+    }
+</script>
+{% endblock %}

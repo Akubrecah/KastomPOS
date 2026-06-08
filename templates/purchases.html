@@ -1,0 +1,144 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Content Header -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="backbtn" title="Back" onclick="window.history.back()"><i class="fa fa-arrow-left"></i></button>
+                    Purchases
+                </h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Purchases</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<section class="content">
+    <div class="container-fluid">
+        <!-- Filter Form -->
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" action="/admin/purchases">
+                    <div class="row">
+                        <div class="col-md-12 text-info mb-2">
+                            Filter by date range
+                        </div>
+                        <div class="col-md-2">
+                            <label>Org/Branch/Store <i class="text-danger">*</i></label>
+                            <select class="form-control" name="store_id">
+                                <option value="">All Stores</option>
+                                {% for store in stores %}
+                                <option value="{{ store.id }}" {% if current_store == store.id|string %}selected{% endif %}>{{ store.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label>Purchase Option *</label>
+                            <select class="form-control" name="status">
+                                <option value="All" {% if current_status == 'All' %}selected{% endif %}>All purchases</option>
+                                <option value="Due" {% if current_status == 'Due' %}selected{% endif %}>Due purchases</option>
+                                <option value="Paid" {% if current_status == 'Paid' %}selected{% endif %}>Paid/Settled</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label>From Date <i class="fa fa-calendar"></i> *</label>
+                            <input type="date" name="from_date" class="form-control" value="{{ from_date }}" required />
+                        </div>
+                        <div class="col-md-2">
+                            <label>To Date <i class="fa fa-calendar"></i> *</label>
+                            <input type="date" name="to_date" class="form-control" value="{{ to_date }}" required />
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" style="margin-top: 30px;" class="btn btn-rgp">Filter <i class="fa fa-filter"></i></button>
+                            <a href="#" style="margin-top: 30px;" class="btn btn-rgs">Export to CSV <i class="fa fa-file-excel-o"></i></a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Purchase List Table -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">List</h3>
+                <div class="card-tools">
+                    <a href="/admin/direct-purchase" class="btn btn-dark btn-xs">New Purchase <i class="fa fa-plus"></i></a>
+                    <a href="/admin/payment-schedules" class="btn btn-dark btn-xs">Bulk Purchase Payment</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="data_table" class="table table-striped table-sm">
+                        <thead>
+                            <tr class="headings">
+                                <th>Bill No</th>
+                                <th>Supplier Name</th>
+                                <th>Date</th>
+                                <th>Attendant:</th>
+                                <th>Net Amount</th>
+                                <th>Balance</th>
+                                <th>Discount</th>
+                                <th>Store</th>
+                                <th class="no-link last">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for purchase in purchases %}
+                            <tr>
+                                <td><a href="#" class="text-kastompos-teal font-weight-bold">{{ purchase.bill_no }}</a></td>
+                                <td>{{ purchase.supplier.name }}</td>
+                                <td>{{ purchase.purchase_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>{{ purchase.attendant.name if purchase.attendant else 'N/A' }}</td>
+                                <td class="font-weight-bold text-dark">{{ "{:,.2f}".format(purchase.amount) }}</td>
+                                <td class="text-danger">{{ "{:,.2f}".format(purchase.balance) }}</td>
+                                <td>{{ "{:,.2f}".format(purchase.discount) }}</td>
+                                <td><span class="badge badge-info">{{ purchase.store.name if purchase.store else 'Main' }}</span></td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button class="btn btn-xs btn-default"><i class="fa fa-eye"></i></button>
+                                        <button class="btn btn-xs btn-default"><i class="fa fa-edit"></i></button>
+                                        <button class="btn btn-xs btn-default text-danger"><i class="fa fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="9" class="text-center p-4 text-muted">No purchases found for the selected criteria.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(function () {
+        $('#data_table').DataTable({
+            "paging": true,
+            "lengthChange": true,
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "autoWidth": false,
+            "responsive": true,
+            "order": [[2, 'desc']]
+        });
+    });
+</script>
+{% endblock %}

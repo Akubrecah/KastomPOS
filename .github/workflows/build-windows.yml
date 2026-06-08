@@ -1,0 +1,58 @@
+name: Build Windows Application
+
+on:
+  push:
+    branches: [ main, master, development, python-dev, python_dev ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & Package KastomPOS
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+
+    - name: Install Python Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements_win.txt
+
+    - name: Run PyInstaller Build
+      run: |
+        python build_exe.py
+
+    - name: Install Inno Setup
+      run: |
+        choco install innosetup --yes --no-progress
+      shell: powershell
+
+    - name: Compile Inno Setup Installer
+      run: |
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+      shell: powershell
+
+    - name: Upload Standalone EXE
+      uses: actions/upload-artifact@v4
+      with:
+        name: KastomPOS-Portable-EXE
+        path: dist/KastomPOS.exe
+        if-no-files-found: error
+        retention-days: 30
+
+    - name: Upload Setup Installer
+      uses: actions/upload-artifact@v4
+      with:
+        name: KastomPOS-Windows-Installer
+        path: dist/KastomPOS_Setup.exe
+        if-no-files-found: error
+        retention-days: 30

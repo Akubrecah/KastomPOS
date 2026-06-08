@@ -1,0 +1,59 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-2xl font-bold text-slate-900">Receipting Records</h1>
+    <p class="text-slate-500">View and audit all generated receipts.</p>
+</div>
+
+<div class="bg-white rounded-xl border shadow-sm overflow-hidden">
+    <div class="p-6 border-b flex items-center justify-between">
+        <div class="relative flex-grow max-w-md">
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" placeholder="Search by receipt # or customer..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition">
+        </div>
+        <div class="flex gap-2">
+            <button class="px-4 py-2 border rounded-lg text-sm font-bold hover:bg-slate-50 transition flex items-center gap-2">
+                <i class="fas fa-filter text-slate-400"></i> Filter
+            </button>
+            <button class="px-4 py-2 border rounded-lg text-sm font-bold hover:bg-slate-50 transition flex items-center gap-2">
+                <i class="fas fa-download text-slate-400"></i> Export
+            </button>
+        </div>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead class="bg-slate-50 border-b">
+                <tr>
+                    <th class="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Receipt #</th>
+                    <th class="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Date & Time</th>
+                    <th class="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Order ID</th>
+                    <th class="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y">
+                {% for receipt in receipts %}
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="px-6 py-4 font-bold text-emerald-600">#{{ receipt.receipt_number }}</td>
+                    <td class="px-6 py-4 text-slate-600 text-sm">{{ receipt.generated_at.strftime('%d %b %Y, %H:%M') }}</td>
+                    <td class="px-6 py-4 text-slate-600 text-sm">Order #{{ receipt.order_id }}</td>
+                    <td class="px-6 py-4 text-right">
+                        <a href="/receipt/{{ receipt.order_id }}" class="text-slate-400 hover:text-slate-900 transition mr-4"><i class="fas fa-eye"></i></a>
+                        <button class="text-slate-400 hover:text-slate-900 transition"><i class="fas fa-print"></i></button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="px-6 py-12 text-center text-slate-400">
+                        <div class="flex flex-col items-center gap-2">
+                            <i class="fas fa-file-invoice text-3xl opacity-20"></i>
+                            <p>No receipts found in the system.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

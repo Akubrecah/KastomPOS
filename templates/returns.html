@@ -1,0 +1,176 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="goBack()"><i class="fa fa-arrow-left" aria-hidden="true"> </i></button>
+                    Item Return</h1>
+                <script>
+                    function goBack() {
+                        window.history.back();
+                    }
+                </script>
+            </div><!-- /.col -->
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/admin">Home</a></li>
+                    <li class="breadcrumb-item active">Item Return</li>
+                </ol>
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12 col-sm-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <p><i class="fa fa-info-circle"></i> Fill the form sequentially <small><i>(from left to right, top to bottom)</i></small> to get the right data filtered in the <code>select input types</code>. Sale returns are limited to sales which are open and have been made within the day.</p>
+                            </div>
+                        </div>
+                        <form action="/admin/add-return" method="post">
+                            <div class="row">
+                                <div class="col-md-3 col-xs-12">
+                                    <label for="">Item Return Option <span class="text text-danger">*</span> </label>
+                                    <select class="select2 form-control" name="item_status_id" onchange="get_orders(this)" required>
+                                        <option value="">Select return option</option>
+                                        <option value="1"> Purchase Return </option>
+                                        <option value="2"> Sale Return </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 col-xs-12">
+                                    <label for="">Orders <span class="text text-danger">*</span> </label>
+                                    <select class="select2 form-control" name="order_id" id="order_id" onchange="get_order_items(this)" required>
+                                        <option value="">Search and select order/purchase</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 col-xs-12">
+                                    <label for="">Order Items <span class="text text-danger">*</span> </label>
+                                    <select class="select2 form-control" name="order_item_id" id="order_item_id" required>
+                                        <option value="">Search and select item</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 col-xs-12">
+                                    <label for="">Quantity Returning <span class="text text-danger">*</span> </label>
+                                    <input type="number" class="form-control" name="qty" id="qty" step="0.01" required /> 
+                                </div>
+                                <div class="col-md-3 col-xs-12">
+                                    <label for="">Return Condition <span class="text text-danger">*</span> </label>
+                                    <select class="select2 form-control" name="return_condition" id="return_condition" required>
+                                        <option value="">Select item(s) condition</option>
+                                        <option value="Good">Good</option>
+                                        <option value="Spoilt">Spoilt</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 col-xs-12">
+                                    <label for="">Narrative </label>
+                                    <textarea name="narrative" id="" class="form-control"></textarea>
+                                </div>
+                                <div class="col-md-12" style="padding-top: 15px; margin-top: 15px;">
+                                    <button type="Submit" class="btn btn-primary">Save</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div><!-- /.card-body -->
+                </div>
+            </div>
+            
+            <div class="col-md-12 col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Returned Items/Products </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12 table-responsive">
+                                <table id="data_table" class="table table-striped table-hover table-sm">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th>Ref#</th>
+                                            <th>Item</th>
+                                            <th>Item Code</th>
+                                            <th>Qty</th>
+                                            <th>Return Type</th>
+                                            <th>Staff</th>
+                                            <th>Return Date</th>
+                                            <th>Order Code</th>
+                                            <th>Narrative </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div><!-- /.card-body -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function get_orders (e) {
+        $.ajax({
+            url: '/admin/get-return-orders',
+            type: 'POST',
+            cache: false,
+            data: {
+                id: e.value,
+            },
+            success: function(html) {
+                $('#order_item_id').html('');
+                $('#order_id').html('').html(html);
+            }
+        });
+    }
+    function get_order_items (e) {
+        $.ajax({
+            url: '/admin/get-return-order-items',
+            type: 'POST',
+            cache: false,
+            data: {
+                id: e.value,
+                type: $('select[name="item_status_id"]').val()
+            },
+            success: function(html) {
+                $('#order_item_id').html('').html(html);
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        $('#data_table').DataTable({
+            "pageLength": 40,
+            "processing": true,
+            "serverSide": true,
+            "ajax": {
+                url: "/admin/all-returns-data",
+                type: 'GET'
+            },
+            "columns": [
+                { "data": "ref" },
+                { "data": "item" },
+                { "data": "code" },
+                { "data": "qty" },
+                { "data": "type" },
+                { "data": "staff" },
+                { "data": "date" },
+                { "data": "order_code" },
+                { "data": "narrative" }
+            ]
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "layout.html" %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="window.history.back()"><i class="fa fa-arrow-left"></i></button>
+                    Stock Take Details
+                </h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/stock-take">Stock Takes</a></li>
+                    <li class="breadcrumb-item active">Details</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Instance Info</h3></div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <tr><th>Name</th><td>{{ instance.name }}</td></tr>
+                            <tr><th>Reference</th><td><code>{{ instance.reference }}</code></td></tr>
+                            <tr><th>Store</th><td>{{ instance.store.name }}</td></tr>
+                            <tr><th>Status</th><td><span class="badge {% if instance.status == 'Reconciled' %}badge-success{% else %}badge-warning{% endif %}">{{ instance.status }}</span></td></tr>
+                            <tr><th>Created At</th><td>{{ instance.created_at.strftime('%Y-%m-%d %H:%M') }}</td></tr>
+                        </table>
+                        
+                        {% if instance.status != 'Reconciled' %}
+                        <div class="mt-3">
+                            <button class="btn btn-success btn-block" onclick="reconcileStock({{ instance.id }})">Reconcile Stock <i class="fa fa-check-circle ml-1"></i></button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Stock Items</h3></div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="detailsTable" class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Expected</th>
+                                        <th>Actual</th>
+                                        <th>Variance</th>
+                                        <th>Update</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items %}
+                                    <tr>
+                                        <td>{{ item.product.name }}</td>
+                                        <td>{{ item.expected_quantity }}</td>
+                                        <td>
+                                            <input type="number" class="form-control form-control-sm" value="{{ item.actual_quantity or 0 }}" onchange="updateActual({{ item.id }}, this.value)" style="width: 100px;">
+                                        </td>
+                                        <td id="variance-{{ item.id }}">{{ item.variance or (0 - item.expected_quantity) }}</td>
+                                        <td><button class="btn btn-xs btn-rgp" onclick="saveActual({{ item.id }})">Save</button></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    $(document).ready(function() {
+        $('#detailsTable').DataTable({ "pageLength": 50 });
+    });
+
+    function updateActual(itemId, val) {
+        // Simple variance calculation on UI
+        var expected = parseFloat($($(event.target).closest('tr').find('td')[1]).text());
+        var variance = val - expected;
+        $('#variance-' + itemId).text(variance.toFixed(2));
+    }
+
+    function saveActual(itemId) {
+        var val = $(event.target).closest('tr').find('input').val();
+        $.ajax({
+            url: '/admin/stock-take/item-update',
+            method: 'POST',
+            data: { item_id: itemId, actual_qty: val },
+            success: function(resp) {
+                toastr.success('Item updated');
+            }
+        });
+    }
+
+    function reconcileStock(instanceId) {
+        if(confirm('Are you sure you want to reconcile? This will update actual stock levels in the store.')) {
+            window.location.href = '/admin/stock-take/reconcile/' + instanceId;
+        }
+    }
+</script>
+{% endblock %}

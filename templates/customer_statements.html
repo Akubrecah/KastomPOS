@@ -1,0 +1,138 @@
+{% extends "layout.html" %}
+
+{% block title %}Customer Statement | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    .select2 { width: 100% !important; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="window.history.back()">
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                    </button>
+                    Customer Statement
+                </h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Accounting</li>
+                    <li class="breadcrumb-item active">Customer Statement</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="card card-outline">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Customer <i class="text-danger">*</i></label>
+                        <select class="form-control select2" id="customer_id">
+                            <option value="">Select Customer</option>
+                            {% for cust in customers %}
+                            <option value="{{ cust.id }}">{{ cust.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label>From Date</label>
+                        <input type="date" id="from_date" class="form-control" value="{{ start_of_month }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label>To Date</label>
+                        <input type="date" id="to_date" class="form-control" value="{{ today }}">
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" onclick="get_statement()" style="margin-top: 30px;" class="btn btn-rgp">Generate <i class="fa fa-filter"></i></button>
+                        <button type="button" onclick="window.print()" style="margin-top: 30px;" class="btn btn-rgd">Print <i class="fa fa-print"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-outline card-info mt-3">
+            <div class="card-body">
+                <div id="statement-content">
+                    <div class="text-center text-muted py-5">
+                        <i class="fa fa-info-circle fa-3x mb-3"></i>
+                        <p>Select a customer and date range to view the statement.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({ theme: 'bootstrap4' });
+    });
+
+    function get_statement() {
+        var customer_id = $('#customer_id').val();
+        var from_date = $('#from_date').val();
+        var to_date = $('#to_date').val();
+
+        if (!customer_id || !from_date || !to_date) {
+            toastr.error('Customer and date range are required');
+            return;
+        }
+
+        $('#statement-content').html('<div class="text-center py-5"><i class="fa fa-spinner fa-spin fa-3x"></i><p class="mt-2">Generating statement...</p></div>');
+
+        $.ajax({
+            url: '/accounting/get_customer_statement',
+            type: 'POST',
+            data: {
+                customer_id: customer_id,
+                from_date: from_date,
+                to_date: to_date
+            },
+            success: function(response) {
+                if (response.error) {
+                    $('#statement-content').html('<div class="alert alert-danger">' + response.error + '</div>');
+                    return;
+                }
+                render_statement(response);
+            },
+            error: function() {
+                $('#statement-content').html('<div class="alert alert-danger">Failed to fetch statement data.</div>');
+            }
+        });
+    }
+
+    function render_statement(data) {
+        var html = '<div class="table-responsive">';
+        html += '<table class="table table-striped table-sm table-hover table-bordered">';
+        html += '<thead class="bg-dark text-white"><tr><th>Date</th><th>Reference</th><th>Narrative</th><th class="text-right">Debit</th><th class="text-right">Credit</th><th class="text-right">Balance</th></tr></thead>';
+        html += '<tbody>';
+        
+        data.entries.forEach(function(entry) {
+            html += '<tr>';
+            html += '<td>' + entry.date + '</td>';
+            html += '<td>' + entry.reference + '</td>';
+            html += '<td>' + entry.narrative + '</td>';
+            html += '<td class="text-right">' + (entry.debit > 0 ? entry.debit.toLocaleString(undefined, {minimumFractionDigits: 2}) : '-') + '</td>';
+            html += '<td class="text-right">' + (entry.credit > 0 ? entry.credit.toLocaleString(undefined, {minimumFractionDigits: 2}) : '-') + '</td>';
+            html += '<td class="text-right font-weight-bold">' + entry.balance.toLocaleString(undefined, {minimumFractionDigits: 2}) + '</td>';
+            html += '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+        $('#statement-content').html(html);
+    }
+</script>
+{% endblock %}

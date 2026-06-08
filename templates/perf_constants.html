@@ -1,0 +1,160 @@
+{% extends "layout.html" %}
+
+{% block title %}Performance Constants | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    .nv2:hover {
+        background-color: #f4f6f9 !important;
+    }
+    .active-perf-nav {
+        background-color: #007bff !important;
+        color: white !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">
+                        <button class="pull-left backbtn" title="Back" onclick="goBack()">
+                            <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                        </button>
+                        Performance Constants
+                    </h1>
+                    <script>
+                        function goBack() { window.history.back(); }
+                    </script>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item active">Performance Constants</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body p-0">
+                            <ul class="nav flex-column">
+                                <li class="nav-item nv2">
+                                    <a href="#" class="nav-link perf-nav active-perf-nav" onclick="get_constant('collections', this)">
+                                        <i class="fa fa-arrow-circle-o-right mr-2"></i> Index Collections
+                                    </a>
+                                </li>
+                                <li class="nav-item nv2">
+                                    <a href="#" class="nav-link perf-nav" onclick="get_constant('indexes', this)">
+                                        <i class="fa fa-arrow-circle-o-right mr-2"></i> Performance Indexes
+                                    </a>
+                                </li>
+                                <li class="nav-item nv2">
+                                    <a href="#" class="nav-link perf-nav" onclick="get_constant('matrix', this)">
+                                        <i class="fa fa-arrow-circle-o-right mr-2"></i> Appraisal Matrix
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-9" id="white_space">
+                    <!-- Dynamic Content Loaded via AJAX -->
+                    <div class="text-center py-5">
+                        <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+                        <p class="mt-2">Loading content...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        get_constant('collections');
+    });
+
+    function get_constant(category, element) {
+        if (element) {
+            $('.perf-nav').removeClass('active-perf-nav');
+            $(element).addClass('active-perf-nav');
+        }
+
+        $.ajax({
+            url: '/api/admin/performance/get-constant',
+            type: 'POST',
+            data: { data: category },
+            success: function(resp) {
+                $('#white_space').html(resp);
+                // Initialize components if needed
+                if ($('.select2').length) {
+                    $('.select2').select2({ theme: 'bootstrap4' });
+                }
+            },
+            error: function() {
+                toastr.error('Failed to load constant view');
+            }
+        });
+    }
+
+    function save_perf_constant(category) {
+        let formData = $('#performance_form').serialize();
+        $('#submit').prop('disabled', true).html('Processing <i class="fa fa-spinner fa-spin"></i>');
+
+        $.ajax({
+            url: '/api/admin/performance/add-constant',
+            type: 'POST',
+            data: formData,
+            success: function(obj) {
+                if (obj.resp == '1') {
+                    toastr.success(obj.message);
+                    get_constant(category);
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Error', text: obj.message });
+                    $('#submit').prop('disabled', false).text('Save');
+                }
+            },
+            error: function() {
+                toastr.error('Failed to save constant');
+                $('#submit').prop('disabled', false).text('Save');
+            }
+        });
+    }
+
+    function delete_constant(category, id) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This record will be deleted.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/api/admin/performance/delete-constant',
+                    type: 'POST',
+                    data: { category: category, id: id },
+                    success: function(obj) {
+                        if (obj.resp == '1') {
+                            toastr.success(obj.message);
+                            get_constant(category);
+                        } else {
+                            toastr.error(obj.message);
+                        }
+                    }
+                });
+            }
+        });
+    }
+</script>
+{% endblock %}

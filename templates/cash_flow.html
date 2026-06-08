@@ -1,0 +1,246 @@
+{% extends "layout.html" %}
+
+{% block title %}Cash Flow | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    form {
+        padding: 10px !important;
+    }
+
+    .custom_nav_theme {
+        color: black !important;
+        border-bottom: 1px grey solid;
+    }
+
+    .tb_title {
+        height: 30px;
+        background: #2A3F54;
+        position: relative;
+        color: #fff;
+        font-weight: bold;
+        border: none;
+        width: 200px;
+        text-align: left;
+        padding-left: 10px;
+        line-height: 30px;
+    }
+
+    .tb_title:hover,
+    .tb_title:active {
+        color: #A6A6A6;
+    }
+
+    .tb_title:before {
+        content: '';
+        position: absolute;
+        right: 0;
+        border-top: 30px solid white;
+        border-left: 30px solid #2A3F54;
+        width: 0;
+        top: 0;
+    }
+
+    .fa-ian {
+        color: #393B3D !important;
+    }
+
+    .select2-container--bootstrap4 .select2-selection--single {
+        height: calc(2.25rem + 2px) !important;
+    }
+
+    .card-header {
+        padding: .50rem 1.25rem !important;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0,0,0,.125);
+    }
+    
+    .card-title {
+        font-weight: 600;
+        color: #444;
+    }
+
+    .trr {
+        background-color: #025757;
+        color: aliceblue;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="goBack()">
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                    </button>
+                    Cash Flow
+                </h1>
+                <script>
+                    function goBack() {
+                        window.history.back();
+                    }
+                </script>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Cash Flow</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h3 class="card-title">Filter By Date</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="filterForm">
+                            <div class="row">
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <label>Store/Shop <span class="text-danger">*</span></label>
+                                    <select class="form-control select2" name="store_id" required id="store_id">
+                                        {% for store in stores %}
+                                        <option value="{{ store.id }}">{{ store.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <label>From Date <span class="text-danger">*</span></label>
+                                    <input type="date" name="from_date" id="from_date" class="form-control" value="{{ today }}" required />
+                                </div>
+
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <label>To Date <span class="text-danger">*</span></label>
+                                    <input type="date" name="to_date" id="to_date" class="form-control" value="{{ today }}" required />
+                                </div>
+
+                                <div class="col-md-3 col-sm-12">
+                                    <div style="margin-top: 32px;">
+                                        <button type="button" class="btn btn-primary" onclick="get_data()">
+                                            Generate <i class="fa fa-filter"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-rgd ml-1" onclick="window.print()">
+                                            Print <i class="fa fa-file-pdf-o"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-12">
+                <div class="card shadow-sm mt-3">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover table-bordered">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Description</th>
+                                        <th>Ref No</th>
+                                        <th class="text-right">Inflow</th>
+                                        <th class="text-right">Outflow</th>
+                                        <th class="text-right">Running Balance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-data">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">Select filters and generate to view report data.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function get_data() {
+        var store_id = $('#store_id').val();
+        var from_date = $('#from_date').val();
+        var to_date = $('#to_date').val();
+
+        if (!from_date || !to_date) {
+            alert('Please select both From and To dates');
+            return;
+        }
+
+        $('#table-data').html('<tr><td colspan="6" class="text-center"><i class="fa fa-spinner fa-spin"></i> Loading cash flow data...</td></tr>');
+
+        $.ajax({
+            url: '/api/admin/accounting/get-cash-flow',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                from_date: from_date,
+                to_date: to_date,
+                store_id: store_id
+            }),
+            success: function(response) {
+                if (response.status === 'success') {
+                    var html = '';
+                    
+                    // Opening Balance
+                    html += `<tr class="trr font-weight-bold">
+                        <td colspan="5">OPENING BALANCE</td>
+                        <td class="text-right">${parseFloat(response.opening_balance).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    </tr>`;
+
+                    if (response.data.length === 0) {
+                        html += '<tr><td colspan="6" class="text-center text-muted">No transactions found for the selected period.</td></tr>';
+                    } else {
+                        response.data.forEach(function(item) {
+                            html += `<tr>
+                                <td>${item.date}</td>
+                                <td>${item.description}</td>
+                                <td>${item.ref_no}</td>
+                                <td class="text-right text-success">${item.inflow > 0 ? parseFloat(item.inflow).toLocaleString(undefined, {minimumFractionDigits: 2}) : '-'}</td>
+                                <td class="text-right text-danger">${item.outflow > 0 ? parseFloat(item.outflow).toLocaleString(undefined, {minimumFractionDigits: 2}) : '-'}</td>
+                                <td class="text-right font-weight-bold">${parseFloat(item.running_balance).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                            </tr>`;
+                        });
+                    }
+
+                    // Closing Balance
+                    html += `<tr class="bg-dark text-white font-weight-bold">
+                        <td colspan="5">CLOSING BALANCE</td>
+                        <td class="text-right">${parseFloat(response.closing_balance).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                    </tr>`;
+
+                    $('#table-data').html(html);
+                } else {
+                    $('#table-data').html(`<tr><td colspan="6" class="text-center text-danger">${response.message || 'Error loading data'}</td></tr>`);
+                }
+            },
+            error: function() {
+                $('#table-data').html('<tr><td colspan="6" class="text-center text-danger">Server error while fetching data.</td></tr>');
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        $('.select2').select2({
+            theme: 'bootstrap4',
+            width: '100%'
+        });
+    });
+</script>
+{% endblock %}
+",Description:

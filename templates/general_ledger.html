@@ -1,0 +1,237 @@
+{% extends "layout.html" %}
+
+{% block title %}General Ledger | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    form {
+        padding: 10px !important;
+    }
+
+    .custom_nav_theme {
+        color: black !important;
+        border-bottom: 1px grey solid;
+    }
+
+    .tb_title {
+        height: 30px;
+        background: #2A3F54;
+        position: relative;
+        color: #fff;
+        font-weight: bold;
+        border: none;
+        width: 200px;
+        text-align: left;
+    }
+
+    .tb_title:hover,
+    .tb_title:active {
+        color: #A6A6A6;
+    }
+
+    .tb_title:before {
+        content: '';
+        position: absolute;
+        right: 0;
+        border-top: 30px solid white;
+        border-left: 30px solid #2A3F54;
+        width: 0;
+        top: 0;
+    }
+
+    .fa-ian {
+        color: #393B3D !important;
+    }
+
+    .select2 {
+        width: 100% !important;
+    }
+
+    .dropdown-menu {
+        min-width: 15rem !important;
+    }
+
+    .card-header {
+        padding: .50rem 1.25rem !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Content Header (Page header) -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="goBack()">
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                    </button>
+                    General Ledger
+                </h1>
+                <script>
+                    function goBack() {
+                        window.history.back();
+                    }
+                </script>
+            </div><!-- /.col -->
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">General Ledger</li>
+                </ol>
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+<!-- /.content-header -->
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-md-12 col-sm-12">
+                <div class="card card-outline">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12 text-info mb-2">
+                                Filter by account and date range
+                            </div>
+                            <div class="col-md-3">
+                                <label>Account <i class="text-danger">*</i></label>
+                                <select class="form-control select2" id="account_id">
+                                    <option value="All">All Accounts</option>
+                                    {% for acc in accounts %}
+                                    <option value="{{ acc.id }}">{{ acc.code }} - {{ acc.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2 col-sm-6">
+                                <label>From Date <i class="fa fa-calendar"></i> *</label>
+                                <input type="date" id="from_date" class="form-control" value="{{ start_of_month }}" required />
+                            </div>
+                            <div class="col-md-2 col-sm-6">
+                                <label>To Date <i class="fa fa-calendar"></i> *</label>
+                                <input type="date" id="to_date" class="form-control" value="{{ today }}" required />
+                            </div>
+                            <div class="col-md-5">
+                                <button type="button" onclick="get_ledger()" style="margin-top: 30px;" class="btn btn-rgp">Filter <i class="fa fa-filter"></i></button>
+                                <button type="button" onclick="export_ledger()" style="margin-top: 30px;" class="btn btn-rgs">Export to CSV <i class="fa fa-file-excel-o"></i></button>
+                                <button type="button" onclick="window.print()" style="margin-top: 30px;" class="btn btn-rgd">Print Report <i class="fa fa-print"></i></button>
+                            </div>
+                        </div>
+                    </div><!-- /.card-body -->
+                </div>
+            </div>
+
+            <div class="col-md-12 col-sm-12">
+                <div class="card card-outline card-info">
+                    <div class="card-body">
+                        <div id="ledger-content">
+                            <div class="text-center text-muted py-5">
+                                <i class="fa fa-info-circle fa-3x mb-3"></i>
+                                <p>Select an account and date range to view the general ledger entries.</p>
+                            </div>
+                        </div>
+                    </div><!-- /.card-body -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!--/. container-fluid -->
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({
+            theme: 'bootstrap4'
+        });
+    });
+
+    function get_ledger() {
+        var account_id = $('#account_id').val();
+        var from_date = $('#from_date').val();
+        var to_date = $('#to_date').val();
+
+        if (!from_date || !to_date) {
+            toastr.error('Please select both From and To dates');
+            return;
+        }
+
+        $('#ledger-content').html('<div class="text-center py-5"><i class="fa fa-spinner fa-spin fa-3x"></i><p class="mt-2">Generating ledger...</p></div>');
+
+        $.ajax({
+            url: '/api/admin/accounting/get-general-ledger',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                account_id: account_id,
+                from_date: from_date,
+                to_date: to_date
+            }),
+            success: function(response) {
+                if (response.error) {
+                    $('#ledger-content').html('<div class="alert alert-danger">' + response.error + '</div>');
+                    return;
+                }
+                render_ledger(response);
+            },
+            error: function(xhr) {
+                $('#ledger-content').html('<div class="alert alert-danger">Internal Server Error: Failed to fetch ledger data.</div>');
+            }
+        });
+    }
+
+    function render_ledger(data) {
+        var isAll = (data.account_name === 'All Accounts');
+        var html = '<div class="table-responsive">';
+        html += '<h4 class="mb-3 text-center">' + (data.account_name || 'All Accounts') + ' (' + (data.account_code || 'Consolidated') + ')</h4>';
+        html += '<table class="table table-striped table-sm table-hover table-bordered">';
+        html += '<thead class="bg-dark text-white">';
+        html += '<tr><th>Date</th><th>Acc. Name</th><th>Acc. Code</th><th>Sub-Acc. Type Name</th><th>Acc. Type Name</th><th>Created By</th><th>Narrative</th><th class="text-right">CR</th><th class="text-right">DR</th>';
+        if (!isAll) html += '<th class="text-right">Balance</th>';
+        html += '</tr></thead>';
+        html += '<tbody>';
+        
+        if (!isAll && data.opening_balance !== undefined) {
+            html += '<tr class="bg-light font-weight-bold"><td colspan="9">Opening Balance</td><td class="text-right">' + data.opening_balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td></tr>';
+        }
+
+        if (data.entries.length === 0) {
+            html += '<tr><td colspan="' + (isAll ? '9' : '10') + '" class="text-center text-muted">No entries found for this period.</td></tr>';
+        } else {
+            data.entries.forEach(function(entry) {
+                html += '<tr>';
+                html += '<td>' + entry.date + '</td>';
+                html += '<td>' + entry.account_name + '</td>';
+                html += '<td>' + entry.account_code + '</td>';
+                html += '<td>' + (entry.sub_account_type_name || '-') + '</td>';
+                html += '<td>' + (entry.account_type_name || '-') + '</td>';
+                html += '<td>' + (entry.created_by || 'System') + '</td>';
+                html += '<td>' + (entry.narrative || '-') + '</td>';
+                html += '<td class="text-right text-danger">' + (entry.credit > 0 ? entry.credit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-') + '</td>';
+                html += '<td class="text-right text-success">' + (entry.debit > 0 ? entry.debit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-') + '</td>';
+                if (!isAll) html += '<td class="text-right">' + (entry.balance !== 0 ? entry.balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-') + '</td>';
+                html += '</tr>';
+            });
+        }
+
+        if (!isAll && data.closing_balance !== undefined) {
+            html += '<tr class="bg-dark text-white font-weight-bold"><td colspan="9">Closing Balance</td><td class="text-right">' + data.closing_balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td></tr>';
+        }
+
+        html += '</tbody></table></div>';
+        
+        $('#ledger-content').html(html);
+    }
+
+    function export_ledger() {
+        toastr.info('Exporting ledger to CSV...');
+        // Logic for CSV export
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="window.history.back()"><i class="fa fa-arrow-left" aria-hidden="true"> </i></button>
+                    Room Profile: {{ room.room_number }}</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/admin">Home</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/rooms">Rooms</a></li>
+                    <li class="breadcrumb-item active">Profile</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card card-primary card-outline">
+                    <div class="card-body box-profile">
+                        <div class="text-center">
+                            <i class="fas fa-door-open fa-5x text-muted"></i>
+                        </div>
+                        <h3 class="profile-username text-center">{{ room.room_number }}</h3>
+                        <p class="text-muted text-center">{{ room.room_type }}</p>
+
+                        <ul class="list-group list-group-unbordered mb-3">
+                            <li class="list-group-item">
+                                <b>Status</b> <a class="float-right"><span class="badge badge-success">{{ room.status|capitalize }}</span></a>
+                            </li>
+                            <li class="list-group-item">
+                                <b>Category</b> <a class="float-right">{{ room.category|default('N/A') }}</a>
+                            </li>
+                        </ul>
+
+                        <button class="btn btn-primary btn-block" data-toggle="modal" data-target="#editModal{{ room.id }}"><b>Edit Details</b></button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header p-2">
+                        <ul class="nav nav-pills">
+                            <li class="nav-item"><a class="nav-link active" href="#pricing" data-toggle="tab">Pricing</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#history" data-toggle="tab">Booking History</a></li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content">
+                            <div class="active tab-pane" id="pricing">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Plan</th>
+                                            <th>Single ({{ settings.currency|default('KES') }})</th>
+                                            <th>Double ({{ settings.currency|default('KES') }})</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Day Rest</td>
+                                            <td>{{ room.day_rest_s }}</td>
+                                            <td>{{ room.day_rest_d }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Bed Only</td>
+                                            <td>{{ room.price_per_night }}</td>
+                                            <td>{{ room.bed_only_d }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Bed & Breakfast</td>
+                                            <td>{{ room.bb_s }}</td>
+                                            <td>{{ room.bb_d }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Half Board</td>
+                                            <td>{{ room.hb_s }}</td>
+                                            <td>{{ room.hb_d }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Full Board</td>
+                                            <td>{{ room.fb_s }}</td>
+                                            <td>{{ room.fb_d }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="tab-pane" id="history">
+                                <p class="text-center text-muted">No recent bookings found for this room.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

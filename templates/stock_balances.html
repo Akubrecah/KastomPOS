@@ -1,0 +1,216 @@
+{% extends "layout.html" %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<!-- Content Header (Page header) -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-8">
+                <h1 class="m-0 text-dark"><button class="pull-left backbtn" title="Back" onclick="goBack()"><i class="fa fa-arrow-left" aria-hidden="true"> </i></button>
+                    Stock Balances</h1>
+                <script>
+                    function goBack() {
+                        window.history.back();
+                    }
+                </script>
+            </div><!-- /.col -->
+            <div class="col-sm-4">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Stock Balances</li>
+                </ol>
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+<!-- /.content-header -->
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-md-12 col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <a href="#" data-toggle="modal" data-target="#redistributeModal" class="btn btn-dark btn-sm">Redistribute Items <i class="fa fa-expand ml-1"></i></a>
+                        </h3>
+                        <div class="card-tools d-flex align-items-center">
+                            <select name="store_id" class="form-control form-control-sm mr-2" onchange="filterByStore(this)" id="orgid" style="width: 200px;">
+                                <option value="">Select stock per store</option>
+                                {% for store in stores %}
+                                <option value="{{ store.id }}" {% if selected_store_id == store.id %}selected{% endif %}>{{ store.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <a href="/admin/stock-export-csv" class="btn btn-xs btn-rgs mr-1" title="Export to .CSV?"><i class="fa fa-file-excel-o"></i><sup>.CSV</sup></a>
+                            <button type="button" data-toggle="modal" data-target="#stock_filter_modal" class="btn btn-xs btn-rgp mr-1" title="Detailed filter"><i class="fa fa-filter"></i><sup>Det.</sup></button>
+                            <button type="button" onclick="window.print()" class="btn btn-xs btn-primary mr-1"><i class="fa fa-print"></i> Print Stock <i>(Detailed)</i></button>
+                            <button type="button" data-toggle="modal" data-target="#stock_filter_modal2" class="btn btn-xs btn-rgp mr-1" title="Summary filter"><i class="fa fa-filter"></i><sup>Sum.</sup></button>
+                            <button type="button" onclick="window.print()" class="btn btn-xs btn-primary mr-1"><i class="fa fa-print"></i> Print Stock</button>
+                            <button type="button" class="btn btn-xs btn-danger" onclick="deleteSelected()"><i class="fa fa-trash"></i> Delete Store Item</button>
+                        </div>
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="stockTable" class="table table-condensed table-sm table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="select_all"></th>
+                                        <th style="min-width: 200px;">Name</th>
+                                        <th>Unit</th>
+                                        <th>Category</th>
+                                        <th>Shelve/Tbl</th>
+                                        <th>M.Price</th>
+                                        <th>Stock Qty</th>
+                                        <th>Last Stock Take</th>
+                                        <th>Update Store Stock</th>
+                                        <th>Purchase Value</th>
+                                        <th>Markup Value <br/><small>(B.P-S.P)Qty</small></th>
+                                        <th>Active</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in stock_items %}
+                                    <tr>
+                                        <td><input type="checkbox" name="items[]" value="{{ item.id }}" class="item-checkbox"></td>
+                                        <td>
+                                            {{ item.product.name }}<br/>
+                                            <small class="text-muted"><i>PROD_{{ item.product.id }}</i></small>
+                                        </td>
+                                        <td>{{ item.product.unit or 'Pcs' }}</td>
+                                        <td>{{ item.product.category.name if item.product.category else 'General' }}</td>
+                                        <td><a href="#" onclick="editShelve({{ item.id }})"><i class="fa fa-edit"></i></a></td>
+                                        <td>
+                                            <input type="number" class="form-control form-control-sm" value="{{ item.product.selling_price }}" onchange="updatePrice({{ item.product.id }}, this.value)" style="width: 80px;">
+                                        </td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>{{ item.last_stock_take or 'N/A' }}</td>
+                                        <td>
+                                            <input type="number" class="form-control form-control-sm" value="{{ item.quantity }}" onchange="updateStock({{ item.id }}, this.value)" style="width: 80px;">
+                                        </td>
+                                        <td>{{ "{:,.2f}".format(item.product.cost_price * item.quantity) }}</td>
+                                        <td>{{ "{:,.2f}".format((item.product.selling_price - item.product.cost_price) * item.quantity) }}</td>
+                                        <td><span class="badge badge-success">True</span></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr style="font-weight: bold;">
+                                        <td colspan="9" class="text-right">TOTALS:</td>
+                                        <td>{{ "{:,.2f}".format(total_purchase_value) }}</td>
+                                        <td>{{ "{:,.2f}".format(total_markup_value) }}</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div><!-- /.card-body -->
+                </div>
+            </div>
+        </div>
+    </div><!--/. container-fluid -->
+</section>
+
+<!-- Redistribute Modal -->
+<div id="redistributeModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Redistribute Items</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted"><i class="fa fa-info-circle text-success mr-1"></i> Spread items from main store registry to preferred store/shop below.</p>
+                <form action="/admin/stock-redistribute" method="post">
+                    <div class="form-group">
+                        <label>Preferred Store/Shop <span class="text-danger">*</span></label>
+                        <select class="form-control select2" name="store_id" required style="width: 100%;">
+                            {% for store in stores %}
+                            <option value="{{ store.id }}">{{ store.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Select Items <span class="text-danger">*</span></label>
+                        <select class="form-control select2" name="product_ids[]" multiple required style="width: 100%;">
+                            <option value="All">All items</option>
+                            {% for product in products %}
+                            <option value="{{ product.id }}">{{ product.name }} [PROD_{{ product.id }}]</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="text-right">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-dark">Redistribute Items <i class="fa fa-expand ml-1"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('#stockTable').DataTable({
+            "responsive": true,
+            "autoWidth": false,
+            "pageLength": 25
+        });
+        $('.select2').select2();
+
+        $('#select_all').on('click', function() {
+            $('.item-checkbox').prop('checked', this.checked);
+        });
+    });
+
+    function filterByStore(select) {
+        var storeId = $(select).val();
+        window.location.href = '/admin/stock-balances?store_id=' + storeId;
+    }
+
+    function updatePrice(productId, price) {
+        $.ajax({
+            url: '/admin/save-item-price',
+            method: 'POST',
+            data: { itemid: productId, itemprice: price },
+            success: function(resp) {
+                toastr.success('Price updated successfully');
+            }
+        });
+    }
+
+    function updateStock(stockId, qty) {
+        $.ajax({
+            url: '/admin/update-store-stock',
+            method: 'POST',
+            data: { stock_id: stockId, quantity: qty },
+            success: function(resp) {
+                toastr.success('Stock quantity updated');
+            }
+        });
+    }
+
+    function deleteSelected() {
+        var selected = [];
+        $('.item-checkbox:checked').each(function() {
+            selected.push($(this).val());
+        });
+
+        if (selected.length === 0) {
+            toastr.warning('Please select items to delete');
+            return;
+        }
+
+        if (confirm('Are you sure you want to delete selected store items?')) {
+            // Implementation for deletion
+            toastr.info('Deletion triggered for ' + selected.length + ' items');
+        }
+    }
+</script>
+{% endblock %}

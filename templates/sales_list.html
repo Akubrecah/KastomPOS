@@ -1,0 +1,298 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark"><button class="pull-left backbtn" title="Back" onclick="goBack()"><i class="fa fa-arrow-left" aria-hidden="true"> </i></button>
+                    Sales</h1>
+                <script>
+                    function goBack() {
+                        window.history.back();
+                    }
+                </script>
+            </div><!-- /.col -->
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Sales</li>
+                </ol>
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12 col-sm-12">
+                <div class="card card-outline">
+                    <div class="card-body">
+                        <form id="filter_form" method="GET">
+                            <div class="row">
+                                <div class="col-md-12 text-info">
+                                    Filter by date range
+                                </div>
+                                <div class="col-md-2">
+                                    <label>Org/Branch/Store <i class="text-danger">*</i></label>
+                                    <select class="form-control" name="org_id" id="org_id">
+                                        <option value="All">All Stores</option>
+                                        {% for store in stores %}
+                                        <option value="{{ store.id }}">{{ store.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-2 col-sm-6 col-xs-12">
+                                    <label> Sale Option *</label>
+                                    <select class="form-control" name="due" id="due" required>
+                                        <option value="All" selected>All sales</option>
+                                        <option value="Due">Due sales</option>
+                                        <option value="Paid">Paid/Settled</option>
+                                        <option value="Extended">Extended Credit</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 col-sm-6 col-xs-12">
+                                    <label> From Date <i class="fa fa-calendar"></i> *</label>
+                                    <input type="date" name="from_date" id="from_date" class="form-control" value="{{ today }}" required />
+                                </div>
+                                <div class="col-md-2 col-sm-6 col-xs-12">
+                                    <label> To Date <i class="fa fa-calendar"></i> *</label>
+                                    <input type="date" name="to_date" id="to_date" class="form-control" value="{{ today }}" required />
+                                </div>
+                                <div class="col-md-4 col-xs-12">
+                                    <button type="button" onclick="refresh_table()" style="margin-top: 30px;" class="btn btn-rgp">Filter <i class="fa fa-filter"></i></button>
+                                    <a href="/admin/export-sales-csv" style="margin-top: 30px;" class="btn btn-rgs">Export to CSV <i class="fa fa-file-excel-o"></i></a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-12 col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Sales</h3>
+                        <div class="card-tools">
+                            <a href="/pos" target="_blank" class="btn btn-primary btn-xs">New Sale</a>
+                            <a href="/admin/stamped" class="btn btn-dark btn-xs">Stamped Sales</a>
+                            <a href="/admin/bulk-payment" class="btn btn-dark btn-xs">Bulk Sale/Invoice Payment</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12 table-responsive">
+                                <table id="data_table" class="table table-striped table-sm">
+                                    <thead>
+                                        <tr class="headings">
+                                            <th>Serial</th>
+                                            <th>Bill No</th>
+                                            <th>Customer Name</th>
+                                            <th>Sales Point</th>
+                                            <th>Date</th>
+                                            <th>Attendant:</th>
+                                            <th>Net Amount</th>
+                                            <th>Balance</th>
+                                            <th>Discount</th>
+                                            <th>Store</th>
+                                            <th>Stamp</th>
+                                            <th class="no-link last"><span class="nobr">Action</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="orders">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- Modals -->
+<input type="hidden" id="orderid" name="orderid" />
+
+<div class="modal" id="voidSale" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <p><i class="fa fa-info-circle"></i> Enter the reason below, for voiding this sale.</p>
+                        <hr />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <label>Reason ? </label>
+                        <textarea class="form-control" name="voiding_reason" id="voiding_reason" placeholder="Write here..."></textarea>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mt-3">
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary pull-right" id="void_btn" onclick="save_void()">Yes, Void <i class="fa fa-check-circle-o"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="complementSale" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <p><i class="fa fa-info-circle"></i> Enter the reason below, for complementing this sale.</p>
+                        <hr />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <label>Reason ? </label>
+                        <textarea class="form-control" name="complement_reason" id="complement_reason" placeholder="Write here..."></textarea>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mt-3">
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary pull-right" id="complement_btn" onclick="save_complement()">Yes, Complement <i class="fa fa-check-o"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="extendCredit" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <p><i class="fa fa-info-circle"></i> Enter the reason below, for extend credit on this sale.</p>
+                        <hr />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <label>Reason ? </label>
+                        <textarea class="form-control" name="credit_reason" id="credit_reason" placeholder="Write here..."></textarea>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mt-3">
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary pull-right" id="credit_btn" onclick="credit_extension()">Yes, Extend Credit <i class="fa fa-check-circle-o"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    var dataTable;
+
+    $(document).ready(function() {
+        dataTable = $('#data_table').DataTable({
+            "pageLength": 40,
+            "processing": true,
+            "serverSide": true,
+            "responsive": true,
+            "order": [[4, 'desc']],
+            "ajax": {
+                url: "/admin/all-sales-data",
+                type: 'GET',
+                data: function(d) {
+                    d.from_date = $('#from_date').val();
+                    d.to_date = $('#to_date').val();
+                    d.due = $('#due').val();
+                    d.org_id = $('#org_id').val();
+                }
+            },
+            "columns": [
+                { "data": "serial" },
+                { "data": "bill_no" },
+                { "data": "customer" },
+                { "data": "sales_point" },
+                { "data": "created_at" },
+                { "data": "attendant" },
+                { "data": "net_amount" },
+                { "data": "balance" },
+                { "data": "discount" },
+                { "data": "store" },
+                { "data": "stamp" },
+                { "data": "actions", "orderable": false }
+            ]
+        });
+    });
+
+    function refresh_table() {
+        dataTable.ajax.reload();
+    }
+
+    function void_sale(e) {
+        $('#orderid').val(e);
+        $('#voidSale').modal('toggle');
+    }
+
+    function save_void() {
+        swal("Are you sure you want to void this sale? Action CANNOT be reversed once DONE!", {
+            buttons: {
+                no: { text: "No", value: "no" },
+                yes: { text: "Yes", value: "yes" }
+            },
+        }).then((value) => {
+            if (value === "yes") {
+                var orderid = $('#orderid').val();
+                var voiding_reason = $('#voiding_reason').val();
+                $("#void_btn").html('Wait... <i class="fa fa-spinner"></i>').attr("disabled", true);
+
+                $.ajax({
+                    url: '/admin/void-sale',
+                    type: 'POST',
+                    data: { order_id: orderid, reason: voiding_reason },
+                    success: function(resp) {
+                        if (resp.status == "success") {
+                            toastr.success(resp.message);
+                            setTimeout(() => location.reload(), 2000);
+                        } else {
+                            toastr.error(resp.message);
+                            $("#void_btn").html('Yes, Void').removeAttr('disabled');
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    function view_sale(id) {
+        window.open('/receipt/' + id, '_blank');
+    }
+
+    // Placeholders for other functions
+    function complement_sale(e) { $('#orderid').val(e); $('#complementSale').modal('toggle'); }
+    function extend_credit(e) { $('#orderid').val(e); $('#extendCredit').modal('toggle'); }
+    
+    function save_complement() { toastr.info("Complement functionality coming soon"); }
+    function credit_extension() { toastr.info("Credit extension functionality coming soon"); }
+    function tax_stamping(e) { toastr.info("Tax stamping functionality coming soon"); }
+</script>
+{% endblock %}

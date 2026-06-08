@@ -1,0 +1,168 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Content Header -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">Staff Profile</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/" class="text-teal">Home</a></li>
+                    <li class="breadcrumb-item active">Profile</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+        <!-- Success Alert -->
+        {% if request.query_params.get('success') == 'true' %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert" style="background-color: #00817a; border-color: #00817a; color: white;">
+            <h5><i class="icon fas fa-check"></i> Success!</h5>
+            Your profile details have been successfully updated.
+            <button type="button" class="close text-white" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <!-- Left Column: User Card -->
+            <div class="col-md-4">
+                <div class="card card-outline card-teal">
+                    <div class="card-body box-profile">
+                        <div class="text-center mb-3">
+                            <img class="profile-user-img img-fluid img-circle"
+                                 src="https://ui-avatars.com/api/?name={{ user.name|urlencode }}&background=00817a&color=fff&size=128"
+                                 alt="User profile picture"
+                                 style="border: 3px solid #00817a; width: 100px; height: 100px;">
+                        </div>
+
+                        <h3 class="profile-username text-center font-weight-bold">{{ user.name }}</h3>
+                        <p class="text-muted text-center">{{ user.role|capitalize }}</p>
+
+                        <ul class="list-group list-group-unbordered mb-3">
+                            <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                                <b>Username</b> <span class="text-teal font-weight-bold">@{{ user.username }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                                <b>Phone Number</b> <span>{{ user.phone|default('Not Set') }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                                <b>National ID / Passport</b> <span>{{ user.id_number|default('Not Set') }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                                <b>Basic Salary</b> <span class="badge badge-success" style="background-color: #00817a;">KES {{ user.basic_salary|format_currency }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
+                                <b>Status</b> 
+                                {% if user.is_active %}
+                                <span class="badge badge-success">Active</span>
+                                {% else %}
+                                <span class="badge badge-danger">Inactive</span>
+                                {% endif %}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Settings and Activity Log -->
+            <div class="col-md-8">
+                <div class="card card-outline card-teal card-tabs">
+                    <div class="card-header p-0 pt-1 border-bottom-0">
+                        <ul class="nav nav-tabs" id="profileTab" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="details-tab" data-toggle="pill" href="#details" role="tab" aria-controls="details" aria-selected="true">
+                                    <i class="fas fa-edit mr-1"></i> Edit Details
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="activity-tab" data-toggle="pill" href="#activity" role="tab" aria-controls="activity" aria-selected="false">
+                                    <i class="fas fa-history mr-1"></i> Activity Log
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="tab-content" id="profileTabContent">
+                            <!-- Details Form Tab -->
+                            <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+                                <form action="/admin/profile/update" method="POST" class="form-horizontal">
+                                    <div class="form-group row">
+                                        <label for="inputName" class="col-sm-3 col-form-label">Full Name</label>
+                                        <div class="col-sm-9">
+                                            <input type="text" class="form-control" id="inputName" name="name" value="{{ user.name }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="inputPhone" class="col-sm-3 col-form-label">Phone Number</label>
+                                        <div class="col-sm-9">
+                                            <input type="text" class="form-control" id="inputPhone" name="phone" value="{{ user.phone|default('') }}">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="inputIdNumber" class="col-sm-3 col-form-label">ID / Passport Number</label>
+                                        <div class="col-sm-9">
+                                            <input type="text" class="form-control" id="inputIdNumber" name="id_number" value="{{ user.id_number|default('') }}">
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="inputPassword" class="col-sm-3 col-form-label">New Password</label>
+                                        <div class="col-sm-9">
+                                            <input type="password" class="form-control" id="inputPassword" name="password" placeholder="Leave blank to keep current password">
+                                            <small class="form-text text-muted">Password will be securely hashed before saving.</small>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="offset-sm-3 col-sm-9">
+                                            <button type="submit" class="btn btn-rgp px-4" style="background-color: #00817a; color: white; border: none; font-weight: bold; border-radius: 4px;">
+                                                <i class="fas fa-save mr-1"></i> Save Changes
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Activity Log Tab -->
+                            <div class="tab-pane fade" id="activity" role="tabpanel" aria-labelledby="activity-tab">
+                                <div class="timeline timeline-inverse">
+                                    {% if recent_logs %}
+                                        {% for log in recent_logs %}
+                                        <div>
+                                            <i class="fas fa-user-cog bg-teal"></i>
+                                            <div class="timeline-item">
+                                                <span class="time"><i class="far fa-clock"></i> {{ log.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+                                                <h3 class="timeline-header font-weight-bold" style="font-size: 15px; border-bottom: none;">{{ log.action }}</h3>
+                                                <div class="timeline-body text-muted pt-0" style="font-size: 14px;">
+                                                    {{ log.details }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="text-center py-4 text-muted">
+                                            <i class="fas fa-info-circle fa-2x mb-2 text-teal"></i>
+                                            <p>No recent activity logs recorded for this account.</p>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <i class="far fa-clock bg-gray"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

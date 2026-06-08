@@ -1,0 +1,243 @@
+{% extends "layout.html" %}
+
+{% block title %}P9 Form | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    .p9-table th, .p9-table td { font-size: 0.85rem; padding: 4px !important; }
+    .header-info p { margin-bottom: 2px; }
+    @media print {
+        .no-print { display: none; }
+        .content-wrapper { margin-left: 0 !important; }
+        .card { border: none !important; box-shadow: none !important; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="content-header no-print">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">P9 Form (Tax Summary)</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item active">P9 Form</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Filter Section -->
+            <div class="row no-print">
+                <div class="col-md-12">
+                    <div class="card card-outline card-primary">
+                        <div class="card-body">
+                            <form id="p9_filter_form" class="row">
+                                <div class="col-md-4">
+                                    <label>Select Employee</label>
+                                    <select name="employee_id" class="form-control select2" required>
+                                        <option value="">~ Select Employee ~</option>
+                                        {% for s in staff %}
+                                        <option value="{{ s.id }}">{{ s.name }} ({{ s.id_number }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label>Fiscal Year</label>
+                                    <select name="fiscal_year_id" class="form-control select2" required>
+                                        {% for year in fiscal_years %}
+                                        <option value="{{ year.id }}" {% if year.is_active %}selected{% endif %}>{{ year.year }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-2 mt-4">
+                                    <button type="submit" class="btn btn-primary btn-block mt-2">Generate P9 <i class="fa fa-file-text-o ml-1"></i></button>
+                                </div>
+                                <div class="col-md-2 mt-4">
+                                    <button type="button" class="btn btn-default btn-block mt-2" onclick="window.print()">Print <i class="fa fa-print ml-1"></i></button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- P9 Report Display -->
+            <div class="row" id="p9_report_area" style="display: none;">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="text-center mb-4">
+                                <h3><b>KENYA REVENUE AUTHORITY</b></h3>
+                                <h4><b>INCOME TAX DEPARTMENT</b></h4>
+                                <h5><b>P.9A INCOME TAX DEDUCTION CARD - YEAR <span id="report_year">2026</span></b></h5>
+                            </div>
+                            
+                            <div class="row header-info mb-3">
+                                <div class="col-md-6">
+                                    <p><b>Employer's Name:</b> {{ settings.company_name }}</p>
+                                    <p><b>Employer's PIN:</b> {{ settings.kra_pin }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><b>Employee's Name:</b> <span id="emp_name"></span></p>
+                                    <p><b>Employee's PIN:</b> <span id="emp_pin"></span></p>
+                                </div>
+                            </div>
+
+                            <table class="table table-bordered p9-table">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th>MONTH</th>
+                                        <th>Basic Salary</th>
+                                        <th>Benefits (Non-Cash)</th>
+                                        <th>Value of Quarters</th>
+                                        <th>Total Cash Pay (A+B+C)</th>
+                                        <th>Defined Contribution</th>
+                                        <th>Owner Occupied Interest</th>
+                                        <th>Retirement Contribution</th>
+                                        <th>Chargeable Pay</th>
+                                        <th>Tax Charged</th>
+                                        <th>Personal Relief</th>
+                                        <th>Insurance Relief</th>
+                                        <th>PAYE Tax (J-K-L)</th>
+                                    </tr>
+                                    <tr class="text-center bg-light">
+                                        <td></td>
+                                        <td>A</td>
+                                        <td>B</td>
+                                        <td>C</td>
+                                        <td>D</td>
+                                        <td>E</td>
+                                        <td>F</td>
+                                        <td>G</td>
+                                        <td>H</td>
+                                        <td>I</td>
+                                        <td>J</td>
+                                        <td>K</td>
+                                        <td>L</td>
+                                    </tr>
+                                </thead>
+                                <tbody id="p9_body">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                                <tfoot>
+                                    <tr class="font-weight-bold bg-light">
+                                        <td>TOTALS</td>
+                                        <td id="t_a">0</td>
+                                        <td id="t_b">0</td>
+                                        <td id="t_c">0</td>
+                                        <td id="t_d">0</td>
+                                        <td id="t_e">0</td>
+                                        <td id="t_f">0</td>
+                                        <td id="t_g">0</td>
+                                        <td id="t_h">0</td>
+                                        <td id="t_i">0</td>
+                                        <td id="t_j">28,800</td>
+                                        <td id="t_k">0</td>
+                                        <td id="t_l">0</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <p>I confirm that the above information is correct.</p>
+                                    <br><br>
+                                    <p>..................................................................</p>
+                                    <p><b>Employer's Signature & Stamp</b></p>
+                                </div>
+                                <div class="col-md-6 text-right">
+                                    <p>Date: {{ now.strftime('%d/%m/%Y') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({ theme: 'bootstrap4' });
+
+        $('#p9_filter_form').on('submit', function(e) {
+            e.preventDefault();
+            generateP9();
+        });
+    });
+
+    function generateP9() {
+        let formData = $('#p9_filter_form').serialize();
+        $.ajax({
+            url: '/api/admin/payroll/generate-p9',
+            type: 'GET',
+            data: formData,
+            success: function(data) {
+                $('#emp_name').text(data.employee.name);
+                $('#emp_pin').text(data.employee.pin || 'N/A');
+                $('#report_year').text(data.year);
+                
+                let html = '';
+                let t = { a:0, b:0, c:0, d:0, e:0, f:0, g:0, h:0, i:0, j:28800, k:0, l:0 };
+                
+                const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                
+                months.forEach((m, idx) => {
+                    let r = data.records[idx + 1] || { basic:0, benefits:0, quarters:0, total_cash:0, nssf:0, interest:0, contrib:0, chargeable:0, tax_charged:0, relief:2400, ins_relief:0, paye:0 };
+                    html += `<tr>
+                        <td>${m}</td>
+                        <td>${r.basic.toLocaleString()}</td>
+                        <td>${r.benefits.toLocaleString()}</td>
+                        <td>${r.quarters.toLocaleString()}</td>
+                        <td>${r.total_cash.toLocaleString()}</td>
+                        <td>${r.nssf.toLocaleString()}</td>
+                        <td>${r.interest.toLocaleString()}</td>
+                        <td>${r.contrib.toLocaleString()}</td>
+                        <td>${r.chargeable.toLocaleString()}</td>
+                        <td>${r.tax_charged.toLocaleString()}</td>
+                        <td>${r.personal_relief.toLocaleString()}</td>
+                        <td>${r.ins_relief.toLocaleString()}</td>
+                        <td>${r.paye.toLocaleString()}</td>
+                    </tr>`;
+                    
+                    t.a += r.basic;
+                    t.b += r.benefits;
+                    t.c += r.quarters;
+                    t.d += r.total_cash;
+                    t.e += r.nssf;
+                    t.f += r.interest;
+                    t.g += r.contrib;
+                    t.h += r.chargeable;
+                    t.i += r.tax_charged;
+                    t.k += r.ins_relief;
+                    t.l += r.paye;
+                });
+                
+                $('#p9_body').html(html);
+                $('#t_a').text(t.a.toLocaleString());
+                $('#t_b').text(t.b.toLocaleString());
+                $('#t_c').text(t.c.toLocaleString());
+                $('#t_d').text(t.d.toLocaleString());
+                $('#t_e').text(t.e.toLocaleString());
+                $('#t_f').text(t.f.toLocaleString());
+                $('#t_g').text(t.g.toLocaleString());
+                $('#t_h').text(t.h.toLocaleString());
+                $('#t_i').text(t.i.toLocaleString());
+                $('#t_k').text(t.k.toLocaleString());
+                $('#t_l').text(t.l.toLocaleString());
+                
+                $('#p9_report_area').show();
+            }
+        });
+    }
+</script>
+{% endblock %}

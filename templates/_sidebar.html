@@ -1,0 +1,310 @@
+<aside class="main-sidebar sidebar-dark-primary">
+    <a href="/" class="brand-link flex items-center pl-3">
+        <span class="brand-text font-display font-bold tracking-tight text-white"><i class="fas fa-cubes text-teal mr-2"></i>Kastom<span class="text-teal-500 font-light">POS</span></span>
+    </a>
+    <div class="sidebar">
+        <nav class="mt-2">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+                <li class="nav-item">
+                    <a href="/" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">
+                        <i class="nav-icon fas fa-tachometer-alt"></i>
+                        <p>Dashboard</p>
+                    </a>
+                </li>
+                <li class="nav-header">OPERATIONS</li>
+
+                <!-- Purchases -->
+                <li class="nav-item has-treeview {% if active_page in ['purchases', 'payments', 'direct_purchase', 'lpos', 'new_lpo'] %}menu-open{% endif %}">
+                    <a href="#" class="nav-link {% if active_page in ['purchases', 'payments', 'direct_purchase', 'lpos', 'new_lpo'] %}active{% endif %}">
+                        <i class="nav-icon fas fa-shopping-cart"></i>
+                        <p>Purchases <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item"><a href="/admin/purchases" class="nav-link {% if active_page == 'purchases' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Purchase List</p></a></li>
+                        <li class="nav-item"><a href="/admin/payment-schedules" class="nav-link {% if active_page == 'payments' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Payment Schedule</p></a></li>
+                        <li class="nav-item"><a href="/admin/direct-purchase" class="nav-link {% if active_page == 'direct_purchase' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Direct Purchase</p></a></li>
+                        <li class="nav-item"><a href="/admin/lpos" class="nav-link {% if active_page == 'lpos' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>LPO List</p></a></li>
+                        <li class="nav-item"><a href="/admin/new-lpo" class="nav-link {% if active_page == 'new_lpo' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>New LPO</p></a></li>
+                    </ul>
+                </li>
+
+                <!-- Inventory -->
+                <li class="nav-item has-treeview {% if active_page in ['inventory', 'serials', 'requisition', 'balances', 'stock_take', 'transfer', 'production', 'wastage', 'assets'] %}menu-open{% endif %}">
+                    <a href="#" class="nav-link {% if active_page in ['inventory', 'serials', 'requisition', 'balances', 'stock_take', 'transfer', 'production', 'wastage', 'assets'] %}active{% endif %}">
+                        <i class="nav-icon fas fa-boxes"></i>
+                        <p>Inventory <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item"><a href="/inventory" class="nav-link {% if active_page == 'inventory' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Items</p></a></li>
+                        <li class="nav-item"><a href="/admin/serials" class="nav-link {% if active_page == 'serials' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Serials</p></a></li>
+                        <li class="nav-item"><a href="/admin/requisition" class="nav-link {% if active_page == 'requisition' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Requisition</p></a></li>
+                        <li class="nav-item"><a href="/admin/stock-balances" class="nav-link {% if active_page == 'balances' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Stock Balances</p></a></li>
+                        <li class="nav-item"><a href="/admin/stock-take" class="nav-link {% if active_page == 'stock_take' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Stock Take</p></a></li>
+                        <li class="nav-item"><a href="/admin/transfer-stock" class="nav-link {% if active_page == 'transfer' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Move/Transfer Stock</p></a></li>
+                        <li class="nav-item"><a href="/admin/production" class="nav-link {% if active_page == 'production' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Production</p></a></li>
+                        <li class="nav-item"><a href="/admin/wastage" class="nav-link {% if active_page == 'wastage' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Wastages &amp; Damages</p></a></li>
+                        <li class="nav-item"><a href="/admin/fixed-assets" class="nav-link {% if active_page == 'assets' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Fixed Assets</p></a></li>
+                    </ul>
+                </li>
+
+                <!-- Sales -->
+                <li class="nav-item has-treeview {% if active_page in ['pos', 'open_sales', 'sales_list', 'quotations', 'invoices', 'banquets', 'voided', 'complementary', 'mpesa_till', 'mpesa_stk', 'returns'] %}menu-open{% endif %}">
+                    <a href="#" class="nav-link {% if active_page in ['pos', 'open_sales', 'sales_list', 'quotations', 'invoices', 'banquets', 'voided', 'complementary', 'mpesa_till', 'mpesa_stk', 'returns'] %}active{% endif %}">
+                        <i class="nav-icon fas fa-shopping-cart"></i>
+                        <p>Sales <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item"><a href="/pos" class="nav-link {% if active_page == 'pos' %}active{% endif %}"><i class="far fa-circle nav-icon text-warning"></i><p>PoS</p></a></li>
+                        <li class="nav-item"><a href="/admin/open-sales" class="nav-link {% if active_page == 'open_sales' %}active{% endif %}"><i class="far fa-circle nav-icon text-warning"></i><p>Open Sales</p></a></li>
+                        <li class="nav-item"><a href="/admin/sales" class="nav-link {% if active_page == 'sales_list' %}active{% endif %}"><i class="far fa-circle nav-icon text-warning"></i><p>Sales List</p></a></li>
+                        <li class="nav-item"><a href="/admin/quotations" class="nav-link {% if active_page == 'quotations' %}active{% endif %}"><i class="far fa-circle nav-icon text-warning"></i><p>Quotations</p></a></li>
+                        <li class="nav-item"><a href="/admin/invoices" class="nav-link {% if active_page == 'invoices' %}active{% endif %}"><i class="far fa-circle nav-icon text-warning"></i><p>Invoices</p></a></li>
+                        <li class="nav-item"><a href="/admin/banquets" class="nav-link {% if active_page == 'banquets' %}active{% endif %}"><i class="far fa-circle nav-icon text-warning"></i><p>Banquets</p></a></li>
+                        <li class="nav-item"><a href="/admin/voided-sales" class="nav-link {% if active_page == 'voided' %}active{% endif %}"><i class="far fa-circle nav-icon text-warning"></i><p>Voided Sales</p></a></li>
+                        <li class="nav-item"><a href="/admin/complementary-sales" class="nav-link {% if active_page == 'complementary' %}active{% endif %}"><i class="far fa-circle nav-icon text-warning"></i><p>Complementary Sales</p></a></li>
+                        <li class="nav-item"><a href="/admin/mpesa-till" class="nav-link {% if active_page == 'mpesa_till' %}active{% endif %}"><i class="far fa-circle nav-icon text-warning"></i><p>Mpesa Till Payments</p></a></li>
+                        <li class="nav-item"><a href="/admin/mpesa-stk" class="nav-link {% if active_page == 'mpesa_stk' %}active{% endif %}"><i class="far fa-circle nav-icon text-warning"></i><p>Mpesa Callbacks(STK)</p></a></li>
+                        <li class="nav-item"><a href="/admin/returns" class="nav-link {% if active_page == 'returns' %}active{% endif %}"><i class="far fa-circle nav-icon text-warning"></i><p>Returns</p></a></li>
+                    </ul>
+                </li>
+
+                <!-- Rooms/Accommodation -->
+                <li class="nav-item has-treeview {% if active_page in ['rooms_dashboard', 'book_room', 'bookings', 'online_bookings', 'bookings_calendar', 'rooms', 'room_settings'] %}menu-open{% endif %}">
+                    <a href="#" class="nav-link {% if active_page in ['rooms_dashboard', 'book_room', 'bookings', 'online_bookings', 'bookings_calendar', 'rooms', 'room_settings'] %}active{% endif %}">
+                        <i class="nav-icon fas fa-bed"></i>
+                        <p>Rooms/Accommodation <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item"><a href="/admin/rooms/dashboard" class="nav-link {% if active_page == 'rooms_dashboard' %}active{% endif %}"><i class="far fa-circle nav-icon text-success"></i><p>Dashboard</p></a></li>
+                        <li class="nav-item"><a href="/admin/rooms/book-room" class="nav-link {% if active_page == 'book_room' %}active{% endif %}"><i class="far fa-circle nav-icon text-success"></i><p>Book Room</p></a></li>
+                        <li class="nav-item"><a href="/admin/rooms/bookings" class="nav-link {% if active_page == 'bookings' %}active{% endif %}"><i class="far fa-circle nav-icon text-success"></i><p>Bookings</p></a></li>
+                        <li class="nav-item"><a href="/admin/rooms/online-bookings" class="nav-link {% if active_page == 'online_bookings' %}active{% endif %}"><i class="far fa-circle nav-icon text-success"></i><p>Online Bookings</p></a></li>
+                        <li class="nav-item"><a href="/admin/rooms/bookings-calendar" class="nav-link {% if active_page == 'bookings_calendar' %}active{% endif %}"><i class="far fa-circle nav-icon text-success"></i><p>Bookings Calendar</p></a></li>
+                        <li class="nav-item"><a href="/admin/rooms" class="nav-link {% if active_page == 'rooms' %}active{% endif %}"><i class="far fa-circle nav-icon text-success"></i><p>Rooms</p></a></li>
+                        <li class="nav-item"><a href="/admin/rooms/settings" class="nav-link {% if active_page == 'room_settings' %}active{% endif %}"><i class="far fa-circle nav-icon text-success"></i><p>Important Room Settings</p></a></li>
+                    </ul>
+                </li>
+
+                <li class="nav-header">FINANCE &amp; HR</li>
+
+                <!-- Accounting -->
+                <li class="nav-item has-treeview {% if active_page in ['expenses', 'budgeting', 'petty_cash', 'income', 'account_types', 'charts_of_accounts', 'bank_transfers', 'journal_entry', 'cash_flow', 'trial_balance', 'balance_sheet', 'profit_loss', 'general_ledger', 'vat', 'customer_statements'] %}menu-open{% endif %}">
+                    <a href="#" class="nav-link {% if active_page in ['expenses', 'budgeting', 'petty_cash', 'income', 'account_types', 'charts_of_accounts', 'bank_transfers', 'journal_entry', 'cash_flow', 'trial_balance', 'balance_sheet', 'profit_loss', 'general_ledger', 'vat', 'customer_statements'] %}active{% endif %}">
+                        <i class="nav-icon fas fa-balance-scale"></i>
+                        <p>Accounting <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item"><a href="/admin/accounting/expenses" class="nav-link {% if active_page == 'expenses' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Expenses &amp; Payments</p></a></li>
+                        <li class="nav-item"><a href="/admin/accounting/budgeting" class="nav-link {% if active_page == 'budgeting' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Budgeting</p></a></li>
+                        <li class="nav-item"><a href="/admin/accounting/petty-cash" class="nav-link {% if active_page == 'petty_cash' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Petty Cash Request</p></a></li>
+                        <li class="nav-item"><a href="/admin/accounting/income" class="nav-link {% if active_page == 'income' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Income</p></a></li>
+                        <li class="nav-item"><a href="/admin/accounting/account-types" class="nav-link {% if active_page == 'account_types' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Account Types</p></a></li>
+                        <li class="nav-item"><a href="/admin/accounting/charts-of-accounts" class="nav-link {% if active_page == 'charts_of_accounts' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Charts of Accounts</p></a></li>
+                        <li class="nav-item"><a href="/admin/accounting/bank-transfers" class="nav-link {% if active_page == 'bank_transfers' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Bank Transfers</p></a></li>
+                        <li class="nav-item"><a href="/admin/accounting/journal-entry" class="nav-link {% if active_page == 'journal_entry' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Journal Entry</p></a></li>
+                        <li class="nav-item"><a href="/admin/accounting/cash-flow" class="nav-link {% if active_page == 'cash_flow' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Cash Flow</p></a></li>
+                        <li class="nav-item"><a href="/admin/accounting/trial-balance" class="nav-link {% if active_page == 'trial_balance' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Trial Balance</p></a></li>
+                        <li class="nav-item"><a href="/admin/accounting/balance-sheet" class="nav-link {% if active_page == 'balance_sheet' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Balance Sheet</p></a></li>
+                        <li class="nav-item"><a href="/admin/accounting/profit-loss" class="nav-link {% if active_page == 'profit_loss' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Profit &amp; Loss</p></a></li>
+                        <li class="nav-item"><a href="/admin/accounting/general-ledger" class="nav-link {% if active_page == 'general_ledger' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>General Ledger</p></a></li>
+                        <li class="nav-item"><a href="/admin/accounting/vat" class="nav-link {% if active_page == 'vat' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>VAT INPUT/OUTPUT</p></a></li>
+                        <li class="nav-item"><a href="/admin/accounting/customer-statements" class="nav-link {% if active_page == 'customer_statements' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Customer Statements</p></a></li>
+                    </ul>
+                </li>
+
+                <!-- Core HR -->
+                <li class="nav-item has-treeview {% if active_page in ['hr_constants', 'hr_awards', 'hr_warnings', 'hr_resignations', 'hr_terminations'] %}menu-open{% endif %}">
+                    <a href="#" class="nav-link {% if active_page in ['hr_constants', 'hr_awards', 'hr_warnings', 'hr_resignations', 'hr_terminations'] %}active{% endif %}">
+                        <i class="nav-icon fas fa-users-cog"></i>
+                        <p>Core HR <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item"><a href="/admin/hr/constants" class="nav-link {% if active_page == 'hr_constants' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Constants</p></a></li>
+                        <li class="nav-item"><a href="/admin/hr/awards" class="nav-link {% if active_page == 'hr_awards' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Awards</p></a></li>
+                        <li class="nav-item"><a href="/admin/hr/warnings" class="nav-link {% if active_page == 'hr_warnings' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Warnings</p></a></li>
+                        <li class="nav-item"><a href="/admin/hr/resignations" class="nav-link {% if active_page == 'hr_resignations' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Resignations</p></a></li>
+                        <li class="nav-item"><a href="/admin/hr/terminations" class="nav-link {% if active_page == 'hr_terminations' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Terminations</p></a></li>
+                    </ul>
+                </li>
+
+                <!-- Performance -->
+                <li class="nav-item has-treeview {% if active_page in ['perf_constants', 'perf_appraisal'] %}menu-open{% endif %}">
+                    <a href="#" class="nav-link {% if active_page in ['perf_constants', 'perf_appraisal'] %}active{% endif %}">
+                        <i class="nav-icon fas fa-chart-line"></i>
+                        <p>Performance <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item"><a href="/admin/performance/constants" class="nav-link {% if active_page == 'perf_constants' %}active{% endif %}"><i class="far fa-circle nav-icon text-success"></i><p>Constants</p></a></li>
+                        <li class="nav-item"><a href="/admin/performance/appraisal" class="nav-link {% if active_page == 'perf_appraisal' %}active{% endif %}"><i class="far fa-circle nav-icon text-success"></i><p>Appraisal</p></a></li>
+                    </ul>
+                </li>
+
+                <!-- Payroll -->
+                <li class="nav-item has-treeview {% if active_page in ['payroll_configs', 'payroll_generate', 'payroll_advances', 'payroll_p9', 'payroll_allowances', 'payroll_deductions'] %}menu-open{% endif %}">
+                    <a href="#" class="nav-link {% if active_page in ['payroll_configs', 'payroll_generate', 'payroll_advances', 'payroll_p9', 'payroll_allowances', 'payroll_deductions'] %}active{% endif %}">
+                        <i class="nav-icon fas fa-file-invoice-dollar"></i>
+                        <p>Payroll <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item has-treeview {% if active_page in ['payroll_allowances', 'payroll_deductions'] %}menu-open{% endif %}">
+                            <a href="#" class="nav-link {% if active_page in ['payroll_allowances', 'payroll_deductions'] %}active{% endif %}">
+                                <i class="far fa-circle nav-icon text-warning"></i>
+                                <p>Payroll configs <i class="right fas fa-angle-left"></i></p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item"><a href="/admin/payroll/allowance-types" class="nav-link {% if active_page == 'payroll_allowances' %}active{% endif %}"><i class="nav-icon fa fa-angle-right"></i><p>Allowance Types</p></a></li>
+                                <li class="nav-item"><a href="/admin/payroll/deduction-types" class="nav-link {% if active_page == 'payroll_deductions' %}active{% endif %}"><i class="nav-icon fa fa-angle-right"></i><p>Deduction Types</p></a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item"><a href="/admin/payroll/generate" class="nav-link {% if active_page == 'payroll_generate' %}active{% endif %}"><i class="far fa-circle nav-icon text-warning"></i><p>Generate Payroll</p></a></li>
+                        <li class="nav-item"><a href="/admin/payroll/advances" class="nav-link {% if active_page == 'payroll_advances' %}active{% endif %}"><i class="far fa-circle nav-icon text-warning"></i><p>Advances</p></a></li>
+                        <li class="nav-item"><a href="/admin/payroll/p9" class="nav-link {% if active_page == 'payroll_p9' %}active{% endif %}"><i class="far fa-circle nav-icon text-warning"></i><p>P9 Forms</p></a></li>
+                    </ul>
+                </li>
+
+                <!-- Staff -->
+                <li class="nav-item">
+                    <a href="/admin/staff" class="nav-link {% if active_page == 'staff' %}active{% endif %}">
+                        <i class="nav-icon fas fa-user-tie"></i>
+                        <p>Staff/Employees</p>
+                    </a>
+                </li>
+
+                <!-- Leave Management -->
+                <li class="nav-item has-treeview {% if active_page in ['leave_applications', 'leave_types'] %}menu-open{% endif %}">
+                    <a href="#" class="nav-link {% if active_page in ['leave_applications', 'leave_types'] %}active{% endif %}">
+                        <i class="nav-icon fas fa-calendar-alt"></i>
+                        <p>Leave Management <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item"><a href="/admin/hr/leave-applications" class="nav-link {% if active_page == 'leave_applications' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Leave Applications</p></a></li>
+                        <li class="nav-item"><a href="/admin/hr/leave-types" class="nav-link {% if active_page == 'leave_types' %}active{% endif %}"><i class="far fa-circle nav-icon text-info"></i><p>Leave Types</p></a></li>
+                    </ul>
+                </li>
+
+                <!-- Time Attendance -->
+                <li class="nav-item has-treeview {% if active_page in ['attendance_transactions', 'time_card_report'] %}menu-open{% endif %}">
+                    <a href="#" class="nav-link {% if active_page in ['attendance_transactions', 'time_card_report'] %}active{% endif %}">
+                        <i class="nav-icon fas fa-clock"></i>
+                        <p>Time Attendance <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item"><a href="/admin/attendance/transactions" class="nav-link {% if active_page == 'attendance_transactions' %}active{% endif %}"><i class="far fa-circle nav-icon text-warning"></i><p>All Transactions</p></a></li>
+                        <li class="nav-item"><a href="/admin/attendance/time-card-report" class="nav-link {% if active_page == 'time_card_report' %}active{% endif %}"><i class="far fa-circle nav-icon text-warning"></i><p>Time Card Report</p></a></li>
+                    </ul>
+                </li>
+
+                <!-- Workflows -->
+                <li class="nav-item has-treeview {% if active_page in ['approvals', 'workflow_settings'] %}menu-open{% endif %}">
+                    <a href="#" class="nav-link {% if active_page in ['approvals', 'workflow_settings'] %}active{% endif %}">
+                        <i class="nav-icon fas fa-project-diagram"></i>
+                        <p>Workflows <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item"><a href="/admin/workflows/approvals" class="nav-link {% if active_page == 'approvals' %}active{% endif %}"><i class="far fa-circle nav-icon text-success"></i><p>Approvals</p></a></li>
+                        <li class="nav-item"><a href="/admin/workflows/settings" class="nav-link {% if active_page == 'workflow_settings' %}active{% endif %}"><i class="far fa-circle nav-icon text-success"></i><p>Workflow Settings</p></a></li>
+                    </ul>
+                </li>
+
+                <!-- Reports -->
+                {% set report_pages = ['reports', 'room_sales_report', 'room_occupancy_report', 'room_collections_report',
+                    'general_sales', 'close_day', 'item_sales', 'periodic_revenue', 'item_purchase',
+                    'staff_sales', 'cheques_report', 'suppliers_report', 'customers_report',
+                    'account_statements', 'customer_statements', 'supplier_statements',
+                    'customer_balances', 'supplier_balances', 'general_expenses_report',
+                    'item_ledger', 'statement_profit'] %}
+                <li class="nav-item has-treeview {% if active_page in report_pages %}menu-open{% endif %}">
+                    <a href="#" class="nav-link {% if active_page in report_pages %}active{% endif %}">
+                        <i class="nav-icon fas fa-file-invoice"></i>
+                        <p>Reports <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item"><a href="/admin/reports/close-day" class="nav-link {% if active_page == 'close_day' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Close Day Report</p></a></li>
+                        <li class="nav-item"><a href="/admin/reports/item-sales" class="nav-link {% if active_page == 'item_sales' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Items Sales Report</p></a></li>
+                        <li class="nav-item"><a href="/admin/reports/periodic-revenue" class="nav-link {% if active_page == 'periodic_revenue' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Periodic Revenue Report</p></a></li>
+                        <li class="nav-item"><a href="/admin/reports/item-purchase" class="nav-link {% if active_page == 'item_purchase' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Items Purchase Report</p></a></li>
+                        <li class="nav-item"><a href="/admin/reports/room-sales" class="nav-link {% if active_page in ['room_sales_report', 'room_occupancy_report', 'room_collections_report'] %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Room Sales</p></a></li>
+                        <li class="nav-item"><a href="/admin/reports/general-sales" class="nav-link {% if active_page == 'general_sales' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>General Sales</p></a></li>
+                        <li class="nav-item"><a href="/admin/reports/staff-sales" class="nav-link {% if active_page == 'staff_sales' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Staff Sales Summary</p></a></li>
+                        <li class="nav-item"><a href="/admin/reports/item-ledger" class="nav-link {% if active_page == 'item_ledger' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Item Ledger</p></a></li>
+                        <li class="nav-item"><a href="/admin/reports/statement-profit" class="nav-link {% if active_page == 'statement_profit' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Statement of Profit</p></a></li>
+                        <li class="nav-item"><a href="/admin/reports/cheques" class="nav-link {% if active_page == 'cheques_report' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Cheques</p></a></li>
+                        <li class="nav-item"><a href="/admin/reports/suppliers" class="nav-link {% if active_page == 'suppliers_report' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Suppliers</p></a></li>
+                        <li class="nav-item"><a href="/admin/reports/customers" class="nav-link {% if active_page == 'customers_report' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Customers</p></a></li>
+                        <li class="nav-item"><a href="/admin/reports/account-statements" class="nav-link {% if active_page == 'account_statements' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Account Statements</p></a></li>
+                        <li class="nav-item"><a href="/admin/reports/customer-statements" class="nav-link {% if active_page == 'customer_statements' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Customer Statements</p></a></li>
+                        <li class="nav-item"><a href="/admin/reports/supplier-statements" class="nav-link {% if active_page == 'supplier_statements' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Supplier Statements</p></a></li>
+                        <li class="nav-item"><a href="/admin/reports/customer-balances" class="nav-link {% if active_page == 'customer_balances' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Customer Balances</p></a></li>
+                        <li class="nav-item"><a href="/admin/reports/supplier-balances" class="nav-link {% if active_page == 'supplier_balances' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Supplier Balances</p></a></li>
+                        <li class="nav-item"><a href="/admin/reports/general-expenses" class="nav-link {% if active_page == 'general_expenses_report' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>General Expenses</p></a></li>
+                    </ul>
+                </li>
+
+                <li class="nav-header">Settings</li>
+
+                <!-- System Users -->
+                <li class="nav-item has-treeview {% if active_page in ['staff', 'suppliers', 'customers', 'agents', 'roles'] %}menu-open{% endif %}">
+                    <a href="#" class="nav-link {% if active_page in ['staff', 'suppliers', 'customers', 'agents', 'roles'] %}active{% endif %}">
+                        <i class="nav-icon fas fa-users"></i>
+                        <p>System Users <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item"><a href="/admin/staff" class="nav-link {% if active_page == 'staff' %}active{% endif %}"><i class="far fa-dot-circle nav-icon text-primary"></i><p>System Users</p></a></li>
+                        <li class="nav-item"><a href="/admin/users/suppliers" class="nav-link {% if active_page == 'suppliers' %}active{% endif %}"><i class="far fa-dot-circle nav-icon text-primary"></i><p>Suppliers</p></a></li>
+                        <li class="nav-item"><a href="/admin/users/customers" class="nav-link {% if active_page == 'customers' %}active{% endif %}"><i class="far fa-dot-circle nav-icon text-primary"></i><p>Customers</p></a></li>
+                        <li class="nav-item"><a href="/admin/users/agents" class="nav-link {% if active_page == 'agents' %}active{% endif %}"><i class="far fa-dot-circle nav-icon text-primary"></i><p>Agents</p></a></li>
+                        <li class="nav-item"><a href="/admin/staff" class="nav-link {% if active_page == 'staff' %}active{% endif %}"><i class="far fa-dot-circle nav-icon text-primary"></i><p>Staff/Employees</p></a></li>
+                        <li class="nav-item"><a href="/admin/roles" class="nav-link {% if active_page == 'roles' %}active{% endif %}"><i class="far fa-dot-circle nav-icon text-primary"></i><p>Role Management</p></a></li>
+                    </ul>
+                </li>
+
+                <!-- Configurations -->
+                <li class="nav-item has-treeview">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-cog"></i>
+                        <p>Configurations <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item"><a href="/admin/config/categories" class="nav-link"><i class="far fa-dot-circle nav-icon text-info"></i><p>Item Categories</p></a></li>
+                        <li class="nav-item"><a href="/admin/config/attributes" class="nav-link"><i class="far fa-dot-circle nav-icon text-info"></i><p>Item Attributes</p></a></li>
+                        <li class="nav-item"><a href="/admin/config/brands" class="nav-link"><i class="far fa-dot-circle nav-icon text-info"></i><p>Item Brands</p></a></li>
+                        <li class="nav-item"><a href="/admin/config/colors" class="nav-link"><i class="far fa-dot-circle nav-icon text-info"></i><p>Item Colors</p></a></li>
+                        <li class="nav-item"><a href="/admin/config/units" class="nav-link"><i class="far fa-dot-circle nav-icon text-info"></i><p>Item Units</p></a></li>
+                        <li class="nav-item"><a href="/admin/config/unit-conversion" class="nav-link"><i class="far fa-dot-circle nav-icon text-info"></i><p>Unit Conversion Formulas</p></a></li>
+                        <li class="nav-item"><a href="/admin/config/document-types" class="nav-link"><i class="far fa-dot-circle nav-icon text-info"></i><p>Document Types</p></a></li>
+                        <li class="nav-item"><a href="/admin/config/countries" class="nav-link"><i class="far fa-dot-circle nav-icon text-info"></i><p>Countries</p></a></li>
+                        <li class="nav-item"><a href="/admin/config/currencies" class="nav-link"><i class="far fa-dot-circle nav-icon text-info"></i><p>Currencies</p></a></li>
+                        <li class="nav-item"><a href="/admin/config/tax-types" class="nav-link"><i class="far fa-dot-circle nav-icon text-info"></i><p>Tax Types</p></a></li>
+                        <li class="nav-item"><a href="/admin/config/fiscal-years" class="nav-link"><i class="far fa-dot-circle nav-icon text-info"></i><p>Fiscal Years</p></a></li>
+                        <li class="nav-item"><a href="/admin/config/stores" class="nav-link"><i class="far fa-dot-circle nav-icon text-info"></i><p>Stores/Branches</p></a></li>
+                        <li class="nav-item"><a href="/admin/config/tables" class="nav-link"><i class="far fa-dot-circle nav-icon text-info"></i><p>Tables/Counters/Shelves</p></a></li>
+                        <li class="nav-item"><a href="/admin/config/event-types" class="nav-link"><i class="far fa-dot-circle nav-icon text-info"></i><p>Event Types</p></a></li>
+                        <li class="nav-item"><a href="/admin/config/invoice-templates" class="nav-link"><i class="far fa-dot-circle nav-icon text-info"></i><p>Invoice Templates</p></a></li>
+                    </ul>
+                </li>
+
+                <!-- Organization -->
+                <li class="nav-item has-treeview">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-sitemap"></i>
+                        <p>Organization <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item"><a href="/admin/org/settings" class="nav-link"><i class="far fa-dot-circle nav-icon text-warning"></i><p>Business Settings</p></a></li>
+                        <li class="nav-item"><a href="/admin/org/stations" class="nav-link"><i class="far fa-dot-circle nav-icon text-warning"></i><p>Stations</p></a></li>
+                        <li class="nav-item"><a href="/admin/org/departments" class="nav-link"><i class="far fa-dot-circle nav-icon text-warning"></i><p>Departments</p></a></li>
+                    </ul>
+                </li>
+
+                <!-- Integration APIs -->
+                <li class="nav-item">
+                    <a href="/admin/integration-apis" class="nav-link">
+                        <i class="nav-icon fas fa-plug"></i>
+                        <p>Integration APIs</p>
+                    </a>
+                </li>
+
+            </ul>
+        </nav>
+    </div>
+</aside>

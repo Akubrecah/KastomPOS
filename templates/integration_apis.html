@@ -1,0 +1,131 @@
+{% extends "layout.html" %}
+
+{% block title %}Integration APIs | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    .card {
+        border-radius: 0px !important;
+        border-top: 3px solid #008080 !important;
+    }
+    .api-key-container {
+        background-color: #f8f9fa;
+        border: 1px dashed #ced4da;
+        padding: 10px 15px;
+        font-family: monospace;
+        font-size: 1.1rem;
+        color: #333;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">Integration &amp; APIs</h1>
+                <p class="text-muted mb-0">Manage system API keys, configure webhooks, and connect KastomPOS with downstream ERP platforms.</p>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">APIs</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title font-weight-bold"><i class="fas fa-key mr-2"></i> KastomPOS ERP Secret Token</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">Use this API token to authenticate requests made from external inventory checkers, PMS systems, or accountant reporting tools.</p>
+                        
+                        <div class="api-key-container">
+                            <span id="apiKeyText">{{ api_token }}</span>
+                            <button class="btn btn-sm btn-rgp" onclick="copyApiKey()">
+                                <i class="fas fa-copy mr-1"></i> Copy
+                            </button>
+                        </div>
+                        
+                        <form action="/admin/integration-apis/regenerate" method="POST" class="mt-3" aria-label="Regenerate API Token Form">
+                            <button type="submit" class="btn btn-rgp btn-sm" onclick="return confirm('Regenerating will invalidate your current API key. Proceed?');">
+                                <i class="fas fa-sync mr-1"></i> Regenerate Token
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card card-outline mt-3">
+                    <div class="card-header">
+                        <h3 class="card-title font-weight-bold"><i class="fas fa-mobile-alt mr-2"></i> Mobile Integration Webhooks</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-bordered mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Service Name</th>
+                                    <th>Webhook URL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="font-weight-bold">M-Pesa STK Push Endpoint</td>
+                                    <td><code>/admin/mpesa-stk</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="font-weight-bold">M-Pesa Till Callback</td>
+                                    <td><code>/admin/mpesa-till</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title font-weight-bold"><i class="fas fa-info-circle mr-2"></i> Integration Specifications</h3>
+                    </div>
+                    <div class="card-body">
+                        <h5>Standard Authorization Header</h5>
+                        <pre class="bg-dark p-3 text-light" style="border-radius: 4px;"><code>Authorization: Bearer {% if api_token %}{{ api_token }}{% else %}YOUR_SECRET_TOKEN{% endif %}</code></pre>
+                        
+                        <h5 class="mt-4">Active Endpoints</h5>
+                        <ul>
+                            <li><strong>Get Sales:</strong> <code>GET /api/v1/sales</code></li>
+                            <li><strong>Get Inventory Balances:</strong> <code>GET /api/v1/inventory</code></li>
+                            <li><strong>Push Booking Status:</strong> <code>POST /api/v1/booking-sync</code></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function copyApiKey() {
+        const keyText = document.getElementById("apiKeyText").innerText;
+        navigator.clipboard.writeText(keyText).then(() => {
+            toastr.success("API Token copied to clipboard successfully!");
+        }).catch(err => {
+            toastr.error("Failed to copy token: " + err);
+        });
+    }
+</script>
+{% endblock %}

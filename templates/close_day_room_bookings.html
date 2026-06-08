@@ -1,0 +1,311 @@
+{% extends "layout.html" %}
+
+{% block title %}Close Day Report | KastomPOS{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
+<style>
+    .headings { border-bottom: 2px dotted; }
+    .headings th { padding-top: 10px !important; }
+    .card-header { padding: .50rem 1.25rem !important; }
+    .nav-tabs .nav-link { color: #495057; }
+    .nav-tabs .nav-link.active { font-weight: 600; }
+    form { padding: 10px !important; }
+    @media print { .no-print { display: none !important; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Content Header -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="window.history.back()">
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                    </button>
+                    Close Day Report
+                </h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Close Day Report</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12 col-sm-12">
+                <div class="card card-primary card-outline card-outline-tabs">
+                    <div class="card-header p-0 border-bottom-0">
+                        <ul class="nav nav-tabs" id="custom-tabs-four-tab" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link" href="/admin/reports/close-day/general-sales" role="tab">General/POS Sales</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/admin/reports/close-day/invoices" role="tab">Invoices</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link active" href="/admin/reports/close-day/room-bookings" role="tab">Room Bookings</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/admin/reports/close-day/cash" role="tab">Cash/Bank</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/admin/reports/close-day/cash-statement" role="tab">Cash/Bank Statement</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="row">
+
+                            <!-- LEFT: Filter Form -->
+                            <div class="col-md-6 col-sm-12">
+                                <div class="card card-outline">
+                                    <div class="card-body">
+                                        <form method="get" action="/admin/reports/close-day/room-bookings">
+                                            <div class="row">
+                                                <div class="col-md-12 text-info">
+                                                    Filter by date range
+                                                </div>
+
+                                                <div class="col-md-12">
+                                                    <label>Org/Store/Shop <i class="fa fa-building"></i> *</label>
+                                                    <select class="form-control" name="org_id">
+                                                        <option value="">All Organisations</option>
+                                                        {% for org in orgs %}
+                                                        <option value="{{ org.id }}"
+                                                            {% if selected_org_id == org.id %}selected{% endif %}>
+                                                            {{ org.name }}
+                                                        </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-md-12">
+                                                    <div class="form-group">
+                                                        <label>Date and time range <i class="text-danger">*</i></label>
+                                                        <div class="input-group">
+                                                            <div class="input-group-prepend">
+                                                                <span class="input-group-text">
+                                                                    <i class="far fa-clock"></i>
+                                                                </span>
+                                                            </div>
+                                                            <input type="text"
+                                                                   class="form-control float-right"
+                                                                   name="date_range"
+                                                                   value="{{ date_range }}"
+                                                                   id="reservationtime">
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-12">
+                                                    <br>
+                                                    <button type="submit" class="btn btn-primary">
+                                                        Filter <i class="fa fa-filter"></i>
+                                                    </button>
+                                                    <button type="button" onclick="window.print()" class="btn btn-danger no-print">
+                                                        Print <i class="fa fa-print"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- RIGHT: Summary Table -->
+                            <div class="col-md-6 col-sm-12">
+                                <div class="card card-outline">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-12 table-responsive">
+                                                <table class="table table-sm table-hover">
+                                                    <tbody>
+
+                                                        <!-- Booking Summary -->
+                                                        <tr class="headings">
+                                                            <th colspan="3">Room Bookings Summary</th>
+                                                        </tr>
+                                                        <tr>
+                                                            <td colspan="2">Total Bookings</td>
+                                                            <td>{{ total_bookings }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td colspan="2">Active / In-house</td>
+                                                            <td>{{ active_count }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td colspan="2">Checked Out</td>
+                                                            <td>{{ checked_out_count }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td colspan="2">Cancelled</td>
+                                                            <td>{{ cancelled_count }}</td>
+                                                        </tr>
+
+                                                        <!-- Financial Summary -->
+                                                        <tr class="headings">
+                                                            <th colspan="3">Financial Summary</th>
+                                                        </tr>
+                                                        <tr>
+                                                            <td colspan="2">Total Booking Value</td>
+                                                            <td>{{ "{:,.2f}".format(total_amount) }}</td>
+                                                        </tr>
+                                                        <tr style="background-color: #28a74570;">
+                                                            <td colspan="2">Amount Paid</td>
+                                                            <th><u>{{ "{:,.2f}".format(total_paid) }}</u></th>
+                                                        </tr>
+                                                        <tr>
+                                                            <td colspan="2">Outstanding Balance</td>
+                                                            <td>{{ "{:,.2f}".format(total_balance) }}</td>
+                                                        </tr>
+
+                                                        <!-- Payment Method Breakdown -->
+                                                        <tr class="headings">
+                                                            <th colspan="3">Payment Method Breakdown</th>
+                                                        </tr>
+                                                        {% for method, amount in payment_breakdown.items() %}
+                                                        <tr>
+                                                            <td colspan="2">{{ method }}</td>
+                                                            <td>{{ "{:,.2f}".format(amount) }}</td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                        <tr style="background-color: #dee2e6;">
+                                                            <td colspan="2">Total</td>
+                                                            <td><u>{{ "{:,.2f}".format(total_paid) }}</u></td>
+                                                        </tr>
+
+                                                        <!-- Room Type Breakdown -->
+                                                        {% if room_type_sales %}
+                                                        <tr class="headings">
+                                                            <th colspan="3">Room Type Breakdown</th>
+                                                        </tr>
+                                                        {% for rtype, amount in room_type_sales.items() %}
+                                                        <tr>
+                                                            <td colspan="2">{{ rtype }}</td>
+                                                            <td>{{ "{:,.2f}".format(amount) }}</td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                        {% endif %}
+
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <!-- /row -->
+
+                        <!-- Bookings Detail Table -->
+                        {% if bookings %}
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="card card-outline">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">Bookings Detail</h5>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-striped table-hover mb-0">
+                                                <thead class="thead-light">
+                                                    <tr>
+                                                        <th>#</th>
+                                                        <th>Date</th>
+                                                        <th>Guest</th>
+                                                        <th>Room</th>
+                                                        <th>Nights</th>
+                                                        <th>Check-in</th>
+                                                        <th>Check-out</th>
+                                                        <th>Method</th>
+                                                        <th>Status</th>
+                                                        <th class="text-right">Total</th>
+                                                        <th class="text-right">Paid</th>
+                                                        <th class="text-right">Balance</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for b in bookings %}
+                                                    <tr>
+                                                        <td>{{ b.id }}</td>
+                                                        <td>{{ b.created_at.strftime('%d/%m/%Y') if b.created_at else '-' }}</td>
+                                                        <td>{{ b.customer_name }}</td>
+                                                        <td>{{ b.room.room_number if b.room else '-' }}</td>
+                                                        <td>{{ b.nights }}</td>
+                                                        <td>{{ b.from_date.strftime('%d/%m/%Y') if b.from_date else '-' }}</td>
+                                                        <td>{{ b.to_date.strftime('%d/%m/%Y') if b.to_date else '-' }}</td>
+                                                        <td>{{ b.payment_method }}</td>
+                                                        <td>
+                                                            {% if b.status == 'active' %}
+                                                                <span class="badge badge-primary">Active</span>
+                                                            {% elif b.status == 'checked_out' %}
+                                                                <span class="badge badge-success">Checked Out</span>
+                                                            {% elif b.status == 'cancelled' %}
+                                                                <span class="badge badge-danger">Cancelled</span>
+                                                            {% else %}
+                                                                <span class="badge badge-secondary">{{ b.status }}</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td class="text-right">{{ "{:,.2f}".format(b.total_amount) }}</td>
+                                                        <td class="text-right">{{ "{:,.2f}".format(b.paid_amount) }}</td>
+                                                        <td class="text-right">{{ "{:,.2f}".format(b.balance) }}</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                                <tfoot class="font-weight-bold">
+                                                    <tr style="background-color: #dee2e6;">
+                                                        <td colspan="9">Totals</td>
+                                                        <td class="text-right">{{ "{:,.2f}".format(total_amount) }}</td>
+                                                        <td class="text-right">{{ "{:,.2f}".format(total_paid) }}</td>
+                                                        <td class="text-right">{{ "{:,.2f}".format(total_balance) }}</td>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/moment/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script>
+$(function() {
+    $('#reservationtime').daterangepicker({
+        timePicker: true,
+        timePickerIncrement: 30,
+        locale: { format: 'MM/DD/YYYY hh:mm A' },
+        ranges: {
+           'Today': [moment(), moment()],
+           'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+           'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+           'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+           'This Month': [moment().startOf('month'), moment().endOf('month')],
+           'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+        }
+    });
+});
+</script>
+{% endblock %}

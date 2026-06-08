@@ -1,0 +1,276 @@
+{% extends "layout.html" %}
+
+{% block extra_css %}
+<style>
+    .rm { background-color: #ffffff !important; border-color: #ffffff; }
+    .select2-container--open { z-index: 9999 !important; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="window.history.back()"><i class="fa fa-arrow-left"></i></button>
+                    Production
+                </h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Production</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-9 col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Create a Product Recipe</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="recipe_form" action="/admin/production/save" method="post">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label>Product Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="name" class="form-control" required placeholder="Recipe name">
+                                </div>
+                                <div class="col-md-4">
+                                    <label>Unit <span class="text-danger">*</span></label>
+                                    <select class="form-control select2" name="unit_id" required>
+                                        <option value="">~Select unit~</option>
+                                        {% for unit in units %}
+                                        <option value="{{ unit.id }}">{{ unit.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label>Category <span class="text-danger">*</span></label>
+                                    <select class="form-control select2" name="category_id" required>
+                                        <option value="">~Select category~</option>
+                                        {% for cat in categories %}
+                                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-md-4">
+                                    <label>Tax Type <span class="text-danger">*</span></label>
+                                    <select class="form-control select2" name="tax_type_id" required>
+                                        <option value="">~Select tax~</option>
+                                        {% for tax in tax_types %}
+                                        <option value="{{ tax.id }}">{{ tax.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label>Store <span class="text-danger">*</span></label>
+                                    <select class="form-control select2" name="store_id" required>
+                                        <option value="">~Select store~</option>
+                                        {% for store in stores %}
+                                        <option value="{{ store.id }}">{{ store.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label>Purpose <span class="text-danger">*</span></label>
+                                    <select class="form-control select2" name="recipe_purpose" required>
+                                        <option value="For Sale" selected>For Sale</option>
+                                        <option value="For Production">For Production</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-md-12 table-responsive">
+                                    <label>Recipe Ingredients <i class="text-danger">*</i></label>
+                                    <table class="table table-sm table-bordered" id="recipe_table">
+                                        <thead class="bg-primary">
+                                            <tr>
+                                                <th style="min-width: 400px;">Item</th>
+                                                <th>Qty</th>
+                                                <th>Cost</th>
+                                                <th><button type="button" class="btn btn-sm btn-default" onclick="add_row()"><i class="fa fa-plus"></i></button></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Rows added via JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="row mt-2">
+                                <div class="col-md-6">
+                                    <label>Total Material Cost</label>
+                                    <input type="number" id="item_cost" class="form-control rm" readonly value="0.00">
+                                </div>
+                                <div class="col-md-6">
+                                    <label>Markup (%)</label>
+                                    <input type="number" id="markup_percentage" step="0.01" class="form-control" oninput="calculatePrice()">
+                                </div>
+                                <div class="col-md-6 mt-2">
+                                    <label>Selling Price <span class="text-danger">*</span></label>
+                                    <input type="number" name="markup_price" id="markup_price" step="0.01" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mt-2">
+                                    <br>
+                                    <div class="custom-control custom-checkbox mt-2">
+                                        <input class="custom-control-input" type="checkbox" id="active" name="active" value="1" checked>
+                                        <label for="active" class="custom-control-label">Active / Visible for sale</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-md-12">
+                                    <button type="submit" class="btn btn-primary btn-lg float-right">Save Recipe & Product</button>
+                                    <h3 id="itemstotal" class="text-orange">Total Cost: 0.00</h3>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card card-outline card-info">
+                    <div class="card-header">
+                        <h3 class="card-title">Help & Info</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="callout callout-info">
+                            <h5>Recipe Costing</h5>
+                            <p>Cost is calculated based on the purchase price of ingredients.</p>
+                        </div>
+                        <div class="callout callout-warning">
+                            <h5>Units</h5>
+                            <p>Ensure your ingredient units match your usage (e.g., grams vs kg).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Existing Products with Recipes</h3>
+                    </div>
+                    <div class="card-body table-responsive">
+                        <table id="recipeList" class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Product Name</th>
+                                    <th>Unit</th>
+                                    <th>Cost</th>
+                                    <th>Price</th>
+                                    <th>Store</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in recipes %}
+                                <tr>
+                                    <td>{{ r.id }}</td>
+                                    <td>{{ r.name }}</td>
+                                    <td>{{ r.unit.name if r.unit else '' }}</td>
+                                    <td>{{ r.cost_price|round(2) }}</td>
+                                    <td>{{ r.selling_price|round(2) }}</td>
+                                    <td>{{ r.store.name if r.store else '' }}</td>
+                                    <td>
+                                        <button class="btn btn-xs btn-rgp" title="View"><i class="fa fa-eye"></i></button>
+                                        <button class="btn btn-xs btn-rgd" title="Delete"><i class="fa fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    var itemOptions = `
+        <option value="">Select item</option>
+        {% for p in products %}
+        <option value="{{ p.id }}" data-cost="{{ p.cost_price }}">{{ p.name }} ({{ p.cost_price }}/unit)</option>
+        {% endfor %}
+    `;
+
+    $(document).ready(function() {
+        $('.select2').select2({ width: '100%' });
+        $('#recipeList').DataTable();
+        add_row(); // Start with one row
+    });
+
+    function add_row() {
+        let rowId = Date.now();
+        let row = `
+            <tr id="row_${rowId}">
+                <td>
+                    <select name="item[]" id="item_${rowId}" class="form-control select2-item" required onchange="calculateRow(${rowId})">
+                        ${itemOptions}
+                    </select>
+                </td>
+                <td>
+                    <input type="number" step="0.001" name="measurement[]" id="qty_${rowId}" class="form-control" required oninput="calculateRow(${rowId})">
+                </td>
+                <td>
+                    <input type="number" step="0.01" name="amount[]" id="cost_${rowId}" class="form-control rm" readonly value="0.00">
+                </td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-danger" onclick="delete_row(${rowId})"><i class="fa fa-minus"></i></button>
+                </td>
+            </tr>
+        `;
+        $('#recipe_table tbody').append(row);
+        $(`#item_${rowId}`).select2({ width: '100%' });
+    }
+
+    function delete_row(rowId) {
+        $(`#row_${rowId}`).remove();
+        calculateTotal();
+    }
+
+    function calculateRow(rowId) {
+        let qty = $(`#qty_${rowId}`).val() || 0;
+        let unitCost = $(`#item_${rowId} option:selected`).data('cost') || 0;
+        let total = (qty * unitCost).toFixed(2);
+        $(`#cost_${rowId}`).val(total);
+        calculateTotal();
+    }
+
+    function calculateTotal() {
+        let total = 0;
+        $('input[name="amount[]"]').each(function() {
+            total += parseFloat($(this).val()) || 0;
+        });
+        $('#item_cost').val(total.toFixed(2));
+        $('#itemstotal').text("Total Cost: " + total.toFixed(2));
+        calculatePrice();
+    }
+
+    function calculatePrice() {
+        let cost = parseFloat($('#item_cost').val()) || 0;
+        let markup = parseFloat($('#markup_percentage').val()) || 0;
+        if (markup > 0) {
+            let price = (cost * (1 + markup / 100)).toFixed(2);
+            $('#markup_price').val(price);
+        }
+    }
+</script>
+{% endblock %}

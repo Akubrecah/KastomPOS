@@ -1,0 +1,256 @@
+{% extends "layout.html" %}
+
+{% block title %}VAT INPUT-OUTPUT | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    form {
+        padding: 10px !important;
+    }
+
+    .custom_nav_theme {
+        color: black !important;
+        border-bottom: 1px grey solid;
+    }
+
+    .tb_title {
+        height: 30px;
+        background: #2A3F54;
+        position: relative;
+        color: #fff;
+        font-weight: bold;
+        border: none;
+        width: 200px;
+        text-align: left;
+    }
+
+    .tb_title:hover,
+    .tb_title:active {
+        color: #A6A6A6;
+    }
+
+    .tb_title:before {
+        content: '';
+        position: absolute;
+        right: 0;
+        border-top: 30px solid white;
+        border-left: 30px solid #2A3F54;
+        width: 0;
+        top: 0;
+    }
+
+    .fa-ian {
+        color: #393B3D !important;
+    }
+
+    .select2 {
+        width: 100% !important;
+    }
+
+    .dropdown-menu {
+        min-width: 15rem !important;
+    }
+
+    .card-header {
+        padding: .50rem 1.25rem !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Content Header (Page header) -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="goBack()">
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                    </button>
+                    VAT INPUT-OUTPUT
+                </h1>
+                <script>
+                    function goBack() {
+                        window.history.back();
+                    }
+                </script>
+            </div><!-- /.col -->
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">VAT INPUT-OUTPUT</li>
+                </ol>
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+<!-- /.content-header -->
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-md-12 col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Filter Options</h3>
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 col-sm-6">
+                                <label for="vat_option">Filter Option <span class="text text-danger">*</span> </label>
+                                <select class="form-control" id="vat_option" required>
+                                    <option value="INPUT" selected>VAT INPUT</option>
+                                    <option value="OUTPUT">VAT OUTPUT</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-3 col-sm-6">
+                                <label for="from_date">From Date <span class="text text-danger">*</span> </label>
+                                <input type="date" id="from_date" class="form-control" value="{{ start_of_month }}" required />
+                            </div>
+
+                            <div class="col-md-3 col-sm-6">
+                                <label for="to_date">To Date <span class="text text-danger">*</span> </label>
+                                <input type="date" id="to_date" class="form-control" value="{{ today }}" required />
+                            </div>
+
+                            <div class="col-md-3 col-sm-6">
+                                <button type="button" class="btn btn-rgp btn-sm" onclick="get_vat_data()" style="margin-top: 30px;">Filter <i class="fa fa-filter"></i></button>
+                            </div>
+                        </div>
+                    </div><!-- /.card-body -->
+                </div>
+            </div>
+
+            <div class="col-md-12 col-sm-12">
+                <div class="card card-outline card-info">
+                    <div class="card-header">
+                        <h3 class="card-title">VAT Report Details</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-rgd btn-xs" onclick="export_pdf()">Export to .pdf <i class="fa fa-file-pdf-o"></i></button>
+                            <button type="button" class="btn btn-rgs btn-xs" onclick="export_csv()">Export to .csv <i class="fa fa-file-excel-o"></i></button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="report-content">
+                            <div class="text-center text-muted py-5">
+                                <i class="fa fa-info-circle fa-3x mb-3"></i>
+                                <p>Select filter options and click Filter to view the VAT report.</p>
+                            </div>
+                        </div>
+                    </div><!-- /.card-body -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!--/. container-fluid -->
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function get_vat_data() {
+        var option = $('#vat_option').val();
+        var from_date = $('#from_date').val();
+        var to_date = $('#to_date').val();
+
+        if (!from_date || !to_date) {
+            toastr.error('Please select both dates');
+            return;
+        }
+
+        $('#report-content').html('<div class="text-center py-5"><i class="fa fa-spinner fa-spin fa-3x mb-3"></i><p>Generating report...</p></div>');
+
+        $.ajax({
+            url: '/api/admin/accounting/get-vat-report',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                option: option,
+                from_date: from_date,
+                to_date: to_date
+            }),
+            success: function(response) {
+                if (response.error) {
+                    $('#report-content').html('<div class="alert alert-danger">' + response.error + '</div>');
+                } else {
+                    render_vat_report(response);
+                }
+            },
+            error: function() {
+                $('#report-content').html('<div class="alert alert-danger">An error occurred while fetching data.</div>');
+            }
+        });
+    }
+
+    function render_vat_report(data) {
+        var html = '<div class="table-responsive">';
+        html += '<table class="table table-sm table-striped table-bordered table-hover">';
+        html += '<thead class="bg-dark text-white">';
+        html += '<tr>';
+        html += '<th>#.</th>';
+        html += '<th>' + (data.option === 'INPUT' ? 'SUPPLIER NAME' : 'CUSTOMER NAME') + '</th>';
+        html += '<th>TAX ID</th>';
+        html += '<th>DATE</th>';
+        html += '<th>REFERENCE</th>';
+        html += '<th class="text-right">GROSS AMOUNT</th>';
+        html += '<th class="text-right">NET AMOUNT</th>';
+        html += '<th class="text-right">VAT AMOUNT</th>';
+        html += '</tr></thead>';
+        html += '<tbody>';
+
+        if (data.entries.length === 0) {
+            html += '<tr><td colspan="8" class="text-center text-muted">No data found for this period.</td></tr>';
+        } else {
+            var total_gross = 0;
+            var total_net = 0;
+            var total_vat = 0;
+
+            data.entries.forEach(function(entry, index) {
+                total_gross += entry.gross_amount;
+                total_net += entry.net_amount;
+                total_vat += entry.vat_amount;
+
+                html += '<tr>';
+                html += '<td>' + (index + 1) + '.</td>';
+                html += '<td>' + entry.name + '</td>';
+                html += '<td>' + (entry.tax_id || '-') + '</td>';
+                html += '<td>' + entry.date + '</td>';
+                html += '<td>' + entry.reference + '</td>';
+                html += '<td class="text-right">' + entry.gross_amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>';
+                html += '<td class="text-right">' + entry.net_amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>';
+                html += '<td class="text-right">' + entry.vat_amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>';
+                html += '</tr>';
+            });
+
+            html += '</tbody>';
+            html += '<tfoot class="bg-light font-weight-bold">';
+            html += '<tr>';
+            html += '<td colspan="5" class="text-right">TOTALS</td>';
+            html += '<td class="text-right">' + total_gross.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>';
+            html += '<td class="text-right">' + total_net.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>';
+            html += '<td class="text-right">' + total_vat.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>';
+            html += '</tr>';
+            html += '</tfoot>';
+        }
+
+        html += '</table></div>';
+        $('#report-content').html(html);
+    }
+
+    function export_pdf() {
+        toastr.info('Export to PDF starting...');
+        // Logic for PDF export would go here (server-side generation)
+    }
+
+    function export_csv() {
+        toastr.info('Export to CSV starting...');
+        // Logic for CSV export would go here
+    }
+</script>
+{% endblock %}

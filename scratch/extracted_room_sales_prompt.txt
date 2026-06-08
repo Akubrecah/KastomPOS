@@ -1,0 +1,69 @@
+<USER_REQUEST>
+change the name of Room Booking Summaries to Room Sales
+then whn clinking on it it should have like this look and design exactly
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+    <title>Room Sale Report | JiPOS </title>
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://demo1.jipos.co/assets/plugins/fontawesome-free/css/all.min.css">
+    <!-- overlayScrollbars -->
+    <link rel="stylesheet" href="https://demo1.jipos.co/assets/plugins/overlayScrollbars/css/OverlayScrollbars.min.css">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <!-- daterange picker -->
+    <link rel="stylesheet" href="https://demo1.jipos.co/assets/plugins/daterangepicker/daterangepicker.css">
+    <!-- iCheck for checkboxes and radio inputs -->
+    <link rel="stylesheet" href="https://demo1.jipos.co/assets/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
+    <!-- Bootstrap Color Picker -->
+    <link rel="stylesheet" href="https://demo1.jipos.co/assets/plugins/bootstrap-colorpicker/css/bootstrap-colorpicker.min.css">
+    <!-- Tempusdominus Bbootstrap 4 -->
+    <link rel="stylesheet" href="https://demo1.jipos.co/assets/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css">
+    <!-- Select2 -->
+    <link rel="stylesheet" href="https://demo1.jipos.co/assets/plugins/select2/css/select2.min.css">
+    <link rel="stylesheet" href="https://demo1.jipos.co/assets/plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css">
+    <!-- Bootstrap4 Duallistbox -->
+    <link rel="stylesheet" href="https://demo1.jipos.co/assets/plugins/bootstrap4-duallistbox/bootstrap-duallistbox.min.css">
+
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://demo1.jipos.co/assets/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="https
+<truncated 45215 bytes>
+owance Types </p>
+                                                            </a>
+                                                        </li>
+                                                        <li class="nav-item">
+                                                            <a href="https://demo1.jipos.co/sys/deductibles" class="nav-link ">
+                                                                <i class="nav-icon fa fa-angle-right"></i>
+                                                                <p> Deduction Types </p>
+                                                            </a>
+                                                        </li>
+                                                                                                    </ul>
+                                            </li>
+                                        
+                                        <li class="nav-item">
+                                            <a href="https://demo1.jipos.co/payroll/index" target="_blank" class="nav-link ">
+                                                <i class="nav-icon far fa-dot-circle-o"></i>
+                                                <p>Generate Payroll </p>
+                                            </a>
+                                        </li>
+
+                                        <li class="nav-item">
+                                            <a href="https://demo1.jipos.co/payroll/advances" target="_blank" class="nav-link ">
+                                                <i class="nav-icon far fa-dot-circle-o"></i>
+                                                <p>Advances </p>
+                                            </a>
+                                        </li>
+
+                                        <li class="nav-item">
+                                            <a href="https://
+<truncated 61772 bytes>
+
+NOTE: The output was truncated because it was too long. Use a more targeted query or a smaller range to get the information you need.

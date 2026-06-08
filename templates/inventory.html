@@ -1,0 +1,240 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Content Header (Page header) -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="goBack()"><i class="fa fa-arrow-left" aria-hidden="true"></i></button>
+                    Active Items
+                </h1>
+                <p class="text-muted mb-0">Manage active items, barcode attributes, pricing, and stock-takes.</p>
+                <script>
+                    function goBack() {
+                        window.history.back();
+                    }
+                </script>
+            </div><!-- /.col -->
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Active Items</li>
+                </ol>
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+<!-- /.content-header -->
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-md-12 col-sm-12 mb-2">
+                <a href="/admin/export-items" class="btn btn-rgs btn-xs pull-right mr-2"><span class="">Export to CSV</span></a>
+                <a href="/admin/failed-imports" class="btn btn-primary btn-xs pull-right mr-2">Failed Imports</a>
+                <a href="/admin/add-item" class="btn btn-primary btn-xs pull-right mr-2">Add Item</a>
+            </div>
+
+            <div class="col-md-12 col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Active Item List</h3>
+                        <div class="card-tools">
+                            <a href="#" data-toggle="modal" data-target="#printLabels" class="btn btn-rgp btn-xs" title="Print Labels"> <i class="fa fa-barcode"></i></a>
+                            <a href="/admin/fixed-assets" class="btn btn-dark btn-xs">Fixed Assets</a>
+                            <a href="/admin/items/archive" class="btn btn-dark btn-xs">Archive Item List</a>
+                            <a href="#" onclick="get_all_items()" class="btn btn-dark btn-xs">Upload to Digitax <i class="fa fa-upload"></i></a>
+                        </div>
+                    </div>
+
+                    <!-- /.card-header -->
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12 table-responsive">
+                                <table id="itemtable" class="table table-sm table-condensed table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>SKU</th>
+                                            <th>Unit</th>
+                                            <th>Category</th>
+                                            <th>Brand</th>
+                                            <th>Color</th>
+                                            <th>B.Price</th>
+                                            <th>M.Price</th>
+                                            <th>Total Qty</th>
+                                            <th>Reorder lvl</th>
+                                            <th>Reorder Status</th>
+                                            <th>Tax Type</th>
+                                            <th>Kitchen Item?</th>
+                                            <th>Qty Predefined</th>
+                                            <th>Narrative</th>
+                                            <th><span class="nobr">Action</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- DataTables will populate this -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div><!-- /.card-body -->
+                </div>
+            </div>
+        </div>
+    </div><!--/. container-fluid -->
+</section>
+
+<!-- Modals -->
+<div id="generalModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body" id="generalModalBody"></div>
+        </div>
+    </div>
+</div>
+
+<div id="printLabels" class="modal fade" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>Print Labels</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-6" style="border-right: 1px solid #abadab70">
+                        <form action="/admin/items-print-labels" method="post" target="_blank">
+                            <div class="row d-flex justify-content-center">
+                                <div class="col-md-12">
+                                    <label>Print by Item Categories <i class="text-danger">*</i></label>
+                                    <select class="form-control select2" name="category_ids[]" multiple required>
+                                        <option value="All">All</option>
+                                        {% for cat in categories %}
+                                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-xs-12 col-md-12 mt-3">
+                                    <button type="button" class="btn btn-rgd" data-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-rgs pull-right">Submit</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col-6">
+                        <form action="/admin/items-print-labels-specific" method="post" target="_blank">
+                            <div class="row d-flex justify-content-center">
+                                <div class="col-md-12">
+                                    <label>Print by Item(s) <i class="text-danger">*</i></label>
+                                    <select class="form-control select2" name="p_items[]" multiple required>
+                                        <option value="All">All</option>
+                                        {% for item in products %}
+                                        <option value="{{ item.id }}">{{ item.name }} [{{ item.sku }}]</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-xs-12 col-md-12 mt-3">
+                                    <button type="button" class="btn btn-rgd" data-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-rgs pull-right">Submit</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    function get_all_items() {
+        $.ajax({
+            url: '/admin/digitax-items-modal',
+            success: function(html) {
+                $('#generalModalBody').html(html);
+                $('#generalModal').modal('toggle');
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        $('#itemtable').DataTable({
+            "pageLength": 30,
+            "processing": true,
+            "serverSide": true,
+            "responsive": true,
+            "ajax": {
+                url: "/admin/all-items-json",
+                type: 'GET',
+                data: {
+                    class: 'All',
+                    active: 1
+                }
+            },
+            "columns": [
+                { "data": "name" },
+                { "data": "sku" },
+                { "data": "unit" },
+                { "data": "category" },
+                { "data": "brand" },
+                { "data": "color" },
+                { "data": "buying_price" },
+                { "data": "marked_price" },
+                { "data": "total_qty" },
+                { "data": "reorder_level" },
+                { "data": "reorder_status" },
+                { "data": "tax_type" },
+                { "data": "kitchen_item" },
+                { "data": "qty_predefined" },
+                { "data": "narrative" },
+                { "data": "action", "orderable": false }
+            ]
+        });
+    });
+
+    function delete_item(id) {
+        if (confirm('Are you sure you want to delete this item?')) {
+            $.ajax({
+                url: '/admin/delete-item/' + id,
+                success: function(data) {
+                    if (data.resp == '1') {
+                        swal({ icon: 'success', title: 'Success', text: data.message });
+                        setTimeout(function() { location.reload(); }, 2000);
+                    } else {
+                        swal({ icon: 'error', title: 'Failed', text: data.message });
+                    }
+                }
+            });
+        }
+    }
+
+    function save_price(id) {
+        var price = $('#marked_price_' + id).val();
+        $.ajax({
+            type: 'POST',
+            url: '/admin/save-item-price',
+            data: { itemid: id, itemprice: price },
+            success: function(resp) {
+                toastr["success"]("Marked price updated!");
+            }
+        });
+    }
+
+    function save_buying_price(id) {
+        var price = $('#buying_price_' + id).val();
+        $.ajax({
+            type: 'POST',
+            url: '/admin/save-item-buying-price',
+            data: { itemid: id, itemprice: price },
+            success: function(resp) {
+                toastr["success"]("Buying price updated!");
+            }
+        });
+    }
+</script>
+{% endblock %}

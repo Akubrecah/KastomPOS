@@ -1,0 +1,239 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="flex flex-col lg:flex-row gap-6 h-[calc(100vh-120px)]">
+    <!-- Left: Product Selection -->
+    <div class="flex-1 flex flex-col min-w-0">
+        <!-- Search and Categories -->
+        <div class="bg-white p-4 rounded-2xl border shadow-sm mb-4">
+            <div class="flex flex-wrap gap-2 overflow-x-auto no-scrollbar">
+                <button onclick="filterCategory('all')" class="cat-btn active px-6 py-2 rounded-lg text-sm font-black border-0 transition">All Items</button>
+                {% for cat in categories %}
+                <button onclick="filterCategory('{{ cat.name }}')" class="cat-btn px-6 py-2 rounded-lg text-sm font-black border-0 transition uppercase">{{ cat.name }}</button>
+                {% endfor %}
+            </div>
+            <div class="mt-4 relative">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="productSearch" onkeyup="searchProducts()" placeholder="Search items..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none transition text-sm">
+            </div>
+        </div>
+
+        <!-- Product Grid -->
+        <div class="flex-1 overflow-y-auto pr-2 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3" id="productGrid">
+            {% for product in products %}
+            <div class="product-card bg-white rounded-xl border shadow-sm hover:shadow-md transition cursor-pointer overflow-hidden flex flex-col group relative" 
+                 data-category="{{ product.category.name }}" 
+                 data-name="{{ product.name }}"
+                 onclick="addToOrder({{ product.id }}, '{{ product.name }}', {{ product.selling_price }})">
+                <div class="aspect-[4/3] bg-slate-100 relative">
+                    {% if product.image_url %}
+                    <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-slate-200 text-2xl"><i class="fas fa-image"></i></div>
+                    {% endif %}
+                    <div class="absolute bottom-2 right-2 px-2 py-0.5 bg-blue-600 text-white rounded text-[10px] font-black shadow-sm">
+                        {{ product.stock_quantity }}
+                    </div>
+                </div>
+                <div class="p-3">
+                    <h3 class="font-bold text-slate-700 text-xs line-clamp-1 mb-1">{{ product.name }}</h3>
+                    <span class="text-teal-600 font-black text-sm">{{ settings.currency }} {{ product.selling_price }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Right: Current Order -->
+    <div class="w-full lg:w-[400px] flex flex-col h-full">
+        <div class="bg-white rounded-2xl flex flex-col h-full shadow-xl border overflow-hidden">
+            <div class="p-4 border-b">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-black text-slate-900">Current Order</h2>
+                    <span class="px-2 py-1 bg-teal-50 text-teal-600 text-[10px] font-black rounded uppercase">Counter Main</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="waiterSelect" class="bg-slate-50 border rounded-lg p-2 text-xs outline-none">
+                        <option value="">Select Waiter</option>
+                        {% for waiter in waiters %}
+                        <option value="{{ waiter.id }}">{{ waiter.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="text" id="tableNum" placeholder="Table/Ref" class="bg-slate-50 border rounded-lg p-2 text-xs outline-none">
+                </div>
+            </div>
+
+            <!-- Order Items List -->
+            <div class="flex-1 overflow-y-auto p-0" id="orderItems">
+                <!-- Items injected here as a table for accuracy -->
+            </div>
+
+            <!-- Totals & Actions -->
+            <div class="p-4 bg-slate-50 border-t space-y-4">
+                <div class="space-y-1">
+                    <div class="flex justify-between text-slate-500 text-[11px] font-bold"><span>Subtotal</span><span id="subtotal">0.00</span></div>
+                    <div class="flex justify-between text-slate-500 text-[11px] font-bold"><span>Tax Total</span><span id="tax">0.00</span></div>
+                    <div class="flex justify-between text-lg font-black text-slate-900 pt-2 border-t border-slate-200">
+                        <span>TOTAL</span>
+                        <span id="grandTotal">0.00</span>
+                    </div>
+                </div>
+                <button onclick="checkout()" class="w-full bg-[#008080] hover:bg-[#006666] text-white py-3 rounded-xl font-black text-base transition shadow-lg shadow-teal-100 flex items-center justify-center gap-2">
+                    PAYMENT <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Note Modal -->
+<div id="noteModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+        <h3 class="font-bold text-lg mb-4">Add Item Note</h3>
+        <textarea id="itemNoteInput" class="w-full p-4 border rounded-xl bg-slate-50 outline-none mb-4" rows="3" placeholder="e.g., Well done, cold, no onions..."></textarea>
+        <div class="flex gap-2">
+            <button onclick="saveNote()" class="flex-1 bg-slate-900 text-white py-3 rounded-xl font-bold">Save Note</button>
+            <button onclick="closeNoteModal()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .cat-btn.active { background-color: #ff8c00; color: white; box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3); }
+    .cat-btn:not(.active) { background-color: #f8fafc; color: #64748b; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+</style>
+
+<script>
+    let currentOrder = [];
+    let activeEditingId = null;
+
+    function filterCategory(cat) {
+        document.querySelectorAll('.cat-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.innerText === cat || (cat === 'all' && btn.innerText === 'All Items'));
+        });
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.style.display = (cat === 'all' || card.dataset.category === cat) ? 'flex' : 'none';
+        });
+    }
+
+    function searchProducts() {
+        const term = document.getElementById('productSearch').value.toLowerCase();
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.style.display = card.dataset.name.toLowerCase().includes(term) ? 'flex' : 'none';
+        });
+    }
+
+    function addToOrder(id, name, price) {
+        const existing = currentOrder.find(item => item.id === id && !item.note);
+        if (existing) {
+            existing.quantity++;
+        } else {
+            currentOrder.push({ id, name, price, quantity: 1, note: '' });
+        }
+        renderOrder();
+    }
+
+    function renderOrder() {
+        const container = document.getElementById('orderItems');
+        if (currentOrder.length === 0) {
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full text-slate-500 gap-4 opacity-50">
+                    <i class="fas fa-shopping-basket text-4xl"></i>
+                    <p class="text-sm">No items in order yet.</p>
+                </div>`;
+            updateTotals();
+            return;
+        }
+
+        container.innerHTML = currentOrder.map((item, index) => `
+            <div class="bg-white/5 border border-white/10 p-3 rounded-xl group relative">
+                <div class="flex justify-between items-start mb-2">
+                    <div class="flex-1">
+                        <h4 class="text-sm font-bold text-white">${item.name}</h4>
+                        <p class="text-[10px] text-emerald-400 font-bold">KES ${item.price}</p>
+                        ${item.note ? `<p class="text-[10px] text-amber-400 italic mt-1"><i class="fas fa-comment"></i> ${item.note}</p>` : ''}
+                    </div>
+                    <button onclick="removeItem(${index})" class="text-slate-500 hover:text-red-400 transition opacity-0 group-hover:opacity-100">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3 bg-white/10 rounded-lg p-1">
+                        <button onclick="updateQty(${index}, -1)" class="w-6 h-6 flex items-center justify-center hover:bg-white/10 rounded-md transition">-</button>
+                        <span class="text-xs font-bold w-4 text-center">${item.quantity}</span>
+                        <button onclick="updateQty(${index}, 1)" class="w-6 h-6 flex items-center justify-center hover:bg-white/10 rounded-md transition">+</button>
+                    </div>
+                    <button onclick="openNoteModal(${index})" class="text-[10px] text-slate-400 hover:text-white transition">
+                        <i class="fas fa-pen"></i> Add Note
+                    </button>
+                    <span class="text-sm font-black text-white">KES ${item.price * item.quantity}</span>
+                </div>
+            </div>
+        `).join('');
+        updateTotals();
+    }
+
+    function updateQty(index, delta) {
+        currentOrder[index].quantity += delta;
+        if (currentOrder[index].quantity <= 0) currentOrder.splice(index, 1);
+        renderOrder();
+    }
+
+    function removeItem(index) {
+        currentOrder.splice(index, 1);
+        renderOrder();
+    }
+
+    function updateTotals() {
+        const total = currentOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        document.getElementById('subtotal').innerText = `KES ${total.toLocaleString()}`;
+        document.getElementById('grandTotal').innerText = `KES ${total.toLocaleString()}`;
+    }
+
+    function openNoteModal(index) {
+        activeEditingId = index;
+        document.getElementById('itemNoteInput').value = currentOrder[index].note;
+        document.getElementById('noteModal').classList.remove('hidden');
+    }
+
+    function closeNoteModal() {
+        document.getElementById('noteModal').classList.add('hidden');
+    }
+
+    function saveNote() {
+        currentOrder[activeEditingId].note = document.getElementById('itemNoteInput').value;
+        closeNoteModal();
+        renderOrder();
+    }
+
+    async function checkout() {
+        if (currentOrder.length === 0) return alert('Order is empty');
+        const waiter_id = document.getElementById('waiterSelect').value;
+        const table_number = document.getElementById('tableNum').value;
+        
+        const response = await fetch('/orders/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                waiter_id,
+                table_number,
+                items: currentOrder.map(i => ({
+                    product_id: i.id,
+                    quantity: i.quantity,
+                    price: i.price,
+                    note: i.note
+                }))
+            })
+        });
+
+        const result = await response.json();
+        if (result.status === 'success') {
+            alert('Order placed successfully! Order ID: ' + result.order_id);
+            currentOrder = [];
+            renderOrder();
+            document.getElementById('tableNum').value = '';
+        }
+    }
+</script>
+{% endblock %}

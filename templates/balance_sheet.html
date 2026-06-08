@@ -1,0 +1,260 @@
+{% extends "layout.html" %}
+
+{% block title %}Balance Sheet | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    form {
+        padding: 10px !important;
+    }
+
+    .custom_nav_theme {
+        color: black !important;
+        border-bottom: 1px grey solid;
+    }
+
+    .tb_title {
+        height: 30px;
+        background: #2A3F54;
+        position: relative;
+        color: #fff;
+        font-weight: bold;
+        border: none;
+        width: 200px;
+        text-align: left;
+    }
+
+    .tb_title:hover,
+    .tb_title:active {
+        color: #A6A6A6;
+    }
+
+    .tb_title:before {
+        content: '';
+        position: absolute;
+        right: 0;
+        border-top: 30px solid white;
+        border-left: 30px solid #2A3F54;
+        width: 0;
+        top: 0;
+    }
+
+    .select2-container--bootstrap4 .select2-selection--single {
+        height: calc(2.25rem + 2px) !important;
+    }
+
+    .card-header {
+        padding: .50rem 1.25rem !important;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0,0,0,.125);
+    }
+    
+    .card-title {
+        font-weight: 600;
+        color: #444;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="goBack()">
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                    </button>
+                    Balance Sheet
+                </h1>
+                <script>
+                    function goBack() {
+                        window.history.back();
+                    }
+                </script>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Balance Sheet</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card shadow-sm card-outline card-info">
+                    <div class="card-header">
+                        <h3 class="card-title">Filter by Date</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <form id="filterForm">
+                            <div class="row">
+                                <div class="col-md-4 col-sm-6 mb-3">
+                                    <label>Store/Shop <span class="text-danger">*</span></label>
+                                    <select id="org_id" name="org_id" class="form-control select2" required>
+                                        <option value="All">All Stores</option>
+                                        {% for store in stores %}
+                                        <option value="{{ store.id }}">{{ store.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4 col-sm-6 mb-3">
+                                    <label>Select date <span class="text-danger">*</span></label>
+                                    <input type="date" id="sheet_date" name="sheet_date" class="form-control" value="{{ today }}" max="{{ today }}" required>
+                                </div>
+                                <div class="col-md-4 col-sm-12">
+                                    <div style="margin-top: 32px;">
+                                        <button type="button" onclick="get_data()" class="btn btn-rgp shadow-sm px-4">
+                                            Query & Print <i class="fa fa-file-pdf ml-1"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-12">
+                <div id="table-data" class="mt-3">
+                    <div class="text-center text-muted py-5 card shadow-sm">
+                        <i class="fa fa-info-circle fa-3x mb-3 text-info"></i>
+                        <p>Select a date and store, then click Query to view the Balance Sheet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({
+            theme: 'bootstrap4',
+            width: '100%'
+        });
+    });
+
+    function get_data() {
+        var org_id = $('#org_id').val();
+        var sheet_date = $('#sheet_date').val();
+
+        if (!sheet_date) {
+            Swal.fire('Error', 'Please select a date', 'error');
+            return;
+        }
+
+        $('#table-data').html('<div class="card shadow-sm"><div class="card-body text-center py-5"><i class="fa fa-spinner fa-spin fa-3x text-primary"></i><p class="mt-2">Generating Balance Sheet...</p></div></div>');
+
+        $.ajax({
+            url: "/api/admin/accounting/get-balance-sheet",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+                store_id: org_id,
+                as_at_date: sheet_date
+            }),
+            success: function(response) {
+                if (response.error) {
+                    $('#table-data').html('<div class="alert alert-danger m-3">' + response.error + '</div>');
+                    return;
+                }
+                render_report(response);
+            },
+            error: function() {
+                $('#table-data').html('<div class="alert alert-danger m-3">Failed to load report data. Please try again.</div>');
+            }
+        });
+    }
+
+    function render_report(data) {
+        var html = '<div class="card shadow-sm">';
+        html += '<div class="card-header d-flex justify-content-between align-items-center bg-light">';
+        html += '<h3 class="card-title font-weight-bold">Statement of Financial Position</h3>';
+        html += '<div class="ml-auto">';
+        html += '<button onclick="window.print()" class="btn btn-sm btn-outline-danger shadow-sm mr-2"><i class="fa fa-print mr-1"></i> Print</button>';
+        html += '</div>';
+        html += '</div>';
+        html += '<div class="card-body p-0">';
+        html += '<div class="table-responsive">';
+        html += '<table class="table table-hover table-bordered mb-0">';
+        
+        // ASSETS
+        html += '<thead class="bg-primary text-white"><tr><th colspan="2" class="py-2">ASSETS</th></tr></thead><tbody>';
+        
+        // Current Assets
+        html += '<tr class="bg-light"><td colspan="2" class="font-weight-bold px-3">Current Assets</td></tr>';
+        if (data.assets.current.length > 0) {
+            data.assets.current.forEach(function(acc) {
+                html += '<tr><td class="pl-4">' + acc.name + '</td><td class="text-right font-weight-bold">' + acc.balance.toLocaleString(undefined, {minimumFractionDigits: 2}) + '</td></tr>';
+            });
+        } else {
+            html += '<tr><td colspan="2" class="text-center text-muted">No current assets found</td></tr>';
+        }
+        
+        // Fixed Assets
+        html += '<tr class="bg-light"><td colspan="2" class="font-weight-bold px-3">Fixed Assets</td></tr>';
+        if (data.assets.fixed.length > 0) {
+            data.assets.fixed.forEach(function(acc) {
+                html += '<tr><td class="pl-4">' + acc.name + '</td><td class="text-right font-weight-bold">' + acc.balance.toLocaleString(undefined, {minimumFractionDigits: 2}) + '</td></tr>';
+            });
+        } else {
+            html += '<tr><td colspan="2" class="text-center text-muted">No fixed assets found</td></tr>';
+        }
+        
+        html += '<tr class="bg-dark text-white font-weight-bold"><td>TOTAL ASSETS</td><td class="text-right">' + data.total_assets.toLocaleString(undefined, {minimumFractionDigits: 2}) + '</td></tr>';
+
+        // LIABILITIES & EQUITY
+        html += '<tr class="bg-info text-white"><th colspan="2" class="py-2">LIABILITIES & EQUITY</th></tr>';
+        
+        // Liabilities
+        html += '<tr class="bg-light"><td colspan="2" class="font-weight-bold px-3">Liabilities</td></tr>';
+        if (data.liabilities.length > 0) {
+            data.liabilities.forEach(function(acc) {
+                html += '<tr><td class="pl-4">' + acc.name + '</td><td class="text-right font-weight-bold">' + acc.balance.toLocaleString(undefined, {minimumFractionDigits: 2}) + '</td></tr>';
+            });
+        } else {
+            html += '<tr><td colspan="2" class="text-center text-muted">No liabilities found</td></tr>';
+        }
+        
+        // Equity
+        html += '<tr class="bg-light"><td colspan="2" class="font-weight-bold px-3">Equity</td></tr>';
+        if (data.equity.length > 0) {
+            data.equity.forEach(function(acc) {
+                html += '<tr><td class="pl-4">' + acc.name + '</td><td class="text-right font-weight-bold">' + acc.balance.toLocaleString(undefined, {minimumFractionDigits: 2}) + '</td></tr>';
+            });
+        }
+        
+        // Retained Earnings (Profit/Loss)
+        html += '<tr><td class="pl-4">Retained Earnings (Net Profit/Loss)</td><td class="text-right font-weight-bold">' + data.retained_earnings.toLocaleString(undefined, {minimumFractionDigits: 2}) + '</td></tr>';
+
+        html += '<tr class="bg-dark text-white font-weight-bold"><td>TOTAL LIABILITIES & EQUITY</td><td class="text-right">' + data.total_liabilities_equity.toLocaleString(undefined, {minimumFractionDigits: 2}) + '</td></tr>';
+
+        html += '</tbody></table>';
+        html += '</div>';
+        
+        // Check for balance
+        var diff = Math.abs(data.total_assets - data.total_liabilities_equity);
+        if (diff > 0.01) {
+            html += '<div class="alert alert-warning m-3 shadow-sm"><i class="fa fa-exclamation-triangle mr-2"></i> Note: Balance Sheet is out of balance by ' + diff.toLocaleString(undefined, {minimumFractionDigits: 2}) + '</div>';
+        }
+
+        html += '</div>';
+        html += '</div>';
+
+        $('#table-data').html(html);
+    }
+</script>
+{% endblock %}

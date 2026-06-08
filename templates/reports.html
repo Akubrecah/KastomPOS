@@ -1,0 +1,166 @@
+{% extends "layout.html" %}
+
+{% block title %}Reports | KastomPOS{% endblock %}
+
+{% block content %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">Business Operations Reports</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item active">Reports</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card card-outline card-info">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <p class="text-muted mb-0">Comprehensive insights into your sales and staff performance.</p>
+                                <div>
+                                    <button class="btn btn-default btn-sm mr-2">
+                                        <i class="fas fa-calendar mr-1"></i> This Week
+                                    </button>
+                                    <button class="btn btn-dark btn-sm">
+                                        <i class="fas fa-download mr-1"></i> Export PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Payment Mode Breakdown -->
+                <div class="col-lg-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white">
+                            <h3 class="card-title font-weight-bold">
+                                <i class="fas fa-wallet text-success mr-2"></i> Payment Mode Breakdown
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group list-group-flush">
+                                {% for method, amount in payment_breakdown %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center bg-light rounded mb-2 border-0">
+                                    <span class="text-sm font-medium text-muted capitalize">{{ method }}</span>
+                                    <span class="font-weight-bold text-dark">{{ settings.currency }} {{ "{:,.2f}".format(amount) }}</span>
+                                </div>
+                                {% else %}
+                                <p class="text-center text-muted py-4">No payments recorded today.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sales by Category -->
+                <div class="col-lg-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white">
+                            <h3 class="card-title font-weight-bold">
+                                <i class="fas fa-tags text-primary mr-2"></i> Revenue by Category
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            {% for name, amount in sales_by_cat %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between text-xs font-weight-bold mb-1">
+                                    <span class="text-muted">{{ name }}</span>
+                                    <span>{{ settings.currency }} {{ "{:,.2f}".format(amount) }}</span>
+                                </div>
+                                <div class="progress progress-xxs rounded-pill">
+                                    <div class="progress-bar bg-primary" style="width: 70%"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Waiter Performance -->
+                <div class="col-lg-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white">
+                            <h3 class="card-title font-weight-bold">
+                                <i class="fas fa-user-friends text-purple mr-2"></i> Waiters Performance
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            {% for name, total in sales_by_waiter %}
+                            <div class="d-flex align-items-center mb-3 p-2 hover-bg-light rounded transition">
+                                <div class="bg-light text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; font-weight: bold; font-size: 14px;">
+                                    {{ name[:2]|upper }}
+                                </div>
+                                <div class="ml-3 flex-grow-1">
+                                    <p class="mb-0 font-weight-bold text-sm">{{ name }}</p>
+                                    <p class="mb-0 text-xs text-muted">Total Sales Generated</p>
+                                </div>
+                                <span class="font-weight-bold text-sm">{{ settings.currency }} {{ "{:,.2f}".format(total) }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Item Sales Table -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h3 class="card-title font-weight-bold">Highest & Lowest Moving Items</h3>
+                            <span class="badge badge-success px-2 py-1">Top Performers</span>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th class="px-4 py-3 text-xs font-weight-bold text-muted text-uppercase">Item Name</th>
+                                            <th class="px-4 py-3 text-xs font-weight-bold text-muted text-uppercase">Quantity Sold</th>
+                                            <th class="px-4 py-3 text-xs font-weight-bold text-muted text-uppercase">Total Revenue</th>
+                                            <th class="px-4 py-3 text-xs font-weight-bold text-muted text-uppercase text-right">Trend</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for name, qty, revenue in item_sales %}
+                                        <tr>
+                                            <td class="px-4 py-3 font-weight-bold text-dark">{{ name }}</td>
+                                            <td class="px-4 py-3">
+                                                <span class="badge badge-secondary px-3 py-1 font-weight-bold">{{ qty }}</span>
+                                            </td>
+                                            <td class="px-4 py-3 font-weight-bold text-success">{{ settings.currency }} {{ "{:,.2f}".format(revenue) }}</td>
+                                            <td class="px-4 py-3 text-right">
+                                                <i class="fas fa-chart-line text-success opacity-50"></i>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <style>
+        .hover-bg-light:hover { background-color: #f8f9fa; }
+        .text-purple { color: #6f42c1; }
+        .transition { transition: all 0.2s ease; }
+        .progress-xxs { height: 6px; }
+    </style>
+{% endblock %}

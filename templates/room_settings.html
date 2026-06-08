@@ -1,0 +1,299 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Content Wrapper. Contains page content -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="goBack()"><i class="fa fa-arrow-left" aria-hidden="true"> </i></button>
+                    Room Types
+                </h1>
+                <script>
+                    function goBack() {
+                        window.history.back();
+                    }
+                </script>
+            </div><!-- /.col -->
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/admin">Home</a></li>
+                    <li class="breadcrumb-item active">Room Types</li>
+                </ol>
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+<!-- /.content-header -->
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-12">
+            </div>
+            <div class="col-12">
+                <p class="text-default"><i class="fa fa-info-cirle-o"></i> Configure essential property settings such as Room Types, Policies and Operational Defaults which directly affects reservations, billing and guest experiences.</p>
+            </div>
+        </div>
+
+        <div class="row">
+
+            <div class="col-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="nav flex-column nav-tabs h-100" id="vert-tabs-tab" role="tablist" aria-orientation="vertical">
+                                    <a class="nav-link active" id="vert-room-types-tab" data-toggle="pill" href="#vert-room-types" role="tab" aria-controls="vert-room-types" aria-selected="true"><i class="fa fa-arrow-circle-o-right"></i> Room Types</a>
+                                    <a class="nav-link" id="vert-room-maintenance-tab" data-toggle="pill" href="#vert-room-maintenance" role="tab" aria-controls="vert-room-maintenance" aria-selected="false"><i class="fa fa-arrow-circle-o-right"></i> Room Maintenance Status</a>
+                                    <a class="nav-link" id="vert-revenue-allocations-tab" data-toggle="pill" href="#vert-revenue-allocations" role="tab" aria-controls="vert-revenue-allocations" aria-selected="false"><i class="fa fa-arrow-circle-o-right"></i> Room Revenue Allocations</a>
+                                    <a class="nav-link" id="vert-house-rules-tab" data-toggle="pill" href="#vert-house-rules" role="tab" aria-controls="vert-house-rules" aria-selected="false"><i class="fa fa-arrow-circle-o-right"></i> House Rules</a>
+                                    <a class="nav-link" id="vert-terms-and-conditions-tab" data-toggle="pill" href="#vert-terms-and-conditions" role="tab" aria-controls="vert-terms-and-conditions" aria-selected="false"><i class="fa fa-arrow-circle-o-right"></i> Terms and Conditions</a>
+                                    <a class="nav-link" id="vert-online-settings-tab" data-toggle="pill" href="#vert-online-settings" role="tab" aria-controls="vert-online-settings" aria-selected="false"><i class="fa fa-arrow-circle-o-right"></i> Online Booking Settings</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-9">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="tab-content" id="vert-tabs-tabContent">
+                                    <div class="tab-pane text-left fade show active" id="vert-room-types" role="tabpanel" aria-labelledby="vert-room-types-tab">
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="card">
+                                                    <div class="card-body p-2">
+                                                        Set / register your hotel's room types appropriately i.e Family Room, Superior Room, Executive Room, etc.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Register Room Type Form -->
+                                            <div class="col-md-4 col-sm-12">
+                                                <div class="card card-outline card-primary">
+                                                    <div class="card-header">
+                                                        <h3 class="card-title">Register Room Type</h3>
+                                                        <div class="card-tools">
+                                                            <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <form action="/api/admin/rooms/types/add" method="post">
+                                                            <div class="row">
+                                                                <div class="col-md-12 form-group">
+                                                                    <label>Type name <span class="text-danger">*</span></label>
+                                                                    <input type="text" name="name" class="form-control" required placeholder="e.g. Executive Suite" />
+                                                                </div>
+                                                                <div class="col-md-12 form-group">
+                                                                    <label>Base Rate (Bed Only) <span class="text-danger">*</span></label>
+                                                                    <input type="number" step="0.01" name="base_rate" class="form-control" required placeholder="0.00" />
+                                                                </div>
+                                                                <div class="col-md-12 form-group">
+                                                                    <label>Narrative / Description</label>
+                                                                    <textarea name="description" class="form-control" rows="3" placeholder="Enter details..."></textarea>
+                                                                </div>
+                                                                <div class="col-md-12">
+                                                                    <button type="submit" class="btn btn-primary btn-block">Save Room Type</button>
+                                                                </div>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Room Types List -->
+                                            <div class="col-md-8 col-sm-12">
+                                                <div class="card card-outline card-info">
+                                                    <div class="card-header">
+                                                        <h3 class="card-title">Room Types List</h3>
+                                                        <div class="card-tools">
+                                                            <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-minus"></i></button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="card-body table-responsive p-0">
+                                                        <table class="table table-hover text-nowrap">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>ID</th>
+                                                                    <th>Room Type Name</th>
+                                                                    <th>Base Rate</th>
+                                                                    <th>Narrative</th>
+                                                                    <th>Action</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for rt in room_types %}
+                                                                <tr>
+                                                                    <td>{{ rt.id }}</td>
+                                                                    <td><b>{{ rt.name }}</b></td>
+                                                                    <td>{{ rt.base_rate|format_currency }}</td>
+                                                                    <td><small>{{ rt.description or 'N/A' }}</small></td>
+                                                                    <td>
+                                                                        <button type="button" class="btn btn-info btn-xs" data-toggle="modal" data-target="#editTypeModal{{ rt.id }}">
+                                                                            <i class="fas fa-edit"></i> Edit
+                                                                        </button>
+                                                                        <form action="/api/admin/rooms/types/delete/{{ rt.id }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this room type?')">
+                                                                            <button type="submit" class="btn btn-danger btn-xs">
+                                                                                <i class="fas fa-trash"></i> Delete
+                                                                            </button>
+                                                                        </form>
+                                                                    </td>
+                                                                </tr>
+
+                                                                <!-- Edit Modal for each Room Type -->
+                                                                <div class="modal fade" id="editTypeModal{{ rt.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+                                                                    <div class="modal-dialog">
+                                                                        <div class="modal-content">
+                                                                            <div class="modal-header bg-info">
+                                                                                <h4 class="modal-title">Edit Room Type Details</h4>
+                                                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                                    <span aria-hidden="true">&times;</span>
+                                                                                </button>
+                                                                            </div>
+                                                                            <form action="/api/admin/rooms/types/update/{{ rt.id }}" method="post">
+                                                                                <div class="modal-body">
+                                                                                    <div class="form-group">
+                                                                                        <label>Type Name <span class="text-danger">*</span></label>
+                                                                                        <input type="text" name="name" class="form-control" value="{{ rt.name }}" required />
+                                                                                    </div>
+                                                                                    <div class="form-group">
+                                                                                        <label>Base Rate <span class="text-danger">*</span></label>
+                                                                                        <input type="number" step="0.01" name="base_rate" class="form-control" value="{{ rt.base_rate }}" required />
+                                                                                    </div>
+                                                                                    <div class="form-group">
+                                                                                        <label>Narrative / Description</label>
+                                                                                        <textarea name="description" class="form-control" rows="3">{{ rt.description }}</textarea>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="modal-footer justify-content-between">
+                                                                                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                                                                    <button type="submit" class="btn btn-primary">Update Details</button>
+                                                                                </div>
+                                                                            </form>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                {% endfor %}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Placeholder Tabs -->
+                                    <div class="tab-pane fade" id="vert-room-maintenance" role="tabpanel" aria-labelledby="vert-room-maintenance-tab">
+                                        <h5>Room Maintenance Status</h5>
+                                        <p>Coming Soon: Manage room cleaning and maintenance schedules.</p>
+                                    </div>
+                                    <div class="tab-pane fade" id="vert-revenue-allocations" role="tabpanel" aria-labelledby="vert-revenue-allocations-tab">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="card">
+                                        <div class="card-body p-2">
+                                            This is the section where you set how you'd like to map your revenue on accommodation.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-12 col-sm-12">
+                                    <div class="card card-primary card-outline">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Booking Revenue Allocations</h3>
+                                        </div>
+                                        <!-- /.card-header -->
+                                        <div class="card-body p-0">
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-hover table-striped mb-0">
+                                                    <tbody>
+                                                        {% for alloc in allocations %}
+                                                        <tr>
+                                                            <th style="width: 30%;">{{ loop.index }}. {{ alloc.meal_plan }} Allocation</th>
+                                                            <td>
+                                                                <form action="/api/admin/rooms/revenue-allocations/update/{{ alloc.id }}" method="post">
+                                                                    <div class="row">
+                                                                        <div class="col-md-6">
+                                                                            <div class="form-group mb-1">
+                                                                                <small>Food Revenue (%):</small>
+                                                                                <input class="form-control form-control-sm" name="food_revenue" type="number" max="100" min="0" value="{{ alloc.food_revenue|int }}">
+                                                                            </div>
+                                                                            <div class="form-group mb-1">
+                                                                                <small>Accommodation Revenue (%):</small>
+                                                                                <input class="form-control form-control-sm" name="accommodation_revenue" type="number" max="100" min="0" value="{{ alloc.accommodation_revenue|int }}">
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-6">
+                                                                            <div class="form-group mb-1">
+                                                                                <small>Beverage Revenue (%):</small>
+                                                                                <input class="form-control form-control-sm" name="beverage_revenue" type="number" max="100" min="0" value="{{ alloc.beverage_revenue|int }}">
+                                                                            </div>
+                                                                            <div class="form-group mb-1">
+                                                                                <small>Hall Revenue (%):</small>
+                                                                                <input class="form-control form-control-sm" name="hall_revenue" type="number" max="100" min="0" value="{{ alloc.hall_revenue|int }}">
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-12 mt-1">
+                                                                            <button type="submit" class="btn btn-xs btn-primary">Update Allocation <i class="fa fa-check-circle"></i></button>
+                                                                        </div>
+                                                                    </div>
+                                                                </form>
+                                                            </td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div><!-- /.card-body -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                                    <div class="tab-pane fade" id="vert-house-rules" role="tabpanel" aria-labelledby="vert-house-rules-tab">
+                                        <h5>House Rules</h5>
+                                        <p>Coming Soon: Define rules for guests (no smoking, check-in times, etc.).</p>
+                                    </div>
+                                    <div class="tab-pane fade" id="vert-terms-and-conditions" role="tabpanel" aria-labelledby="vert-terms-and-conditions-tab">
+                                        <h5>Terms and Conditions</h5>
+                                        <p>Coming Soon: Edit your property's legal terms.</p>
+                                    </div>
+                                    <div class="tab-pane fade" id="vert-online-settings" role="tabpanel" aria-labelledby="vert-online-settings-tab">
+                                        <h5>Online Booking Settings</h5>
+                                        <p>Coming Soon: Configure integration with online travel agencies (OTAs).</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div><!--/. container-fluid -->
+    </section>
+    <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+<style>
+    .nav-tabs .nav-link i {
+        margin-right: 5px;
+    }
+    
+    .card-outline.card-primary {
+        border-top: 3px solid #007bff;
+    }
+    
+    .card-outline.card-info {
+        border-top: 3px solid #17a2b8;
+    }
+</style>
+{% endblock %}

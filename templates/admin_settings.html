@@ -1,0 +1,165 @@
+{% extends "layout.html" %}
+
+{% block title %}Business Settings | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    .card {
+        border-radius: 0px !important;
+        border-top: 3px solid #008080 !important;
+    }
+    .nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+        color: #fff !important;
+        background-color: #008080 !important;
+        border-color: #008080 #008080 #008080 !important;
+    }
+    .nav-tabs .nav-link {
+        color: #495057 !important;
+        border-radius: 0px !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">Business Settings</h1>
+                <p class="text-muted mb-0">Configure your organization settings, localization, and general system properties.</p>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Settings</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-outline">
+                    <div class="card-header p-2 border-bottom-0">
+                        <ul class="nav nav-tabs" id="settingsTab" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab" aria-controls="general" aria-selected="true">
+                                    <i class="fas fa-building mr-1"></i> Organization Profile
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="localization-tab" data-toggle="tab" href="#localization" role="tab" aria-controls="localization" aria-selected="false">
+                                    <i class="fas fa-globe mr-1"></i> Localization &amp; Tax
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="system-tab" data-toggle="tab" href="#system" role="tab" aria-controls="system" aria-selected="false">
+                                    <i class="fas fa-cogs mr-1"></i> System Parameters
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <form action="/admin/org/settings/save" method="POST">
+                        <div class="card-body">
+                            <div class="tab-content" id="settingsTabContent">
+                                <!-- General Settings Tab -->
+                                <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="font-weight-bold">Business Name</label>
+                                                <input type="text" name="business_name" class="form-control" value="{{ settings.business_name|default('KastomPOS ERP') }}" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="font-weight-bold">Company Email</label>
+                                                <input type="email" name="email" class="form-control" value="{{ settings.email|default('info@kastompos.com') }}">
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="font-weight-bold">Phone Number</label>
+                                                <input type="text" name="phone" class="form-control" value="{{ settings.phone|default('+254 712 345678') }}">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="font-weight-bold">Physical Address/Location</label>
+                                                <textarea name="location" class="form-control" rows="3">{{ settings.location|default('Nairobi, Kenya') }}</textarea>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="font-weight-bold">Company Logo URL</label>
+                                                <input type="text" name="logo_url" class="form-control" value="{{ settings.logo_url|default('') }}" placeholder="https://example.com/logo.png">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Localization & Tax Tab -->
+                                <div class="tab-pane fade" id="localization" role="tabpanel" aria-labelledby="localization-tab">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="font-weight-bold">Primary Currency</label>
+                                                <input type="text" name="currency" class="form-control" value="{{ settings.currency|default('KES') }}" required>
+                                                <small class="text-muted">For example: KES, USD, EUR, etc.</small>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="font-weight-bold">Country</label>
+                                                <select name="country" class="form-control">
+                                                    <option value="Kenya" selected>Kenya</option>
+                                                    <option value="Uganda">Uganda</option>
+                                                    <option value="Tanzania">Tanzania</option>
+                                                    <option value="Rwanda">Rwanda</option>
+                                                    <option value="United States">United States</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="font-weight-bold">Default VAT Tax Rate (%)</label>
+                                                <input type="number" step="any" name="tax_rate" class="form-control" value="16.0">
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="font-weight-bold">Fiscal Year Reporting Start</label>
+                                                <input type="date" name="fiscal_start" class="form-control" value="2026-01-01">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- System Parameter Tab -->
+                                <div class="tab-pane fade" id="system" role="tabpanel" aria-labelledby="system-tab">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="font-weight-bold">Default Receipt Footer Notes</label>
+                                                <textarea name="receipt_footer" class="form-control" rows="3">Thank you for your business! Powered by KastomPOS ERP.</textarea>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="font-weight-bold">Standard SMS Notification Gateway</label>
+                                                <select name="sms_gateway" class="form-control">
+                                                    <option value="africastalking">AfricasTalking Gateway</option>
+                                                    <option value="twillio">Twillio SMS</option>
+                                                    <option value="disabled" selected>Disabled</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer text-right">
+                            <button type="submit" class="btn btn-rgp">
+                                <i class="fas fa-save mr-1"></i> Save All Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

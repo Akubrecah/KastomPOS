@@ -1,0 +1,255 @@
+{% extends "layout.html" %}
+
+{% block title %}Room Sale Report | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    form { padding: 10px !important; }
+    .custom_nav_theme { color: black !important; border-bottom: 1px grey solid; }
+    .fa-ian { color: #393B3D !important; }
+    .select2 { width: 100% !important; }
+    .blur { color: transparent; text-shadow: 0 0 3px #000; }
+    li a { padding-left: 10px !important; }
+    .dropdown-menu { min-width: 15rem !important; }
+    .card-header { padding: .50rem 1.25rem !important; }
+
+    @media print {
+        .no-print, .main-sidebar, .main-header, .main-footer, .content-header .breadcrumb { display: none !important; }
+        .content-wrapper { margin-left: 0 !important; }
+        .card-tools { display: none !important; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Content Header -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="backbtn" title="Back" onclick="window.history.back()">
+                        <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                    </button>
+                    Room Sales
+                </h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item"><a href="/admin/reports/room-sales">Room Sales</a></li>
+                    <li class="breadcrumb-item active">Room Booking Summaries</li>
+                </ol>
+            </div>
+        </div>
+        <!-- 3-Tab Page Switch -->
+        <div class="row">
+            <div class="col-12">
+                <ul class="nav nav-tabs" id="roomReportTabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/admin/reports/room-sales">
+                            <i class="fa fa-bed mr-1"></i> Room Bookings Summary
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/reports/room-occupancy">
+                            <i class="fa fa-pie-chart mr-1"></i> Occupancy Report
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/reports/room-collections">
+                            <i class="fa fa-money mr-1"></i> Room Collections
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+
+        <!-- Filter Card -->
+        <div class="card no-print mb-3">
+            <div class="card-body">
+                <form method="get" action="/admin/reports/room-sales">
+                    <div class="row">
+                        <div class="col-md-12 text-info mb-2">
+                            Filter by date range
+                        </div>
+                        <div class="col-md-3">
+                            <label>Org/Store/Shop <i class="fa fa-building fa-ian"></i> <span class="text-danger">*</span></label>
+                            <select class="form-control select2" name="store_id" required>
+                                <option value="All">All Stores</option>
+                                {% for store in stores %}
+                                <option value="{{ store.id }}" {% if request.query_params.get('store_id') == store.id|string %}selected{% endif %}>{{ store.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label>From Date <i class="fa fa-calendar fa-ian"></i> <span class="text-danger">*</span></label>
+                            <input type="date" value="{{ from_date }}" name="from_date" class="form-control" required />
+                        </div>
+                        <div class="col-md-2">
+                            <label>To Date <i class="fa fa-calendar fa-ian"></i> <span class="text-danger">*</span></label>
+                            <input type="date" value="{{ to_date }}" name="to_date" class="form-control" required />
+                        </div>
+                        <div class="col-md-5">
+                            <button type="submit" style="margin-top: 30px;" class="btn btn-rgp">Filter <i class="fa fa-filter"></i></button>
+                            <button type="button" style="margin-top: 30px;" onclick="window.print()" class="btn btn-rgd ml-2">Print <i class="fa fa-print"></i></button>
+                            <button type="button" style="margin-top: 30px;" onclick="exportCSV()" class="btn btn-rgs ml-2">Export CSV <i class="fa fa-file-excel-o"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="row no-print mb-3">
+            <div class="col-lg-3 col-md-4 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3>{{ total_bookings }}</h3>
+                        <p class="font-weight-bold">Total Bookings</p>
+                    </div>
+                    <div class="icon"><i class="fa fa-bed"></i></div>
+                    <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-4 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3>{{ total_room_revenue|format_currency }}</h3>
+                        <p class="font-weight-bold">Room Revenue</p>
+                    </div>
+                    <div class="icon"><i class="fa fa-money"></i></div>
+                    <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data table -->
+        <div class="row">
+            <div class="col-md-12 col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title font-weight-bold">Room Sales Details</h3>
+                        <div class="card-tools mr-2 mt-1 no-print">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0 table-responsive">
+                        <table id="example1" class="table table-bordered table-striped table-hover table-sm m-0">
+                            <thead>
+                                <tr>
+                                    <th>Booking Date</th>
+                                    <th>Ref</th>
+                                    <th>Guest Name</th>
+                                    <th>Room</th>
+                                    <th>Nights</th>
+                                    <th>Value</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in room_sales %}
+                                <tr>
+                                    <td>{{ booking.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td><code>#{{ booking.id }}</code></td>
+                                    <td>{{ booking.customer_name }}</td>
+                                    <td>{{ booking.room_name }}</td>
+                                    <td>{{ booking.nights }}</td>
+                                    <td class="text-right">{{ booking.total_amount|format_currency }}</td>
+                                    <td class="text-center">
+                                        {% if booking.status == 'checked_out' %}
+                                        <span class="badge badge-success">Checked Out</span>
+                                        {% elif booking.status == 'active' %}
+                                        <span class="badge badge-primary">Active</span>
+                                        {% else %}
+                                        <span class="badge badge-secondary">{{ booking.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">
+                                        <i class="fa fa-info-circle fa-2x d-block mb-2 text-warning"></i>
+                                        No room bookings found for the selected period.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="bg-light font-weight-bold">
+                                    <td colspan="4" class="text-right">Total:</td>
+                                    <td>{{ total_nights }}</td>
+                                    <td class="text-right">{{ total_room_revenue|format_currency }}</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /.data table -->
+
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(function () {
+        $('.select2').select2({ theme: 'bootstrap4', width: '100%' });
+
+        $("#example1").DataTable({
+            "responsive": true,
+            "autoWidth": false,
+            "order": [[0, "desc"]],
+            "language": {
+                "search": "Search bookings:",
+                "lengthMenu": "Show _MENU_ entries per page",
+                "info": "Showing _START_ to _END_ of _TOTAL_ bookings",
+                "paginate": {
+                    "next": "<i class='fas fa-angle-right'></i>",
+                    "previous": "<i class='fas fa-angle-left'></i>"
+                }
+            }
+        });
+    });
+
+    function exportCSV() {
+        var csv = [];
+        csv.push('"KastomPOS - Room Sales Report"');
+        csv.push('"Date Range: ' + '{{ from_date }}' + ' to ' + '{{ to_date }}' + '"');
+        csv.push('');
+
+        var headers = [];
+        $('#example1 thead th').each(function () { headers.push('"' + $(this).text().trim().replace(/"/g, '""') + '"'); });
+        csv.push(headers.join(','));
+
+        $('#example1 tbody tr').each(function () {
+            var row = [];
+            $(this).find('td').each(function () { row.push('"' + $(this).text().trim().replace(/"/g, '""') + '"'); });
+            if (row.length > 0) csv.push(row.join(','));
+        });
+
+        var footer = [];
+        $('#example1 tfoot td').each(function () { footer.push('"' + $(this).text().trim().replace(/"/g, '""') + '"'); });
+        if (footer.length > 0) csv.push(footer.join(','));
+
+        var csvContent = "data:text/csv;charset=utf-8,\uFEFF" + csv.join("\n");
+        var link = document.createElement("a");
+        link.setAttribute("href", encodeURI(csvContent));
+        link.setAttribute("download", "Room_Sales_{{ from_date }}_to_{{ to_date }}.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+{% endblock %}

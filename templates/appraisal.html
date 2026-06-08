@@ -1,0 +1,342 @@
+{% extends "layout.html" %}
+
+{% block title %}Appraisal | KastomPOS{% endblock %}
+
+{% block styles %}
+<style>
+    .select2 {
+        width: 100% !important;
+    }
+    .card-header {
+        padding: .50rem 1.25rem !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0 text-dark">
+                        <button class="pull-left backbtn" title="Back" onclick="goBack()">
+                            <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                        </button>
+                        Appraisal
+                    </h1>
+                    <script>
+                        function goBack() { window.history.back(); }
+                    </script>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item active">Appraisal</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Appraisal Form -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-outline card-primary collapsed-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Appraisal Form</h3>
+                            <div class="card-tools">
+                                <button type="button" class="btn btn-tool" data-card-widget="collapse"><i class="fas fa-plus"></i></button>
+                            </div>
+                        </div>
+                        <div class="card-body" style="display: none;">
+                            <form id="performance_form">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label>Staff/Employee <span class="text-danger">*</span></label>
+                                            <select class="form-control select2" name="employee_id" onchange="get_matrix(this)" required>
+                                                <option value="">~Select Employee~</option>
+                                                {% for s in employees %}
+                                                <option value="{{ s.id }}">{{ s.name }} {% if s.id_number %}[{{ s.id_number }}]{% endif %}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Appraisal Month <span class="text-danger">*</span></label>
+                                            <select class="form-control select2" name="month" required>
+                                                <option value="">~Select Month~</option>
+                                                {% set months = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'] %}
+                                                {% for m in months %}
+                                                <option value="{{ loop.index }}" {% if loop.index == current_month %}selected{% endif %}>{{ m }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Appraisal Year <span class="text-danger">*</span></label>
+                                            <select class="form-control select2" name="year" required>
+                                                {% for y in range(current_year - 2, current_year + 3) %}
+                                                <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-12" id="matrix_section">
+                                        <!-- Matrix indexes will be loaded here -->
+                                    </div>
+
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label>Narrative / Notes</label>
+                                            <textarea class="form-control" rows="3" name="narrative" placeholder="Enter appraisal notes..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <button type="submit" id="submit" class="btn btn-primary float-right"><i class="fa fa-check-square mr-1"></i> Submit Appraisal</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-outline card-info">
+                        <div class="card-header">
+                            <h3 class="card-title">Filter Appraisals</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="filter_form">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Designation</label>
+                                            <select class="form-control select2" name="designation">
+                                                <option value="ALL">ALL</option>
+                                                {% for d in designations %}
+                                                <option value="{{ d.id }}">{{ d.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Month</label>
+                                            <select class="form-control select2" name="month">
+                                                <option value="ALL">ALL</option>
+                                                {% for m in months %}
+                                                <option value="{{ loop.index }}">{{ m }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Year</label>
+                                            <select class="form-control select2" name="year">
+                                                {% for y in range(current_year - 2, current_year + 2) %}
+                                                <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button type="button" onclick="load_appraisals()" class="btn btn-primary mt-4">Filter <i class="fa fa-filter"></i></button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-outline card-secondary">
+                        <div class="card-header">
+                            <h3 class="card-title">Appraisal List</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table id="appraisal_table" class="table table-sm table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Ref</th>
+                                            <th>Employee</th>
+                                            <th>Designation</th>
+                                            <th>Period</th>
+                                            <th>Score</th>
+                                            <th>Appraised By</th>
+                                            <th>Date</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="appraisal_list_body">
+                                        <!-- Loaded via AJAX -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+<!-- Modal for Viewing Details -->
+<div class="modal fade" id="viewModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Appraisal Details</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body" id="view_modal_body">
+                <!-- Details loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({ theme: 'bootstrap4' });
+        load_appraisals();
+
+        $('#performance_form').on('submit', function(e) {
+            e.preventDefault();
+            save_appraisal();
+        });
+    });
+
+    function get_matrix(element) {
+        if (!element.value) {
+            $('#matrix_section').html('');
+            return;
+        }
+        $('#matrix_section').html('<div class="text-center p-3"><i class="fa fa-spinner fa-spin"></i> Loading matrix...</div>');
+        $.ajax({
+            url: '/api/admin/performance/get-matrix',
+            type: 'POST',
+            data: { employee_id: element.value },
+            success: function(resp) {
+                $('#matrix_section').html(resp);
+                $('.select2').select2({ theme: 'bootstrap4' });
+            }
+        });
+    }
+
+    function save_appraisal() {
+        let formData = $('#performance_form').serialize();
+        $('#submit').prop('disabled', true).html('Processing <i class="fa fa-spinner fa-spin"></i>');
+
+        $.ajax({
+            url: '/api/admin/performance/add-appraisal',
+            type: 'POST',
+            data: formData,
+            success: function(obj) {
+                if (obj.resp == '1') {
+                    toastr.success(obj.message);
+                    location.reload();
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Error', text: obj.message });
+                    $('#submit').prop('disabled', false).html('<i class="fa fa-check-square mr-1"></i> Submit Appraisal');
+                }
+            },
+            error: function() {
+                toastr.error('Failed to save appraisal');
+                $('#submit').prop('disabled', false).html('<i class="fa fa-check-square mr-1"></i> Submit Appraisal');
+            }
+        });
+    }
+
+    function load_appraisals() {
+        let filterData = $('#filter_form').serialize();
+        $('#appraisal_list_body').html('<tr><td colspan="8" class="text-center">Loading...</td></tr>');
+        
+        $.ajax({
+            url: '/api/admin/performance/get-appraisals',
+            type: 'POST',
+            data: filterData,
+            success: function(data) {
+                let html = '';
+                if (data.length === 0) {
+                    html = '<tr><td colspan="8" class="text-center text-muted">No appraisals found</td></tr>';
+                } else {
+                    data.forEach(function(item) {
+                        html += `<tr>
+                            <td>APP-${item.id}</td>
+                            <td>${item.employee_name}</td>
+                            <td>${item.designation || 'N/A'}</td>
+                            <td>${item.period}</td>
+                            <td><b>${item.total_score}</b></td>
+                            <td>${item.appraiser_name}</td>
+                            <td>${item.date}</td>
+                            <td>
+                                <button class="btn btn-xs btn-rgp" onclick="view_appraisal(${item.id})"><i class="fa fa-eye"></i></button>
+                                <button class="btn btn-xs btn-rgd" onclick="delete_appraisal(${item.id})"><i class="fa fa-trash"></i></button>
+                            </td>
+                        </tr>`;
+                    });
+                }
+                $('#appraisal_list_body').html(html);
+                if ($.fn.DataTable.isDataTable('#appraisal_table')) {
+                    $('#appraisal_table').DataTable().destroy();
+                }
+                $('#appraisal_table').DataTable({ responsive: true });
+            }
+        });
+    }
+
+    function view_appraisal(id) {
+        $.ajax({
+            url: '/api/admin/performance/view-appraisal',
+            type: 'POST',
+            data: { id: id },
+            success: function(resp) {
+                $('#view_modal_body').html(resp);
+                $('#viewModal').modal('show');
+            }
+        });
+    }
+
+    function delete_appraisal(id) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This action cannot be undone!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/api/admin/performance/delete-appraisal',
+                    type: 'POST',
+                    data: { id: id },
+                    success: function(obj) {
+                        if (obj.resp == '1') {
+                            toastr.success(obj.message);
+                            load_appraisals();
+                        } else {
+                            toastr.error(obj.message);
+                        }
+                    }
+                });
+            }
+        });
+    }
+</script>
+{% endblock %}
