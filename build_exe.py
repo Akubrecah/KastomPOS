@@ -85,7 +85,7 @@ def build():
         '--collect-all=PyQt6',
         '--collect-all=PyQt6_WebEngine',
         # Disable UPX compression to prevent PyQt6 WebEngine crash
-        '--no-upx',
+        '--noupx',
         # Trim unused heavy packages
         '--exclude-module=tkinter',
         '--exclude-module=matplotlib',
