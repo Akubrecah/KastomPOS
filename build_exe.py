@@ -4,6 +4,9 @@ import shutil
 import sys
 
 def build():
+    # Set PyInstaller config/cache directory locally to avoid permission errors in ~/Library
+    os.environ['PYINSTALLER_CONFIG_DIR'] = os.path.abspath('.pyinstaller_config')
+
     print("Starting build process for KastomPOS Desktop...")
     
     # Remove previous build folders
