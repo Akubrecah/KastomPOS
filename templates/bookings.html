@@ -148,6 +148,9 @@
 <script>
     $(function () {
         $("#bookings_table").DataTable({
+            "language": {
+                "emptyTable": "No bookings found. Data will appear here once bookings are recorded."
+            },
             "responsive": true,
             "autoWidth": false,
         });

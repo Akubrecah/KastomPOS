@@ -141,136 +141,139 @@
                                                 <a href="/api/admin/rooms/delete/{{ room.id }}" class="btn btn-xs btn-danger" onclick="return confirm('Delete this room?')"> Delete <span class="fa fa-close"></span></a>
                                             </td>
                                         </tr>
-
-                                        <!-- Edit Room Modal for each room -->
-                                        <div id="editModal{{ room.id }}" class="modal fade" role="dialog">
-                                            <div class="modal-dialog modal-xl">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h4 class="modal-title">Edit Room details</h4>
-                                                        <button type="button" class="close" data-dismiss="modal">×</button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <form action="/api/admin/rooms/update/{{ room.id }}" method="post">
-                                                            <div class="row">
-                                                                <div class="col-md-7" style="border-right: 1px solid #ddd;">
-                                                                    <div class="row">
-                                                                        <div class="col-md-6">
-                                                                            <div class="form-group">
-                                                                                <label>Room Number/Name *</label>
-                                                                                <input type="text" name="room_number" value="{{ room.room_number }}" class="form-control" required>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-md-6">
-                                                                            <div class="form-group">
-                                                                                <label>Room Type *</label>
-                                                                                <select name="room_type" class="form-control select2" required>
-                                                                                    {% for rt in room_types %}
-                                                                                    <option value="{{ rt.name }}" {% if room.room_type == rt.name %}selected{% endif %}>{{ rt.name }}</option>
-                                                                                    {% else %}
-                                                                                    <option value="Single" {% if room.room_type == 'Single' %}selected{% endif %}>Single Room</option>
-                                                                                    <option value="Double" {% if room.room_type == 'Double' %}selected{% endif %}>Double Room</option>
-                                                                                    <option value="Family" {% if room.room_type == 'Family' %}selected{% endif %}>Family Room</option>
-                                                                                    <option value="Executive" {% if room.room_type == 'Executive' %}selected{% endif %}>Executive</option>
-                                                                                    {% endfor %}
-                                                                                </select>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-md-12">
-                                                                            <hr>
-                                                                            <h5>Pricing Details</h5>
-                                                                        </div>
-                                                                        <div class="col-md-4">
-                                                                            <div class="form-group">
-                                                                                <label>Day Rest (Single)</label>
-                                                                                <input type="number" step="0.01" name="day_rest_s" value="{{ room.day_rest_s }}" class="form-control">
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-md-4">
-                                                                            <div class="form-group">
-                                                                                <label>Bed Only (Single)</label>
-                                                                                <input type="number" step="0.01" name="price_per_night" value="{{ room.price_per_night }}" class="form-control" required>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-md-4">
-                                                                            <div class="form-group">
-                                                                                <label>Bed & Breakfast (S)</label>
-                                                                                <input type="number" step="0.01" name="bb_s" value="{{ room.bb_s }}" class="form-control">
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-md-4">
-                                                                            <div class="form-group">
-                                                                                <label>Half Board (S)</label>
-                                                                                <input type="number" step="0.01" name="hb_s" value="{{ room.hb_s }}" class="form-control">
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-md-4">
-                                                                            <div class="form-group">
-                                                                                <label>Full Board (S)</label>
-                                                                                <input type="number" step="0.01" name="fb_s" value="{{ room.fb_s }}" class="form-control">
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-md-4">
-                                                                            <div class="form-group">
-                                                                                <label>Day Rest (Double)</label>
-                                                                                <input type="number" step="0.01" name="day_rest_d" value="{{ room.day_rest_d }}" class="form-control">
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-md-4">
-                                                                            <div class="form-group">
-                                                                                <label>Bed Only (Double)</label>
-                                                                                <input type="number" step="0.01" name="bed_only_d" value="{{ room.bed_only_d }}" class="form-control">
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-md-4">
-                                                                            <div class="form-group">
-                                                                                <label>Bed & Breakfast (D)</label>
-                                                                                <input type="number" step="0.01" name="bb_d" value="{{ room.bb_d }}" class="form-control">
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-md-4">
-                                                                            <div class="form-group">
-                                                                                <label>Half Board (D)</label>
-                                                                                <input type="number" step="0.01" name="hb_d" value="{{ room.hb_d }}" class="form-control">
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="col-md-4">
-                                                                            <div class="form-group">
-                                                                                <label>Full Board (D)</label>
-                                                                                <input type="number" step="0.01" name="fb_d" value="{{ room.fb_d }}" class="form-control">
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-md-5">
-                                                                    <div class="form-group">
-                                                                        <label>Status</label>
-                                                                        <select name="status" class="form-control">
-                                                                            <option value="available" {% if room.status == 'available' %}selected{% endif %}>Available</option>
-                                                                            <option value="maintenance" {% if room.status == 'maintenance' %}selected{% endif %}>Maintenance</option>
-                                                                            <option value="cleaning" {% if room.status == 'cleaning' %}selected{% endif %}>Cleaning</option>
-                                                                            <option value="occupied" {% if room.status == 'occupied' %}selected{% endif %}>Occupied</option>
-                                                                        </select>
-                                                                    </div>
-                                                                    <div class="form-group">
-                                                                        <label>Narrative</label>
-                                                                        <textarea name="narrative" class="form-control" rows="5"></textarea>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                                                <button type="submit" class="btn btn-primary">Update Details</button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
                                         {% endfor %}
                                     </tbody>
                                 </table>
                             </div>
+
+                            {% for room in rooms %}
+                            <!-- Edit Room Modal for each room -->
+                            <div id="editModal{{ room.id }}" class="modal fade" role="dialog">
+                                <div class="modal-dialog modal-xl">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title">Edit Room details</h4>
+                                            <button type="button" class="close" data-dismiss="modal">×</button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form action="/api/admin/rooms/update/{{ room.id }}" method="post">
+                                                <div class="row">
+                                                    <div class="col-md-7" style="border-right: 1px solid #ddd;">
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <div class="form-group">
+                                                                    <label>Room Number/Name *</label>
+                                                                    <input type="text" name="room_number" value="{{ room.room_number }}" class="form-control" required>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <div class="form-group">
+                                                                    <label>Room Type *</label>
+                                                                    <select name="room_type" class="form-control select2" required>
+                                                                        {% for rt in room_types %}
+                                                                        <option value="{{ rt.name }}" {% if room.room_type == rt.name %}selected{% endif %}>{{ rt.name }}</option>
+                                                                        {% else %}
+                                                                        <option value="Single" {% if room.room_type == 'Single' %}selected{% endif %}>Single Room</option>
+                                                                        <option value="Double" {% if room.room_type == 'Double' %}selected{% endif %}>Double Room</option>
+                                                                        <option value="Family" {% if room.room_type == 'Family' %}selected{% endif %}>Family Room</option>
+                                                                        <option value="Executive" {% if room.room_type == 'Executive' %}selected{% endif %}>Executive</option>
+                                                                        {% endfor %}
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-12">
+                                                                <hr>
+                                                                <h5>Pricing Details</h5>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label>Day Rest (Single)</label>
+                                                                    <input type="number" step="0.01" name="day_rest_s" value="{{ room.day_rest_s }}" class="form-control">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label>Bed Only (Single)</label>
+                                                                    <input type="number" step="0.01" name="price_per_night" value="{{ room.price_per_night }}" class="form-control" required>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label>Bed & Breakfast (S)</label>
+                                                                    <input type="number" step="0.01" name="bb_s" value="{{ room.bb_s }}" class="form-control">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label>Half Board (S)</label>
+                                                                    <input type="number" step="0.01" name="hb_s" value="{{ room.hb_s }}" class="form-control">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label>Full Board (S)</label>
+                                                                    <input type="number" step="0.01" name="fb_s" value="{{ room.fb_s }}" class="form-control">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label>Day Rest (Double)</label>
+                                                                    <input type="number" step="0.01" name="day_rest_d" value="{{ room.day_rest_d }}" class="form-control">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label>Bed Only (Double)</label>
+                                                                    <input type="number" step="0.01" name="bed_only_d" value="{{ room.bed_only_d }}" class="form-control">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label>Bed & Breakfast (D)</label>
+                                                                    <input type="number" step="0.01" name="bb_d" value="{{ room.bb_d }}" class="form-control">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label>Half Board (D)</label>
+                                                                    <input type="number" step="0.01" name="hb_d" value="{{ room.hb_d }}" class="form-control">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label>Full Board (D)</label>
+                                                                    <input type="number" step="0.01" name="fb_d" value="{{ room.fb_d }}" class="form-control">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-5">
+                                                        <div class="form-group">
+                                                            <label>Status</label>
+                                                            <select name="status" class="form-control">
+                                                                <option value="available" {% if room.status == 'available' %}selected{% endif %}>Available</option>
+                                                                <option value="maintenance" {% if room.status == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                                                                <option value="cleaning" {% if room.status == 'cleaning' %}selected{% endif %}>Cleaning</option>
+                                                                <option value="occupied" {% if room.status == 'occupied' %}selected{% endif %}>Occupied</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label>Narrative</label>
+                                                            <textarea name="narrative" class="form-control" rows="5"></textarea>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                    <button type="submit" class="btn btn-primary">Update Details</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -410,6 +413,9 @@
     $(function () {
         if (!$.fn.DataTable.isDataTable('#example1')) {
             $("#example1").DataTable({
+                "language": {
+                    "emptyTable": "No rooms found. Data will appear here once rooms are registered."
+                },
                 "responsive": true,
                 "autoWidth": false,
             });

@@ -134,8 +134,8 @@
                         <ul class="nav nav-pills flex-column">
                             <li class="nav-item">
                                 <a href="/admin/invoices" class="nav-link">
-                                    Due Invoices <small class="text-danger"><i>Total:{{ "{:,.0f}".format(due_invoices) }}</i></small>
-                                    <span class="float-right badge bg-orange">4</span>
+                                    Due Invoices <small class="text-danger"><i>Total:{{ settings.currency }} {{ "{:,.0f}".format(due_invoices) }}</i></small>
+                                    <span class="float-right badge bg-orange">{{ due_invoices_count }}</span>
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -164,7 +164,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="#" class="nav-link">May's top 15 fast moving products</a>
+                                <a href="#" class="nav-link">{{ current_month_name }}'s top 15 fast moving products</a>
                             </li>
                         </ul>
                     </div>
@@ -203,7 +203,7 @@
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-header border-0">
-                        <h3 class="card-title">May/2026 account report</h3>
+                        <h3 class="card-title">{{ current_month_year }} account report</h3>
                     </div>
                     <div class="card-body p-0">
                         <table class="table table-sm table-striped">
@@ -217,15 +217,23 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for acc in accounts %}
+                                {% if not accounts %}
                                 <tr>
-                                    <td>{{ acc.name }}</td>
-                                    <td><a href="#">{{ acc.code }}</a></td>
-                                    <td class="text-emerald-600">{{ "{:,.0f}".format(acc['in']) }}</td>
-                                    <td class="text-red-400">{{ "{:,.0f}".format(acc['out']) }}</td>
-                                    <th class="{% if acc.bal < 0 %}text-red-600{% endif %}">{{ "{:,.0f}".format(acc.bal) }}</th>
+                                    <td colspan="5" class="text-center text-muted py-3">
+                                        No records found. Data will appear here once transactions are recorded.
+                                    </td>
                                 </tr>
-                                {% endfor %}
+                                {% else %}
+                                    {% for acc in accounts %}
+                                    <tr>
+                                        <td>{{ acc.name }}</td>
+                                        <td><a href="#">{{ acc.code }}</a></td>
+                                        <td class="text-emerald-600">{{ "{:,.0f}".format(acc['in']) }}</td>
+                                        <td class="text-red-400">{{ "{:,.0f}".format(acc['out']) }}</td>
+                                        <th class="{% if acc.bal < 0 %}text-red-600{% endif %}">{{ "{:,.0f}".format(acc.bal) }}</th>
+                                    </tr>
+                                    {% endfor %}
+                                {% endif %}
                             </tbody>
                         </table>
                     </div>
@@ -236,8 +244,20 @@
         <!-- Performance Chart -->
         <div class="row">
             <div class="col-12">
-                <div class="card">
+                <div class="card position-relative">
                     <div class="card-body">
+                        {% set total_perf = namespace(val=0.0) %}
+                        {% for item in performance_data %}
+                            {% set total_perf.val = total_perf.val + item.sales + item.expenses %}
+                        {% endfor %}
+                        
+                        {% if total_perf.val == 0.0 %}
+                        <div class="position-absolute w-100 h-100 d-flex flex-column align-items-center justify-content-center" style="background: rgba(255,255,255,0.9); z-index: 10; top: 0; left: 0; border-radius: .25rem;">
+                            <i class="fa fa-chart-line fa-3x mb-3" style="color: #00817a;"></i>
+                            <h5 class="font-weight-bold text-dark">No data yet</h5>
+                            <p class="text-muted text-sm">Charts will populate as you record transactions.</p>
+                        </div>
+                        {% endif %}
                         <div id="company_performance" style="height: 300px;"></div>
                     </div>
                 </div>
@@ -254,17 +274,16 @@
     google.charts.setOnLoadCallback(drawChart);
 
     function drawChart() {
+        {% if performance_data|length > 0 and total_perf.val > 0.0 %}
         var data = google.visualization.arrayToDataTable([
             ['Month', 'Sales', 'Expenses'],
-            ['Jan', 464285, 194853],
-            ['Feb', 228000, 199908],
-            ['Mar', 126064, 6445],
-            ['Apr', 706970, 224569],
-            ['May', 193003, 186022]
+            {% for item in performance_data %}
+            ['{{ item.month }}', {{ item.sales }}, {{ item.expenses }}],
+            {% endfor %}
         ]);
 
         var options = {
-            title: 'KastomPOS ERP Demo 2026 Performance',
+            title: '{{ settings.business_name }} Performance',
             titleTextStyle: { fontName: 'Outfit', fontSize: 16, bold: true, color: '#18181b' },
             curveType: 'function',
             legend: { position: 'bottom', textStyle: { color: '#64748b', fontName: 'Geist', fontSize: 12 } },
@@ -277,6 +296,7 @@
 
         var chart = new google.visualization.LineChart(document.getElementById('company_performance'));
         chart.draw(data, options);
+        {% endif %}
     }
 </script>
 {% endblock %}

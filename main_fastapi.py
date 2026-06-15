@@ -273,7 +273,8 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
     stores_count = db.query(models.Store).count()
     
     # Column 1 Stats
-    due_invoices_total = 940004 # Mocked as per request
+    due_invoices_total = db.query(func.sum(models.Purchase.balance)).filter(models.Purchase.status != "Cancelled").scalar() or 0.00
+    due_invoices_count = db.query(models.Purchase).filter(models.Purchase.balance > 0, models.Purchase.status != "Cancelled").count()
     items_count = db.query(models.Product).count()
     needs_restock = db.query(models.Product).filter(models.Product.stock_quantity < 10).count()
     open_sales = db.query(models.Order).filter(models.Order.status == 'open').count()
@@ -293,16 +294,71 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
         "balance": 0.00
     }
     
-    # Column 3 Accounts (Mocked with request data if empty)
-    accounts = [
-        {"name": "Cash", "code": "C0001", "in": 5305, "out": 50000, "bal": -44695},
-        {"name": "Lipa na M-Pesa", "code": "500004", "in": 0, "out": 580, "bal": -580},
-        {"name": "PDQ 001", "code": "C0004", "in": 50000, "out": 0, "bal": 50000},
-        {"name": "Outside Catering", "code": "OC", "in": 0, "out": 0, "bal": 0},
-        {"name": "Retained Earnings", "code": "100001", "in": 0, "out": 0, "bal": 0},
-        {"name": "Cash", "code": "C01", "in": 0, "out": 0, "bal": 0},
-        {"name": "MPesa", "code": "MP001", "in": 0, "out": 1000, "bal": -1000},
-    ]
+    # Column 3 Accounts (dynamically calculated)
+    db_accounts = db.query(models.Account).all()
+    accounts = []
+    for acc in db_accounts:
+        in_sum = db.query(func.sum(models.JournalPosting.amount)).filter(
+            models.JournalPosting.account_id == acc.id,
+            models.JournalPosting.dr_cr == 'Debit'
+        ).scalar() or 0.00
+        
+        out_sum = db.query(func.sum(models.JournalPosting.amount)).filter(
+            models.JournalPosting.account_id == acc.id,
+            models.JournalPosting.dr_cr == 'Credit'
+        ).scalar() or 0.00
+        
+        acc_type_obj = acc.type
+        acc_type_name = (acc_type_obj.name if (acc_type_obj and acc_type_obj.name) else (acc.account_type or "")).capitalize()
+        
+        if acc_type_name in ['Asset', 'Expense']:
+            bal = in_sum - out_sum
+        else:
+            bal = out_sum - in_sum
+            
+        accounts.append({
+            "name": acc.name,
+            "code": acc.code or "-",
+            "in": in_sum,
+            "out": out_sum,
+            "bal": bal
+        })
+
+    # Last 6 months performance data for line chart
+    performance_data = []
+    for i in range(5, -1, -1):
+        first_of_current = today.replace(day=1)
+        m = first_of_current.month - i
+        y = first_of_current.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        
+        start_date = datetime.date(y, m, 1)
+        if m == 12:
+            end_date = datetime.date(y + 1, 1, 1)
+        else:
+            end_date = datetime.date(y, m + 1, 1)
+            
+        month_name = start_date.strftime('%b')
+        
+        month_sales = db.query(func.sum(models.Order.total_amount)).filter(
+            models.Order.status == 'paid',
+            models.Order.created_at >= start_date,
+            models.Order.created_at < end_date
+        ).scalar() or 0.00
+        
+        month_expenses = db.query(func.sum(models.Expense.amount)).filter(
+            models.Expense.status != 'Cancelled',
+            models.Expense.expense_date >= start_date,
+            models.Expense.expense_date < end_date
+        ).scalar() or 0.00
+        
+        performance_data.append({
+            "month": month_name,
+            "sales": month_sales,
+            "expenses": month_expenses
+        })
 
     return templates.TemplateResponse(
         request=request,
@@ -315,13 +371,17 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
             "supplier_balance": supplier_balance,
             "stores_count": stores_count,
             "due_invoices": due_invoices_total,
+            "due_invoices_count": due_invoices_count,
             "items_count": items_count,
             "needs_restock": needs_restock,
             "open_sales": open_sales,
             "all_sales_count": all_sales_count,
             "fast_moving": fast_moving,
             "today_summary": today_sales_summary,
-            "accounts": accounts
+            "accounts": accounts,
+            "performance_data": performance_data,
+            "current_month_name": today.strftime('%B'),
+            "current_month_year": today.strftime('%B/%Y')
         }
     )
 
@@ -3770,9 +3830,34 @@ async def rooms_dashboard(request: Request, db: Session = Depends(get_db)):
     available_rooms = total_rooms - occupied_rooms
     occupancy_rate = (occupied_rooms / total_rooms * 100) if total_rooms > 0 else 0
     
-    # Mock data for revenue and other stats for now as per template
-    revenue_today = 0.00
-    outstanding_balances = 1731975.00
+    # Calculate outstanding balances
+    outstanding_balances = db.query(func.sum(models.RoomBooking.balance)).filter(models.RoomBooking.status != "cancelled").scalar() or 0.00
+    
+    # Calculate revenue today
+    revenue_today = db.query(func.sum(models.RoomBooking.paid_amount)).filter(
+        func.date(models.RoomBooking.created_at) == today,
+        models.RoomBooking.status != "cancelled"
+    ).scalar() or 0.00
+    
+    # Last 7 days reservation trend and revenue
+    trend_data = []
+    revenue_chart_data = []
+    for i in range(6, -1, -1):
+        d = today - datetime.timedelta(days=i)
+        day_name = d.strftime('%a')
+        
+        bookings_count = db.query(models.RoomBooking).filter(
+            func.date(models.RoomBooking.created_at) == d,
+            models.RoomBooking.status != "cancelled"
+        ).count()
+        
+        day_revenue = db.query(func.sum(models.RoomBooking.paid_amount)).filter(
+            func.date(models.RoomBooking.created_at) == d,
+            models.RoomBooking.status != "cancelled"
+        ).scalar() or 0.00
+        
+        trend_data.append({"day": day_name, "bookings": bookings_count})
+        revenue_chart_data.append({"day": day_name, "revenue": day_revenue})
     
     return templates.TemplateResponse(
         request=request,
@@ -3789,7 +3874,9 @@ async def rooms_dashboard(request: Request, db: Session = Depends(get_db)):
             "revenue_today": revenue_today,
             "outstanding_balances": outstanding_balances,
             "currency": settings.get("currency", "KES"),
-            "active_page": "rooms_dashboard"
+            "active_page": "rooms_dashboard",
+            "trend_data": trend_data,
+            "revenue_chart_data": revenue_chart_data
         }
     )
 
@@ -8083,11 +8170,111 @@ async def time_card_report(request: Request, start_date: str = None, end_date: s
 
 @app.get("/admin/workflows/approvals", response_class=HTMLResponse)
 async def workflows_approvals(request: Request, db: Session = Depends(get_db)):
+    settings = get_settings(db)
+    today = datetime.datetime.utcnow().date()
+    
+    # Fetch pending requisitions
+    pending_reqs = db.query(models.Requisition).filter(models.Requisition.status == 'Pending').all()
+    
+    # Fetch pending expenses
+    pending_exps = db.query(models.Expense).filter(models.Expense.status == 'Pending').all()
+    
+    pending_approvals = []
+    for req in pending_reqs:
+        requester_name = req.request_person.name if req.request_person else "System"
+        total_amt = sum(item.quantity * (item.unit_price or 0.0) for item in req.items)
+        pending_approvals.append({
+            "id": req.id,
+            "ref_no": req.code or f"REQ-{req.id}",
+            "type": "Requisition",
+            "requester": requester_name,
+            "amount": total_amt,
+            "date": req.created_at.strftime('%Y-%m-%d') if req.created_at else "-",
+            "status": "Pending"
+        })
+        
+    for exp in pending_exps:
+        pending_approvals.append({
+            "id": exp.id,
+            "ref_no": exp.ref_no or f"EXP-{exp.id}",
+            "type": "Expense",
+            "requester": exp.paid_to or "N/A",
+            "amount": exp.amount or 0.00,
+            "date": exp.expense_date.strftime('%Y-%m-%d') if exp.expense_date else (exp.created_at.strftime('%Y-%m-%d') if exp.created_at else "-"),
+            "status": "Pending"
+        })
+        
+    # Count approved today
+    approved_reqs_today = db.query(models.Requisition).filter(
+        models.Requisition.status == 'Approved',
+        func.date(models.Requisition.created_at) == today
+    ).count()
+    approved_exps_today = db.query(models.Expense).filter(
+        models.Expense.status == 'Approved',
+        func.date(models.Expense.expense_date) == today
+    ).count()
+    approved_today = approved_reqs_today + approved_exps_today
+    
+    # Count rejected today
+    rejected_reqs_today = db.query(models.Requisition).filter(
+        models.Requisition.status == 'Cancelled',
+        func.date(models.Requisition.created_at) == today
+    ).count()
+    rejected_exps_today = db.query(models.Expense).filter(
+        models.Expense.status == 'Cancelled',
+        func.date(models.Expense.expense_date) == today
+    ).count()
+    rejected_today = rejected_reqs_today + rejected_exps_today
+    
+    pending_count = len(pending_approvals)
+    avg_time = 0.0
+    
     return templates.TemplateResponse(
         request=request,
         name="approvals.html",
-        context={"active_page": "approvals"}
+        context={
+            "settings": settings,
+            "active_page": "approvals",
+            "pending_approvals": pending_approvals,
+            "pending_count": pending_count,
+            "approved_today": approved_today,
+            "rejected_today": rejected_today,
+            "avg_time": avg_time,
+            "currency": settings.get("currency", "KES")
+        }
     )
+
+@app.post("/api/admin/workflows/approve/{item_type}/{item_id}")
+async def approve_workflow_item(item_type: str, item_id: int, db: Session = Depends(get_db)):
+    if item_type == "Requisition":
+        item = db.query(models.Requisition).filter(models.Requisition.id == item_id).first()
+        if item:
+            item.status = "Approved"
+            db.commit()
+            return {"success": True, "message": "Requisition approved successfully!"}
+    elif item_type == "Expense":
+        item = db.query(models.Expense).filter(models.Expense.id == item_id).first()
+        if item:
+            item.status = "Approved"
+            db.commit()
+            return {"success": True, "message": "Expense approved successfully!"}
+    return {"success": False, "message": "Item not found."}
+
+@app.post("/api/admin/workflows/reject/{item_type}/{item_id}")
+async def reject_workflow_item(item_type: str, item_id: int, db: Session = Depends(get_db)):
+    if item_type == "Requisition":
+        item = db.query(models.Requisition).filter(models.Requisition.id == item_id).first()
+        if item:
+            item.status = "Cancelled"
+            db.commit()
+            return {"success": True, "message": "Requisition rejected successfully!"}
+    elif item_type == "Expense":
+        item = db.query(models.Expense).filter(models.Expense.id == item_id).first()
+        if item:
+            item.status = "Cancelled"
+            db.commit()
+            return {"success": True, "message": "Expense rejected successfully!"}
+    return {"success": False, "message": "Item not found."}
 
 @app.get("/admin/workflows/settings", response_class=HTMLResponse)
 async def workflows_settings(request: Request, db: Session = Depends(get_db)):

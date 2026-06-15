@@ -180,11 +180,20 @@
 
             <!-- Reservation Trends -->
             <div class="col-md-3 col-sm-12 col-xs-12">
-                <div class="card card-warning">
+                <div class="card card-warning position-relative">
                     <div class="card-header">
                         <h3 class="card-title"><i class="fas fa-chart-line"></i> Reservation Trends</h3>
                     </div>
                     <div class="card-body">
+                        {% set total_bk = namespace(val=0) %}
+                        {% for item in trend_data %}
+                            {% set total_bk.val = total_bk.val + item.bookings %}
+                        {% endfor %}
+                        {% if total_bk.val == 0 %}
+                        <div class="position-absolute w-100 h-100 d-flex flex-column align-items-center justify-content-center" style="background: rgba(255,255,255,0.9); z-index: 10; top: 0; left: 0; border-radius: .25rem;">
+                            <p class="text-muted text-xs text-center px-2">No bookings yet.<br>Chart will populate as bookings are made.</p>
+                        </div>
+                        {% endif %}
                         <div id="reservationChart" style="height: 200px;"></div>
                     </div>
                 </div>
@@ -192,11 +201,20 @@
 
             <!-- Revenue Overview -->
             <div class="col-md-3 col-sm-12 col-xs-12">
-                <div class="card card-danger">
+                <div class="card card-danger position-relative">
                     <div class="card-header">
                         <h3 class="card-title"><i class="fas fa-dollar-sign"></i> Revenue Overview</h3>
                     </div>
                     <div class="card-body">
+                        {% set total_rev = namespace(val=0.0) %}
+                        {% for item in revenue_chart_data %}
+                            {% set total_rev.val = total_rev.val + item.revenue %}
+                        {% endfor %}
+                        {% if total_rev.val == 0.0 %}
+                        <div class="position-absolute w-100 h-100 d-flex flex-column align-items-center justify-content-center" style="background: rgba(255,255,255,0.9); z-index: 10; top: 0; left: 0; border-radius: .25rem;">
+                            <p class="text-muted text-xs text-center px-2">No revenue yet.<br>Chart will populate as bookings are paid.</p>
+                        </div>
+                        {% endif %}
                         <div id="revenueChart" style="height: 200px;"></div>
                     </div>
                 </div>
@@ -222,9 +240,12 @@
     }
 
     function reservationTrendChart() {
+        {% if trend_data|length > 0 and total_bk.val > 0 %}
         var data = google.visualization.arrayToDataTable([
             ['Day', 'Bookings'],
-            ['Mon', 0],['Tue', 0],['Wed', 2],['Thu', 3],['Fri', 2],['Sat', 1],['Sun', 0],
+            {% for item in trend_data %}
+            ['{{ item.day }}', {{ item.bookings }}],
+            {% endfor %}
         ]);
 
         var options = {
@@ -233,19 +254,24 @@
             legend: {
                 position: 'bottom'
             },
+            colors: ['#00817a'],
             chartArea: { width: '80%', height: '70%' }
         };
 
         var chart = new google.visualization.LineChart(document.getElementById('reservationChart'));
         chart.draw(data, options);
+        {% endif %}
     }
 
     function revenueChart() {
+        {% if revenue_chart_data|length > 0 and total_rev.val > 0.0 %}
         var data = google.visualization.arrayToDataTable([
             ["Day", "Revenue", {
                 role: "style"
             }],
-            ['Mon', 0, '#b87333'],['Tue', 0, 'blue'],['Wed', 5000, 'orangered'],['Thu', 8000, 'green'],['Fri', 6000, '#b87333'],['Sat', 4000, 'green'],['Sun', 0, 'blue'],
+            {% for item in revenue_chart_data %}
+            ['{{ item.day }}', {{ item.revenue }}, '#00817a'],
+            {% endfor %}
         ]);
 
         var view = new google.visualization.DataView(data);
@@ -273,6 +299,7 @@
 
         var chart = new google.visualization.ColumnChart(document.getElementById("revenueChart"));
         chart.draw(view, options);
+        {% endif %}
     }
 </script>
 {% endblock %}

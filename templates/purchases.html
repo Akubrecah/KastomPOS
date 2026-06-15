@@ -110,10 +110,6 @@
                                     </div>
                                 </td>
                             </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="9" class="text-center p-4 text-muted">No purchases found for the selected criteria.</td>
-                            </tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -130,6 +126,9 @@
 <script>
     $(function () {
         $('#data_table').DataTable({
+            "language": {
+                "emptyTable": "No purchases found for the selected criteria."
+            },
             "paging": true,
             "lengthChange": true,
             "searching": true,

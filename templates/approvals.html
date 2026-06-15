@@ -37,7 +37,7 @@
                     <span class="info-box-icon bg-info elevation-1"><i class="fas fa-hourglass-half"></i></span>
                     <div class="info-box-content">
                         <span class="info-box-text">Pending</span>
-                        <span class="info-box-number">5</span>
+                        <span class="info-box-number">{{ pending_count }}</span>
                     </div>
                 </div>
             </div>
@@ -46,7 +46,7 @@
                     <span class="info-box-icon bg-success elevation-1"><i class="fas fa-check-circle"></i></span>
                     <div class="info-box-content">
                         <span class="info-box-text">Approved Today</span>
-                        <span class="info-box-number">12</span>
+                        <span class="info-box-number">{{ approved_today }}</span>
                     </div>
                 </div>
             </div>
@@ -55,7 +55,7 @@
                     <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-times-circle"></i></span>
                     <div class="info-box-content">
                         <span class="info-box-text">Rejected Today</span>
-                        <span class="info-box-number">2</span>
+                        <span class="info-box-number">{{ rejected_today }}</span>
                     </div>
                 </div>
             </div>
@@ -64,7 +64,7 @@
                     <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-history"></i></span>
                     <div class="info-box-content">
                         <span class="info-box-text">Average Time</span>
-                        <span class="info-box-number">2.5 <small>hrs</small></span>
+                        <span class="info-box-number">{{ avg_time }} <small>hrs</small></span>
                     </div>
                 </div>
             </div>
@@ -89,37 +89,27 @@
                                         <th>Ref No</th>
                                         <th>Type</th>
                                         <th>Requester</th>
-                                        <th>Amount</th>
+                                        <th class="text-right">Amount</th>
                                         <th>Date</th>
                                         <th>Status</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    {% for item in pending_approvals %}
                                     <tr>
-                                        <td>REQ-001</td>
-                                        <td>Requisition</td>
-                                        <td>John Doe</td>
-                                        <td>15,000.00</td>
-                                        <td>2026-05-14</td>
+                                        <td>{{ item.ref_no }}</td>
+                                        <td>{{ item.type }}</td>
+                                        <td>{{ item.requester }}</td>
+                                        <td class="text-right">{{ currency }} {{ "{:,.2f}".format(item.amount) }}</td>
+                                        <td>{{ item.date }}</td>
                                         <td><span class="badge badge-warning">Pending</span></td>
                                         <td>
-                                            <button class="btn btn-success btn-xs" title="Approve"><i class="fas fa-check"></i></button>
-                                            <button class="btn btn-danger btn-xs" title="Reject"><i class="fas fa-times"></i></button>
+                                            <button class="btn btn-success btn-xs" title="Approve" onclick="updateStatus('{{ item.type }}', {{ item.id }}, 'approve')"><i class="fas fa-check"></i></button>
+                                            <button class="btn btn-danger btn-xs" title="Reject" onclick="updateStatus('{{ item.type }}', {{ item.id }}, 'reject')"><i class="fas fa-times"></i></button>
                                         </td>
                                     </tr>
-                                    <tr>
-                                        <td>EXP-442</td>
-                                        <td>Expense</td>
-                                        <td>Jane Smith</td>
-                                        <td>4,500.00</td>
-                                        <td>2026-05-15</td>
-                                        <td><span class="badge badge-warning">Pending</span></td>
-                                        <td>
-                                            <button class="btn btn-success btn-xs" title="Approve"><i class="fas fa-check"></i></button>
-                                            <button class="btn btn-danger btn-xs" title="Reject"><i class="fas fa-times"></i></button>
-                                        </td>
-                                    </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
@@ -135,10 +125,38 @@
 <script>
     $(function () {
         $('#approvalsTable').DataTable({
+            "language": {
+                "emptyTable": "No pending approvals found. All clear!"
+            },
             "responsive": true,
             "autoWidth": false,
             "pageLength": 25
         });
     });
+
+    function updateStatus(itemType, itemId, action) {
+        var url = '/api/admin/workflows/' + action + '/' + itemType + '/' + itemId;
+        var verb = action === 'approve' ? 'approve' : 'reject';
+        
+        if (confirm('Are you sure you want to ' + verb + ' this ' + itemType.toLowerCase() + '?')) {
+            $.ajax({
+                url: url,
+                type: 'POST',
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success(response.message);
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        toastr.error(response.message || 'Error updating item status.');
+                    }
+                },
+                error: function() {
+                    toastr.error('Server error updating item status.');
+                }
+            });
+        }
+    }
 </script>
 {% endblock %}
