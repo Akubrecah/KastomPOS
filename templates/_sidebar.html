@@ -209,7 +209,7 @@
                 <!-- Reports -->
                 {% set report_pages = ['reports', 'room_sales_report', 'room_occupancy_report', 'room_collections_report',
                     'general_sales', 'close_day', 'item_sales', 'periodic_revenue', 'item_purchase',
-                    'staff_sales', 'cheques_report', 'suppliers_report', 'customers_report',
+                    'staff_sales', 'cashier_performance', 'cheques_report', 'suppliers_report', 'customers_report',
                     'account_statements', 'customer_statements', 'supplier_statements',
                     'customer_balances', 'supplier_balances', 'general_expenses_report',
                     'item_ledger', 'statement_profit'] %}
@@ -226,6 +226,7 @@
                         <li class="nav-item"><a href="/admin/reports/room-sales" class="nav-link {% if active_page in ['room_sales_report', 'room_occupancy_report', 'room_collections_report'] %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Room Sales</p></a></li>
                         <li class="nav-item"><a href="/admin/reports/general-sales" class="nav-link {% if active_page == 'general_sales' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>General Sales</p></a></li>
                         <li class="nav-item"><a href="/admin/reports/staff-sales" class="nav-link {% if active_page == 'staff_sales' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Staff Sales Summary</p></a></li>
+                        <li class="nav-item"><a href="/admin/reports/cashier-performance" class="nav-link {% if active_page == 'cashier_performance' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Cashier Performance</p></a></li>
                         <li class="nav-item"><a href="/admin/reports/item-ledger" class="nav-link {% if active_page == 'item_ledger' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Item Ledger</p></a></li>
                         <li class="nav-item"><a href="/admin/reports/statement-profit" class="nav-link {% if active_page == 'statement_profit' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Statement of Profit</p></a></li>
                         <li class="nav-item"><a href="/admin/reports/cheques" class="nav-link {% if active_page == 'cheques_report' %}active{% endif %}"><i class="far fa-circle nav-icon text-danger"></i><p>Cheques</p></a></li>

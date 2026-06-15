@@ -1,0 +1,219 @@
+{% extends "layout.html" %}
+
+{% block title %}Cashier Performance Report | KastomPOS{% endblock %}
+
+{% block extra_css %}
+<style>
+    form {
+        padding: 10px !important;
+    }
+    .card-header {
+        padding: .50rem 1.25rem !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Content Header -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="pull-left backbtn" title="Back" onclick="window.history.back()">
+                        <i class="fa fa-arrow-left" aria-hidden="true"> </i>
+                    </button>
+                    Cashier Performance Report
+                </h1>
+                <p class="text-muted mb-0">Track transaction metrics, sales totals, and averages per cashier.</p>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/admin">Home</a></li>
+                    <li class="breadcrumb-item active">Cashier Performance</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+
+        <!-- Filter Card -->
+        <div class="row">
+            <div class="col-md-6 col-sm-12">
+                <div class="card">
+                    <div class="card-body">
+                        <form method="get" action="/admin/reports/cashier-performance" id="filterForm">
+                            <div class="row">
+                                <div class="col-md-12 text-info mb-2">
+                                    Filter by date range
+                                </div>
+
+                                <!-- Date Range -->
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label>Date and time range <i class="text-danger">*</i></label>
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="far fa-clock"></i></span>
+                                            </div>
+                                            <input type="text" class="form-control float-right"
+                                                name="date_range" id="reservationtime"
+                                                value="{{ date_range }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Hidden fields -->
+                                <input type="hidden" name="from_date" id="from_date" value="{{ from_date }}">
+                                <input type="hidden" name="to_date"   id="to_date"   value="{{ to_date }}">
+
+                                <!-- Buttons -->
+                                <div class="col-md-12 mt-2">
+                                    <button type="submit" class="btn btn-sm btn-primary" style="background-color: #008080; border-color: #008080;">
+                                        Filter <i class="fa fa-filter"></i>
+                                    </button>
+                                    <button type="button" onclick="printReport()"
+                                        class="btn btn-sm btn-danger no-print">
+                                        Print <i class="fa fa-print"></i>
+                                    </button>
+                                    <button type="button" onclick="exportCSV()"
+                                        class="btn btn-sm btn-success no-print">
+                                        CSV <i class="fa fa-file-excel"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Table -->
+        <div class="row mt-3">
+            <div class="col-md-12 col-sm-12">
+                <div class="card card-outline card-teal" style="border-top: 3px solid #008080;">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12 table-responsive">
+                                <table id="cashierTable" class="table table-striped table-hover table-sm">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th>Cashier Name</th>
+                                            <th>Username</th>
+                                            <th>Role</th>
+                                            <th class="text-right">Transaction Count</th>
+                                            <th class="text-right">Total Sales (KES)</th>
+                                            <th class="text-right">Avg Transaction (KES)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for c in cashiers %}
+                                        <tr>
+                                            <td><strong>{{ c.name }}</strong></td>
+                                            <td><code>{{ c.username }}</code></td>
+                                            <td><span class="badge badge-teal" style="background-color: #e0f2f1; color: #008080;">{{ c.role|upper }}</span></td>
+                                            <td class="text-right font-weight-bold">{{ c.transaction_count }}</td>
+                                            <td class="text-right text-success font-weight-bold">{{ "{:,.2f}".format(c.total_sales) }}</td>
+                                            <td class="text-right">{{ "{:,.2f}".format(c.average_transaction) }}</td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted p-4">
+                                                No cashier sales found for the selected period.
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(function () {
+    // Init daterangepicker
+    $('#reservationtime').daterangepicker({
+        timePicker: true,
+        timePickerIncrement: 30,
+        locale: {
+            format: 'MM/DD/YYYY hh:mm A'
+        }
+    }, function(start, end) {
+        $('#from_date').val(start.format('YYYY-MM-DD'));
+        $('#to_date').val(end.format('YYYY-MM-DD'));
+    });
+
+    // Sync hidden fields on page load from current value
+    var current = $('#reservationtime').val();
+    if (current) {
+        var picker = $('#reservationtime').data('daterangepicker');
+        if (picker) {
+            $('#from_date').val(picker.startDate.format('YYYY-MM-DD'));
+            $('#to_date').val(picker.endDate.format('YYYY-MM-DD'));
+        }
+    }
+
+    // DataTable
+    $("#cashierTable").DataTable({
+        "responsive": true,
+        "autoWidth": false,
+        "bDestroy": true,
+        "order": [[4, "desc"]]
+    });
+});
+
+function printReport() {
+    window.print();
+}
+
+function exportCSV() {
+    let csv = [];
+    let rows = document.querySelectorAll("#cashierTable tr");
+    
+    for (let i = 0; i < rows.length; i++) {
+        let row = [], cols = rows[i].querySelectorAll("td, th");
+        
+        for (let j = 0; j < cols.length; j++) {
+            let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/(\s\s+)/gm, " ");
+            data = data.replace(/"/g, '""');
+            row.push('"' + data + '"');
+        }
+        csv.push(row.join(","));
+    }
+    
+    let csvContent = "data:text/csv;charset=utf-8," + csv.join("\n");
+    let encodedUri = encodeURI(csvContent);
+    let link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "cashier_performance_report.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+
+<style>
+@media print {
+    .no-print,
+    .main-sidebar,
+    .main-header,
+    .main-footer,
+    .content-header ol.breadcrumb,
+    .content-wrapper {
+        margin-left: 0 !important;
+    }
+}
+</style>
+{% endblock %}

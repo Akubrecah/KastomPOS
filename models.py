@@ -38,6 +38,7 @@ class Product(Base):
     narrative = Column(String, nullable=True)
     purpose = Column(String, default="For Sale") # For Sale, For Production, Fixed Asset
     is_active = Column(Boolean, default=True)
+    expiry_date = Column(Date, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     
     category = relationship("Category", back_populates="products")
@@ -923,4 +924,47 @@ class Attendance(Base):
 
     employee = relationship("Staff")
     store = relationship("Store")
+
+class RoomCleaning(Base):
+    __tablename__ = "room_cleanings"
+    id = Column(Integer, primary_key=True, index=True)
+    room_id = Column(Integer, ForeignKey("rooms.id"))
+    floor_wing = Column(String, nullable=True)
+    cleaning_status = Column(String, default="Pending") # Pending, In Progress, Completed, Skipped
+    assigned_housekeeper_id = Column(Integer, ForeignKey("staff.id"), nullable=True)
+    cleaning_type = Column(String, default="Standard") # Standard, Deep Clean, Checkout Clean, Turndown
+    notes = Column(Text, nullable=True)
+    scheduled_time = Column(DateTime, default=datetime.datetime.utcnow)
+    start_time = Column(DateTime, nullable=True)
+    completion_time = Column(DateTime, nullable=True)
+    last_cleaned = Column(DateTime, nullable=True)
+    next_scheduled = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    room = relationship("Room")
+    housekeeper = relationship("Staff", foreign_keys=[assigned_housekeeper_id])
+
+class RoomMaintenance(Base):
+    __tablename__ = "room_maintenances"
+    id = Column(Integer, primary_key=True, index=True)
+    room_id = Column(Integer, ForeignKey("rooms.id"), nullable=True)
+    area = Column(String, nullable=False) # e.g. "Room 101", "Lobby", "Pool"
+    issue_type = Column(String) # Electrical, Plumbing, Furniture, AC/Heating, General Repair, Preventive
+    priority = Column(String, default="Medium") # Low, Medium, High, Urgent
+    reported_by_id = Column(Integer, ForeignKey("staff.id"))
+    assigned_technician_id = Column(Integer, ForeignKey("staff.id"), nullable=True)
+    date_reported = Column(DateTime, default=datetime.datetime.utcnow)
+    scheduled_date = Column(DateTime, nullable=True)
+    estimated_duration = Column(Float, nullable=True) # hours
+    completion_date = Column(DateTime, nullable=True)
+    status = Column(String, default="Open") # Open, Assigned, In Progress, On Hold, Completed
+    cost = Column(Float, default=0.0)
+    notes = Column(Text, nullable=True)
+    is_recurring = Column(Boolean, default=False)
+    recurring_months = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    room = relationship("Room")
+    reporter = relationship("Staff", foreign_keys=[reported_by_id])
+    technician = relationship("Staff", foreign_keys=[assigned_technician_id])
 

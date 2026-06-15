@@ -1,0 +1,168 @@
+{% extends "layout.html" %}
+
+{% block title %}Add New Item | KastomPOS{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">
+                    <button class="backbtn" title="Back" onclick="window.history.back()"><i class="fa fa-arrow-left"></i></button>
+                    Add New Item
+                </h1>
+                <p class="text-muted mb-0">Create a new item in the inventory registry.</p>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item"><a href="/inventory">Inventory</a></li>
+                    <li class="breadcrumb-item active">Add Item</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="card card-outline card-teal" style="border-top: 3px solid #008080;">
+            <div class="card-header">
+                <h3 class="card-title font-weight-bold text-dark">Item Details</h3>
+            </div>
+            <form action="/admin/add-item" method="POST">
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Left Column -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Item Name <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control" placeholder="e.g. Soda 300ml" required>
+                            </div>
+                            <div class="form-group">
+                                <label>SKU / Barcode</label>
+                                <input type="text" name="sku" class="form-control" placeholder="e.g. 600123456789">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>Category <span class="text-danger">*</span></label>
+                                    <select name="category_id" class="form-control select2" required>
+                                        <option value="">-- Select Category --</option>
+                                        {% for cat in categories %}
+                                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>Unit</label>
+                                    <select name="unit_id" class="form-control select2">
+                                        <option value="">-- Select Unit --</option>
+                                        {% for u in units %}
+                                        <option value="{{ u.id }}">{{ u.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>Buying Price (Cost) <span class="text-danger">*</span></label>
+                                    <input type="number" step="0.01" name="cost_price" class="form-control" placeholder="0.00" required>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>Selling Price (Marked) <span class="text-danger">*</span></label>
+                                    <input type="number" step="0.01" name="selling_price" class="form-control" placeholder="0.00" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>Tax Type</label>
+                                    <select name="tax_type_id" class="form-control select2">
+                                        <option value="">-- Select Tax --</option>
+                                        {% for t in tax_types %}
+                                        <option value="{{ t.id }}">{{ t.name }} ({{ t.rate }}%)</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>Store Location</label>
+                                    <select name="store_id" class="form-control select2">
+                                        <option value="">-- Select Store --</option>
+                                        {% for s in stores %}
+                                        <option value="{{ s.id }}">{{ s.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="col-md-6">
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>Brand</label>
+                                    <input type="text" name="brand" class="form-control" placeholder="e.g. Coca-Cola">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>Color</label>
+                                    <input type="text" name="color" class="form-control" placeholder="e.g. Red">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>Initial Stock Qty <span class="text-danger">*</span></label>
+                                    <input type="number" name="stock_quantity" class="form-control" value="0" required>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>Reorder Level</label>
+                                    <input type="number" name="reorder_level" class="form-control" value="10">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>Expiry Date</label>
+                                    <input type="date" name="expiry_date" class="form-control">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>Purpose</label>
+                                    <select name="purpose" class="form-control">
+                                        <option value="For Sale">For Sale</option>
+                                        <option value="For Production">For Production</option>
+                                        <option value="Fixed Asset">Fixed Asset</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select name="is_active" class="form-control">
+                                    <option value="true">Active</option>
+                                    <option value="false">Inactive</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Item Description / Narrative</label>
+                                <textarea name="narrative" rows="3" class="form-control" placeholder="Additional details..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-right">
+                    <a href="/inventory" class="btn btn-secondary mr-2">Cancel</a>
+                    <button type="submit" class="btn btn-rgp" style="background-color: #008080; border-color: #008080; color: white;">Save Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(function () {
+        if (typeof $.fn.select2 !== 'undefined') {
+            $('.select2').select2({
+                theme: 'bootstrap4'
+            });
+        }
+    });
+</script>
+{% endblock %}

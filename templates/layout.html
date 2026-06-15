@@ -410,19 +410,19 @@
                     <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
                 </li>
                 <li class="nav-item d-none d-sm-inline-block">
-                    <a href="/" class="nav-link my-btn {% if active_page == 'dashboard' %}active{% endif %}">Home <i class="fa fa-home"></i></a>
+                    <a href="/" class="nav-link my-btn {% if active_page == 'dashboard' %}active{% endif %}">{{ _(request, 'Home') }} <i class="fa fa-home"></i></a>
                 </li>
                 <li class="nav-item d-none d-sm-inline-block">
-                    <a href="/admin/rooms/book-room" class="nav-link my-btn {% if active_page == 'book_room' %}active{% endif %}">Book Room</a>
+                    <a href="/admin/rooms/book-room" class="nav-link my-btn {% if active_page == 'book_room' %}active{% endif %}">{{ _(request, 'Book Room') }}</a>
                 </li>
                 <li class="nav-item d-none d-sm-inline-block">
-                    <a href="/admin/rooms/bookings" class="nav-link my-btn {% if active_page == 'bookings' %}active{% endif %}">Bookings</a>
+                    <a href="/admin/rooms/bookings" class="nav-link my-btn {% if active_page == 'bookings' %}active{% endif %}">{{ _(request, 'Bookings') }}</a>
                 </li>
                 <li class="nav-item d-none d-sm-inline-block">
-                    <a href="/admin/rooms/online-bookings" class="nav-link my-btn {% if active_page == 'online_bookings' %}active{% endif %}">Online Bookings</a>
+                    <a href="/admin/rooms/online-bookings" class="nav-link my-btn {% if active_page == 'online_bookings' %}active{% endif %}">{{ _(request, 'Online Bookings') }}</a>
                 </li>
                 <li class="nav-item d-none d-sm-inline-block">
-                    <a href="/admin/rooms/bookings-calendar" class="nav-link my-btn {% if active_page == 'bookings_calendar' %}active{% endif %}" {% if active_page == 'bookings_calendar' %}id="active"{% endif %}>Bookings Calendar</a>
+                    <a href="/admin/rooms/bookings-calendar" class="nav-link my-btn {% if active_page == 'bookings_calendar' %}active{% endif %}" {% if active_page == 'bookings_calendar' %}id="active"{% endif %}>{{ _(request, 'Bookings Calendar') }}</a>
                 </li>
             </ul>
 
@@ -430,6 +430,19 @@
             {% set alerts = get_notifications() %}
             <!-- Right navbar links -->
             <ul class="navbar-nav ml-auto">
+                <!-- Language Switcher Dropdown -->
+                {% set current_lang = request.cookies.get('language', 'en') %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link" data-toggle="dropdown" href="#" title="Select Language">
+                        <i class="fas fa-globe"></i>
+                        <span class="ml-1 text-xs font-weight-bold text-uppercase" style="color: #008080;">{{ current_lang }}</span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow-sm border-0" style="border-radius: 8px; min-width: 120px;">
+                        <a href="/set-language/en" class="dropdown-item py-2 {% if current_lang == 'en' %}text-teal font-weight-bold{% endif %}" style="font-size: 0.85rem; color: #1c1917;">English</a>
+                        <div class="dropdown-divider m-0"></div>
+                        <a href="/set-language/sw" class="dropdown-item py-2 {% if current_lang == 'sw' %}text-teal font-weight-bold{% endif %}" style="font-size: 0.85rem; color: #1c1917;">Kiswahili</a>
+                    </div>
+                </li>
                 <!-- Notifications Dropdown Menu -->
                 <li class="nav-item dropdown">
                     <a class="nav-link" data-toggle="dropdown" href="#">
@@ -494,7 +507,7 @@
         <footer class="main-footer">
             <strong>KastomPOS ERP</strong>
             <div class="float-right d-none d-sm-inline-block">
-                <b>KastomPOS Version 1.0 | Copyright &copy; 2026</b>
+                <b>KastomPOS Version {{ app_version|default('1.0.0') }} | Copyright &copy; 2026</b>
             </div>
         </footer>
     </div>

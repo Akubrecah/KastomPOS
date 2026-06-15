@@ -129,6 +129,9 @@
                                             <td><span class="badge badge-info">{{ booking.status|capitalize }}</span></td>
                                             <td>
                                                 <button class="btn btn-xs btn-outline-info">View</button>
+                                                {% if booking.status == 'active' %}
+                                                <button class="btn btn-xs btn-success ml-1" onclick="checkoutBooking({{ booking.id }})">Check Out</button>
+                                                {% endif %}
                                             </td>
                                         </tr>
                                         {% endfor %}
@@ -149,5 +152,25 @@
             "autoWidth": false,
         });
     });
+
+    function checkoutBooking(id) {
+        if (confirm("Are you sure you want to check out this booking? This will set the room to dirty status and schedule a Checkout Clean task.")) {
+            fetch("/api/admin/rooms/checkout/" + id, {
+                method: "POST"
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success || data.message === undefined) {
+                    toastr.success(data.message || "Checked out successfully!");
+                    setTimeout(() => { window.location.reload(); }, 1200);
+                } else {
+                    toastr.error(data.message || "Error processing checkout.");
+                }
+            })
+            .catch(error => {
+                toastr.error("Server error processing checkout.");
+            });
+        }
+    }
 </script>
 {% endblock %}

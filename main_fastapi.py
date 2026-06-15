@@ -5,8 +5,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, or_, distinct, literal
-import models
-from database import engine, get_db, SessionLocal
+from app.core import models
+from app.services.database import engine, get_db, SessionLocal
 import os
 import datetime
 import calendar
@@ -25,202 +25,55 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 # Create database tables
-models.Base.metadata.create_all(bind=engine)
+try:
+    models.Base.metadata.create_all(bind=engine)
+except Exception as e:
+    print(f"Warning: Could not run metadata.create_all at startup: {e}")
 
 def perform_db_seed(db: Session):
-    from hashlib import sha256
-    hashed_password = sha256('password123'.encode()).hexdigest()
+    # Only seed absolute system-level tables if they do not exist
     
-    # Add Staff
-    if not db.query(models.Staff).filter(models.Staff.username == 'admin').first():
-        admin = models.Staff(username='admin', password_hash=hashed_password, name='Admin User', role='admin', is_active=True)
-        cashier = models.Staff(username='cashier1', password_hash=hashed_password, name='Main Cashier', role='cashier', is_active=True)
-        waiter = models.Staff(username='waiter1', password_hash=hashed_password, name='James Waiter', role='waiter', is_active=True)
-        db.add_all([admin, cashier, waiter])
-        db.commit()
-    
-    # Add Categories
-    cats = ['Food', 'Drinks', 'Rooms', 'Services']
-    for c in cats:
-        if not db.query(models.Category).filter(models.Category.name == c).first():
-            db.add(models.Category(name=c))
-    db.commit()
-    
-    # Add Products
-    food_cat = db.query(models.Category).filter(models.Category.name == 'Food').first()
-    drink_cat = db.query(models.Category).filter(models.Category.name == 'Drinks').first()
-    room_cat = db.query(models.Category).filter(models.Category.name == 'Rooms').first()
-    
-    if food_cat and not db.query(models.Product).filter(models.Product.name == 'Beef Burger').first():
-        db.add(models.Product(name='Beef Burger', category_id=food_cat.id, selling_price=550, cost_price=300, stock_quantity=50))
-        db.add(models.Product(name='Margherita Pizza', category_id=food_cat.id, selling_price=850, cost_price=400, stock_quantity=30))
-        db.add(models.Product(name='Coke 300ml', category_id=drink_cat.id, selling_price=100, cost_price=70, stock_quantity=100))
-        db.add(models.Product(name='Whiskey Shot', category_id=drink_cat.id, selling_price=250, cost_price=150, stock_quantity=40))
-        db.add(models.Product(name='Standard Room', category_id=room_cat.id, selling_price=3500, cost_price=1000, stock_quantity=10, is_service=True))
-    db.commit()
-    
-    # Add Suppliers
-    if not db.query(models.Supplier).first():
-        db.add_all([
-            models.Supplier(name='General Foods Ltd', contact_person='John Doe', phone='0711223344', balance=150000),
-            models.Supplier(name='Beverage King', contact_person='Jane Smith', phone='0722334455', balance=25000)
-        ])
-    
-    # Add Accounts
-    if not db.query(models.Account).first():
-        db.add_all([
-            models.Account(name='Cash', code='C0001', balance=5000, account_type='Asset'),
-            models.Account(name='Lipa na M-Pesa', code='500004', balance=0, account_type='Asset'),
-            models.Account(name='Inventory', code='1973', balance=0, account_type='Asset'),
-            models.Account(name='Accounts Receivable', code='1974', balance=0, account_type='Asset'),
-            models.Account(name='VAT INPUT', code='1975', balance=0, account_type='Asset'),
-            models.Account(name='General Supplies', code='8', balance=0, account_type='Expense')
-        ])
-
-    # Add Units
-    if not db.query(models.Unit).first():
-        db.add_all([
-            models.Unit(name='Pcs', description='Pieces'),
-            models.Unit(name='Kg', description='Kilograms'),
-            models.Unit(name='Ltr', description='Litres'),
-            models.Unit(name='Box', description='Boxes')
-        ])
-
-    # Add Tax Types
-    if not db.query(models.TaxType).first():
-        db.add_all([
-            models.TaxType(name='VAT', rate=16.00),
-            models.TaxType(name='ZERO', rate=0.00),
-            models.TaxType(name='EXEMPT', rate=0.00)
-        ])
-
-    # Add Fiscal Years
-    if not db.query(models.FiscalYear).first():
-        db.add_all([
-            models.FiscalYear(year='2024', is_active=True),
-            models.FiscalYear(year='2025', is_active=True),
-            models.FiscalYear(year='2026', is_active=True)
-        ])
-    
-    # Add Account Types
+    # Account types
     if not db.query(models.AccountType).first():
-        asset = models.AccountType(name='Asset', description='Resources owned by the business')
-        liability = models.AccountType(name='Liability', description='Obligations of the business')
-        equity = models.AccountType(name='Equity', description='Owner\'s stake in the business')
-        revenue = models.AccountType(name='Revenue', description='Income from business activities')
-        expense = models.AccountType(name='Expense', description='Costs incurred in business activities')
-        db.add_all([asset, liability, equity, revenue, expense])
+        at1 = models.AccountType(name="Asset", description="Resources owned by the business")
+        at2 = models.AccountType(name="Liability", description="Obligations to third parties")
+        at3 = models.AccountType(name="Equity", description="Owner's stake in the business")
+        at4 = models.AccountType(name="Revenue", description="Income from business activities")
+        at5 = models.AccountType(name="Expense", description="Costs incurred in business activities")
+        db.add_all([at1, at2, at3, at4, at5])
         db.commit()
-        
+
         # Add common subtypes
         db.add_all([
-            models.AccountType(name='Current Asset', parent_id=asset.id),
-            models.AccountType(name='Fixed Asset', parent_id=asset.id),
-            models.AccountType(name='Current Liability', parent_id=liability.id),
-            models.AccountType(name='Operating Expense', parent_id=expense.id),
-            models.AccountType(name='Other Income', parent_id=revenue.id)
-        ])
-    db.commit()
-
-    # Add Stores
-    if not db.query(models.Store).first():
-        db.add_all([
-            models.Store(name='KastomPOS ERP Demo', location='Nairobi'),
-            models.Store(name='HOUSEKEEPING', location='Nairobi'),
-            models.Store(name='BAKERY', location='Nairobi'),
-            models.Store(name='MAIN STORE', location='Nairobi')
+            models.AccountType(name='Current Asset', parent_id=at1.id),
+            models.AccountType(name='Fixed Asset', parent_id=at1.id),
+            models.AccountType(name='Current Liability', parent_id=at2.id),
+            models.AccountType(name='Operating Expense', parent_id=at5.id),
+            models.AccountType(name='Other Income', parent_id=at4.id)
         ])
         db.commit()
 
-    # Add Purchases
-    if not db.query(models.Purchase).first():
-        supplier = db.query(models.Supplier).first()
-        store = db.query(models.Store).first()
-        admin = db.query(models.Staff).filter(models.Staff.role == 'admin').first()
-        if supplier and store:
-            db.add_all([
-                models.Purchase(
-                    bill_no='PUR-001', 
-                    supplier_id=supplier.id, 
-                    amount=50000, 
-                    balance=25000, 
-                    discount=0, 
-                    store_id=store.id,
-                    attendant_id=admin.id if admin else None
-                ),
-                models.Purchase(
-                    bill_no='PUR-002', 
-                    supplier_id=supplier.id, 
-                    amount=12000, 
-                    balance=0, 
-                    discount=500, 
-                    store_id=store.id,
-                    attendant_id=admin.id if admin else None
-                )
-            ])
-
-    # Add Payment Schedules
-    if not db.query(models.PaymentSchedule).first():
-        admin = db.query(models.Staff).filter(models.Staff.role == 'admin').first()
-        if admin:
-            db.add_all([
-                models.PaymentSchedule(
-                    reference='J12i90VB78YU',
-                    status='Suspended',
-                    amount=580.00,
-                    narrative='Kitchen appliances',
-                    created_by_id=admin.id
-                ),
-                models.PaymentSchedule(
-                    reference='J09i122VWI',
-                    status='Completed',
-                    amount=30090.00,
-                    narrative='',
-                    created_by_id=admin.id
-                )
-            ])
-            db.commit()
-
-    # Add Departments
-    if not db.query(models.Department).first():
+    # Tax types
+    if not db.query(models.TaxType).first():
         db.add_all([
-            models.Department(name='Default'),
-            models.Department(name='Heads of Insurance'),
-            models.Department(name='Food & Beverage'),
-            models.Department(name='Accommodation')
+            models.TaxType(name="VAT 16%", rate=16.0),
+            models.TaxType(name="Exempt", rate=0.0)
         ])
-    
-    # Add Revenue Accounts
-    if not db.query(models.Account).filter(models.Account.account_type == 'Revenue').first():
-        db.add_all([
-            models.Account(name='Sales Income', code='4001', account_type='Revenue', balance=0),
-            models.Account(name='Service Fees', code='4002', account_type='Revenue', balance=0),
-            models.Account(name='Other Income', code='4003', account_type='Revenue', balance=0)
-        ])
-    
-    # Add Account Types and Sub-types
-    if not db.query(models.AccountType).first():
-        asset = models.AccountType(name='Asset', description='Resources owned by the business')
-        equity = models.AccountType(name='Shareholders Equity', description='Owner\'s stake in the business')
-        expense = models.AccountType(name='Expense', description='Costs incurred in operations')
-        income = models.AccountType(name='Income', description='Income generated from operations')
-        liability = models.AccountType(name='Liability', description='Obligations to third parties')
-        
-        db.add_all([asset, equity, expense, income, liability])
         db.commit()
 
-        # Add Sub-types
+    # Units
+    if not db.query(models.Unit).first():
         db.add_all([
-            models.AccountType(name='Cash', parent_id=asset.id),
-            models.AccountType(name='Bank', parent_id=asset.id),
-            models.AccountType(name='General Assets', parent_id=asset.id),
-            models.AccountType(name='General Expenses', parent_id=expense.id),
-            models.AccountType(name='Payroll', parent_id=expense.id),
-            models.AccountType(name='Discount', parent_id=expense.id),
-            models.AccountType(name='REVENUE GENERATORS', parent_id=income.id),
-            models.AccountType(name='General Liabilities', parent_id=liability.id)
+            models.Unit(name="Piece"),
+            models.Unit(name="Kg"),
+            models.Unit(name="Litre")
         ])
-    db.commit()
+        db.commit()
+
+    # Category
+    if not db.query(models.Category).first():
+        db.add(models.Category(name="General"))
+        db.commit()
 
 def auto_seed_on_startup():
     db = SessionLocal()
@@ -337,6 +190,25 @@ def get_notifications_global():
 
 templates.env.globals["get_current_user"] = get_current_user_global
 templates.env.globals["get_notifications"] = get_notifications_global
+
+from app import __version__ as APP_VERSION
+templates.env.globals["app_version"] = APP_VERSION
+
+def translate_ui(request: Request, text: str) -> str:
+    lang = request.cookies.get("language", "en")
+    from app.core.translations import translate
+    return translate(text, lang)
+
+templates.env.globals["_"] = translate_ui
+
+@app.get("/set-language/{lang}")
+async def set_language(lang: str, request: Request):
+    referer = request.headers.get("referer", "/")
+    if "/set-language/" in referer:
+        referer = "/"
+    response = RedirectResponse(url=referer, status_code=303)
+    response.set_cookie("language", lang, max_age=31536000)
+    return response
 
 
 # Serve React App from dist (if built)
@@ -1161,6 +1033,81 @@ async def reports_page(request: Request, db: Session = Depends(get_db)):
             "payment_breakdown": payment_breakdown,
             "item_sales": item_sales,
             "active_page": "close_day"
+        }
+    )
+
+@app.get("/admin/reports/cashier-performance", response_class=HTMLResponse)
+async def admin_cashier_performance_report(
+    request: Request,
+    db: Session = Depends(get_db),
+    from_date: str = Query(None),
+    to_date: str = Query(None),
+    date_range: str = Query(None)
+):
+    settings = get_settings(db)
+    today = datetime.datetime.utcnow().date().strftime('%Y-%m-%d')
+    
+    # Parse date_range string "MM/DD/YYYY hh:mm A - MM/DD/YYYY hh:mm A"
+    if date_range and " - " in date_range:
+        try:
+            parts = date_range.split(" - ")
+            from_date = datetime.datetime.strptime(parts[0].strip(), "%m/%d/%Y %I:%M %p").strftime("%Y-%m-%d")
+            to_date   = datetime.datetime.strptime(parts[1].strip(), "%m/%d/%Y %I:%M %p").strftime("%Y-%m-%d")
+        except Exception:
+            pass
+            
+    if not from_date:
+        from_date = today
+    if not to_date:
+        to_date = today
+        
+    try:
+        dr_start = datetime.datetime.strptime(from_date, "%Y-%m-%d").strftime("%m/%d/%Y 12:00 AM")
+        dr_end   = datetime.datetime.strptime(to_date,   "%Y-%m-%d").strftime("%m/%d/%Y 11:59 PM")
+        date_range_value = f"{dr_start} - {dr_end}"
+    except Exception:
+        date_range_value = f"{today} - {today}"
+        
+    start_dt = datetime.datetime.strptime(from_date, "%Y-%m-%d")
+    end_dt = datetime.datetime.strptime(to_date, "%Y-%m-%d") + datetime.timedelta(days=1) - datetime.timedelta(seconds=1)
+    
+    # Aggregate payment statistics per cashier (Staff member)
+    performance_query = db.query(
+        models.Staff.id.label("cashier_id"),
+        models.Staff.name.label("name"),
+        models.Staff.username.label("username"),
+        models.Staff.role.label("role"),
+        func.count(models.Payment.id).label("transaction_count"),
+        func.sum(models.Payment.amount_paid).label("total_sales"),
+        func.avg(models.Payment.amount_paid).label("average_transaction")
+    ).join(models.Payment, models.Staff.id == models.Payment.cashier_id)\
+     .filter(models.Payment.paid_at >= start_dt, models.Payment.paid_at <= end_dt)\
+     .group_by(models.Staff.id, models.Staff.name, models.Staff.username, models.Staff.role)\
+     .order_by(func.sum(models.Payment.amount_paid).desc())\
+     .all()
+     
+    cashiers_performance = []
+    for row in performance_query:
+        cashiers_performance.append({
+            "id": row.cashier_id,
+            "name": row.name,
+            "username": row.username,
+            "role": row.role,
+            "transaction_count": row.transaction_count,
+            "total_sales": row.total_sales or 0.0,
+            "average_transaction": row.average_transaction or 0.0
+        })
+        
+    return templates.TemplateResponse(
+        request=request,
+        name="cashier_report.html",
+        context={
+            "settings": settings,
+            "cashiers": cashiers_performance,
+            "from_date": from_date,
+            "to_date": to_date,
+            "date_range": date_range_value,
+            "active_page": "reports"
         }
     )
 
@@ -2873,23 +2820,29 @@ async def all_items_json(request: Request, db: Session = Depends(get_db)):
     items = db.query(models.Product).all()
     data = []
     for item in items:
+        # Check stock against reorder level
+        reorder_lvl = item.reorder_level if item.reorder_level is not None else 0
+        stock_qty = item.stock_quantity if item.stock_quantity is not None else 0
+        reorder_status = '<span class="badge badge-success">OK</span>' if stock_qty > reorder_lvl else '<span class="badge badge-danger">LOW</span>'
+        
         data.append({
             "name": item.name,
             "sku": item.sku or "-",
-            "unit": item.unit or "-",
+            "unit": item.unit.name if item.unit else "-",
             "category": item.category.name if item.category else "-",
-            "brand": "-",
-            "color": "-",
-            "buying_price": f'<input type="number" step="0.01" class="form-control form-control-sm" id="buying_price_{item.id}" value="{item.buying_price or 0}" onchange="save_buying_price({item.id})">',
+            "brand": item.brand or "-",
+            "color": item.color or "-",
+            "buying_price": f'<input type="number" step="0.01" class="form-control form-control-sm" id="buying_price_{item.id}" value="{item.cost_price or 0}" onchange="save_buying_price({item.id})">',
             "marked_price": f'<input type="number" step="0.01" class="form-control form-control-sm" id="marked_price_{item.id}" value="{item.selling_price or 0}" onchange="save_price({item.id})">',
-            "total_qty": item.stock_quantity,
-            "reorder_level": 10,
-            "reorder_status": '<span class="badge badge-success">OK</span>' if item.stock_quantity > 10 else '<span class="badge badge-danger">LOW</span>',
-            "tax_type": "VAT 16%",
-            "kitchen_item": '<div class="custom-control custom-switch"><input type="checkbox" class="custom-control-input" id="kitchen_' + str(item.id) + '"><label class="custom-control-label" for="kitchen_' + str(item.id) + '"></label></div>',
+            "total_qty": stock_qty,
+            "reorder_level": reorder_lvl,
+            "reorder_status": reorder_status,
+            "tax_type": item.tax_type.name if item.tax_type else "-",
+            "kitchen_item": f'<div class="custom-control custom-switch"><input type="checkbox" class="custom-control-input" id="kitchen_{item.id}" {"checked" if item.purpose == "For Production" else ""} onchange="$.post(\'/sys/for_kitchen\', {itemid: {item.id}})" ><label class="custom-control-label" for="kitchen_{item.id}"></label></div>',
             "qty_predefined": "-",
-            "narrative": "-",
-            "action": f'<div class="btn-group"><button class="btn btn-xs btn-info"><i class="fas fa-edit"></i></button><button class="btn btn-xs btn-danger" onclick="delete_item({item.id})"><i class="fas fa-trash"></i></button></div>'
+            "expiry_date": item.expiry_date.strftime("%Y-%m-%d") if item.expiry_date else "-",
+            "narrative": item.narrative or "-",
+            "action": f'<div class="btn-group"><a href="/admin/edit-item/{item.id}" class="btn btn-xs btn-info"><i class="fas fa-edit"></i></a><button class="btn btn-xs btn-danger" onclick="delete_item({item.id})"><i class="fas fa-trash"></i></button></div>'
         })
     
     return {
@@ -2911,9 +2864,158 @@ async def admin_save_item_price(itemid: int = Form(...), itemprice: float = Form
 async def admin_save_item_buying_price(itemid: int = Form(...), itemprice: float = Form(...), db: Session = Depends(get_db)):
     product = db.query(models.Product).filter(models.Product.id == itemid).first()
     if product:
-        product.buying_price = itemprice
+        product.cost_price = itemprice
         db.commit()
     return {"status": "success"}
+
+@app.get("/admin/add-item", response_class=HTMLResponse)
+async def admin_add_item_page(request: Request, db: Session = Depends(get_db)):
+    settings = get_settings(db)
+    categories = db.query(models.Category).all()
+    units = db.query(models.Unit).all()
+    tax_types = db.query(models.TaxType).all()
+    stores = db.query(models.Store).all()
+    return templates.TemplateResponse(
+        request=request,
+        name="add_item.html",
+        context={
+            "settings": settings,
+            "categories": categories,
+            "units": units,
+            "tax_types": tax_types,
+            "stores": stores,
+            "active_page": "inventory"
+        }
+    )
+
+@app.post("/admin/add-item")
+async def admin_add_item(
+    name: str = Form(...),
+    sku: Optional[str] = Form(None),
+    category_id: int = Form(...),
+    unit_id: Optional[int] = Form(None),
+    cost_price: float = Form(...),
+    selling_price: float = Form(...),
+    tax_type_id: Optional[int] = Form(None),
+    store_id: Optional[int] = Form(None),
+    brand: Optional[str] = Form(None),
+    color: Optional[str] = Form(None),
+    stock_quantity: int = Form(0),
+    reorder_level: int = Form(0),
+    expiry_date: Optional[str] = Form(None),
+    purpose: str = Form("For Sale"),
+    is_active: str = Form("true"),
+    narrative: Optional[str] = Form(None),
+    db: Session = Depends(get_db)
+):
+    exp_date = None
+    if expiry_date:
+        try:
+            exp_date = datetime.datetime.strptime(expiry_date, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+            
+    is_act = True if is_active == "true" else False
+    
+    product = models.Product(
+        name=name,
+        sku=sku if sku else None,
+        category_id=category_id,
+        unit_id=unit_id,
+        cost_price=cost_price,
+        selling_price=selling_price,
+        tax_type_id=tax_type_id,
+        store_id=store_id,
+        brand=brand if brand else None,
+        color=color if color else None,
+        stock_quantity=stock_quantity,
+        reorder_level=reorder_level,
+        expiry_date=exp_date,
+        purpose=purpose,
+        is_active=is_act,
+        narrative=narrative if narrative else None
+    )
+    db.add(product)
+    db.commit()
+    return RedirectResponse(url="/inventory", status_code=303)
+
+@app.get("/admin/edit-item/{item_id}", response_class=HTMLResponse)
+async def admin_edit_item_page(item_id: int, request: Request, db: Session = Depends(get_db)):
+    settings = get_settings(db)
+    item = db.query(models.Product).filter(models.Product.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    categories = db.query(models.Category).all()
+    units = db.query(models.Unit).all()
+    tax_types = db.query(models.TaxType).all()
+    stores = db.query(models.Store).all()
+    return templates.TemplateResponse(
+        request=request,
+        name="edit_item.html",
+        context={
+            "settings": settings,
+            "item": item,
+            "categories": categories,
+            "units": units,
+            "tax_types": tax_types,
+            "stores": stores,
+            "active_page": "inventory"
+        }
+    )
+
+@app.post("/admin/edit-item/{item_id}")
+async def admin_edit_item(
+    item_id: int,
+    name: str = Form(...),
+    sku: Optional[str] = Form(None),
+    category_id: int = Form(...),
+    unit_id: Optional[int] = Form(None),
+    cost_price: float = Form(...),
+    selling_price: float = Form(...),
+    tax_type_id: Optional[int] = Form(None),
+    store_id: Optional[int] = Form(None),
+    brand: Optional[str] = Form(None),
+    color: Optional[str] = Form(None),
+    stock_quantity: int = Form(...),
+    reorder_level: int = Form(0),
+    expiry_date: Optional[str] = Form(None),
+    purpose: str = Form("For Sale"),
+    is_active: str = Form("true"),
+    narrative: Optional[str] = Form(None),
+    db: Session = Depends(get_db)
+):
+    product = db.query(models.Product).filter(models.Product.id == item_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Item not found")
+        
+    exp_date = None
+    if expiry_date:
+        try:
+            exp_date = datetime.datetime.strptime(expiry_date, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+            
+    is_act = True if is_active == "true" else False
+    
+    product.name = name
+    product.sku = sku if sku else None
+    product.category_id = category_id
+    product.unit_id = unit_id
+    product.cost_price = cost_price
+    product.selling_price = selling_price
+    product.tax_type_id = tax_type_id
+    product.store_id = store_id
+    product.brand = brand if brand else None
+    product.color = color if color else None
+    product.stock_quantity = stock_quantity
+    product.reorder_level = reorder_level
+    product.expiry_date = exp_date
+    product.purpose = purpose
+    product.is_active = is_act
+    product.narrative = narrative if narrative else None
+    
+    db.commit()
+    return RedirectResponse(url="/inventory", status_code=303)
 
 @app.get("/admin/delete-item/{item_id}")
 async def delete_item(item_id: int, db: Session = Depends(get_db)):
@@ -3431,6 +3533,102 @@ async def all_mpesa_callbacks_data(
         "data": data
     }
 
+@app.post("/api/v1/mpesa/callback")
+async def mpesa_callback(request: Request, db: Session = Depends(get_db)):
+    try:
+        payload = await request.json()
+        body = payload.get("Body", {})
+        stk = body.get("stkCallback", {})
+        result_code = stk.get("ResultCode")
+        merchant_request_id = stk.get("MerchantRequestID")
+        checkout_request_id = stk.get("CheckoutRequestID")
+        
+        amount = 0.0
+        mpesa_code = None
+        phone = ""
+        name = "M-Pesa Attendant"
+        
+        metadata = stk.get("CallbackMetadata", {}).get("Item", [])
+        for item in metadata:
+            k = item.get("Name")
+            v = item.get("Value")
+            if k == "Amount":
+                amount = float(v)
+            elif k == "MpesaReceiptNumber":
+                mpesa_code = str(v)
+            elif k == "PhoneNumber":
+                phone = str(v)
+
+        status = "Success" if result_code == 0 else "Failed"
+        order_code = checkout_request_id or merchant_request_id or "UNKNOWN"
+        
+        callback = models.MpesaCallback(
+            mpesa_code=mpesa_code,
+            order_code=order_code,
+            amount=amount,
+            phone=phone,
+            name=name,
+            status=status
+        )
+        db.add(callback)
+        db.commit()
+        
+        if result_code == 0:
+            order = None
+            if order_code != "UNKNOWN":
+                order = db.query(models.Order).filter(models.Order.table_number == order_code, models.Order.status == "open").first()
+            if not order:
+                order = db.query(models.Order).filter(models.Order.total_amount == amount, models.Order.status == "open").order_by(models.Order.created_at.desc()).first()
+                
+            if order:
+                payment = models.Payment(
+                    order_id=order.id,
+                    cashier_id=1,
+                    amount_paid=amount,
+                    method="M-Pesa"
+                )
+                db.add(payment)
+                order.status = "paid"
+                db.commit()
+                
+        return {"ResultCode": 0, "ResultDesc": "Accepted"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Bad request: {e}")
+
+@app.post("/api/v1/mpesa/mock-callback")
+async def mpesa_mock_callback(
+    order_id: int = Form(...),
+    amount: float = Form(...),
+    phone: str = Form(...),
+    mpesa_code: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+        
+    callback = models.MpesaCallback(
+        mpesa_code=mpesa_code,
+        order_code=f"MOCK-{order_id}",
+        amount=amount,
+        phone=phone,
+        name="Mock Customer",
+        status="Success"
+    )
+    db.add(callback)
+    
+    payment = models.Payment(
+        order_id=order.id,
+        cashier_id=1,
+        amount_paid=amount,
+        method="M-Pesa"
+    )
+    db.add(payment)
+    order.status = "paid"
+    db.commit()
+    
+    return {"status": "success", "message": "Mock M-Pesa payment processed successfully"}
+
 @app.get("/admin/returns", response_class=HTMLResponse)
 async def returns_page(request: Request, db: Session = Depends(get_db)):
     settings = get_settings(db)
@@ -3645,6 +3843,27 @@ async def process_booking(
         # In the frontend, we might need to send the room_id
         # For now, let's try to get it from the form if added, or a hidden field
         room_id = form_data.get("room_id")
+        if room_id:
+            room = db.query(models.Room).filter(models.Room.id == int(room_id)).first()
+            if room:
+                if room.status == "dirty" or room.status == "cleaning":
+                    return JSONResponse(status_code=400, content={"message": "Cannot book room: Room is dirty or being cleaned. It must be cleaned first."})
+                if room.status == "maintenance":
+                    return JSONResponse(status_code=400, content={"message": "Cannot book room: Room is undergoing maintenance."})
+                
+                active_maint = db.query(models.RoomMaintenance).filter(
+                    models.RoomMaintenance.room_id == room.id,
+                    models.RoomMaintenance.status.in_(["Open", "Assigned", "In Progress"])
+                ).first()
+                if active_maint:
+                    return JSONResponse(status_code=400, content={"message": "Cannot book room: Room has an active maintenance ticket."})
+                
+                active_clean = db.query(models.RoomCleaning).filter(
+                    models.RoomCleaning.room_id == room.id,
+                    models.RoomCleaning.cleaning_status.in_(["Pending", "In Progress"])
+                ).first()
+                if active_clean:
+                    return JSONResponse(status_code=400, content={"message": "Cannot book room: Room is currently being cleaned."})
         
         new_booking = models.RoomBooking(
             room_id=int(room_id) if room_id else None,
@@ -3902,6 +4121,58 @@ async def room_settings_page(request: Request, db: Session = Depends(get_db)):
         db.commit()
         allocations = db.query(models.RevenueAllocation).all()
 
+    # Query cleaning tasks
+    cleanings = db.query(models.RoomCleaning).options(
+        joinedload(models.RoomCleaning.room),
+        joinedload(models.RoomCleaning.housekeeper)
+    ).order_by(models.RoomCleaning.created_at.desc()).all()
+
+    # Query maintenance tickets
+    maintenances = db.query(models.RoomMaintenance).options(
+        joinedload(models.RoomMaintenance.room),
+        joinedload(models.RoomMaintenance.reporter),
+        joinedload(models.RoomMaintenance.technician)
+    ).order_by(models.RoomMaintenance.created_at.desc()).all()
+
+    # Query active staff & rooms
+    staff_list = db.query(models.Staff).filter(models.Staff.is_active == True).all()
+    rooms_list = db.query(models.Room).all()
+
+    # Cleaning Metrics
+    total_dirty = sum(1 for c in cleanings if c.cleaning_status == "Pending")
+    cleaning_in_progress = sum(1 for c in cleanings if c.cleaning_status == "In Progress")
+    total_clean = sum(1 for r in rooms_list if r.status == "available")
+
+    # Maintenance Metrics
+    open_tickets = sum(1 for m in maintenances if m.status in ["Open", "Assigned", "In Progress"])
+    urgent_tickets = sum(1 for m in maintenances if m.priority == "Urgent" and m.status != "Completed")
+    total_maint_cost = sum(m.cost or 0.0 for m in maintenances)
+
+    # Calculate housekeeper stats
+    housekeep_stats = {}
+    for c in cleanings:
+        if c.cleaning_status == 'Completed' and c.housekeeper:
+            if c.start_time and c.completion_time:
+                try:
+                    duration = (c.completion_time - c.start_time).total_seconds() / 60
+                    name = c.housekeeper.name
+                    if name not in housekeep_stats:
+                        housekeep_stats[name] = {"count": 0, "sum": 0.0}
+                    housekeep_stats[name]["count"] += 1
+                    housekeep_stats[name]["sum"] += duration
+                except Exception:
+                    pass
+
+    # Calculate issue stats
+    issue_stats = {}
+    for m in maintenances:
+        itype = m.issue_type or "General"
+        cost = m.cost or 0.0
+        if itype not in issue_stats:
+            issue_stats[itype] = {"count": 0, "cost": 0.0}
+        issue_stats[itype]["count"] += 1
+        issue_stats[itype]["cost"] += cost
+
     return templates.TemplateResponse(
         request=request,
         name="room_settings.html",
@@ -3909,6 +4180,18 @@ async def room_settings_page(request: Request, db: Session = Depends(get_db)):
             "settings": settings,
             "room_types": room_types,
             "allocations": allocations,
+            "cleanings": cleanings,
+            "maintenances": maintenances,
+            "staff_list": staff_list,
+            "rooms_list": rooms_list,
+            "total_dirty": total_dirty,
+            "cleaning_in_progress": cleaning_in_progress,
+            "total_clean": total_clean,
+            "open_tickets": open_tickets,
+            "urgent_tickets": urgent_tickets,
+            "total_maint_cost": total_maint_cost,
+            "housekeep_stats": housekeep_stats,
+            "issue_stats": issue_stats,
             "active_page": "room_settings"
         }
     )
@@ -4047,6 +4330,380 @@ async def delete_room(
     except Exception as e:
         print(f"Error deleting room: {e}")
         return JSONResponse(status_code=400, content={"message": str(e)})
+
+# --- Room Cleaning & Maintenance Schedules APIs ---
+
+@app.post("/api/admin/rooms/checkout/{booking_id}")
+async def checkout_booking(booking_id: int, db: Session = Depends(get_db)):
+    booking = db.query(models.RoomBooking).filter(models.RoomBooking.id == booking_id).first()
+    if not booking:
+        return JSONResponse(status_code=404, content={"message": "Booking not found"})
+    
+    try:
+        booking.status = "checked_out"
+        if booking.room:
+            booking.room.status = "dirty"
+            # Auto-create Checkout Clean task
+            new_cleaning = models.RoomCleaning(
+                room_id=booking.room_id,
+                floor_wing=booking.room.category or "Default",
+                cleaning_status="Pending",
+                cleaning_type="Checkout Clean",
+                notes=f"Auto-generated checkout clean for guest {booking.customer_name}.",
+                scheduled_time=datetime.datetime.utcnow(),
+                created_at=datetime.datetime.utcnow()
+            )
+            db.add(new_cleaning)
+        db.commit()
+        return JSONResponse({"success": True, "message": "Checkout processed successfully and cleaning task scheduled."})
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=400, content={"message": str(e)})
+
+@app.post("/api/admin/rooms/cleaning/create")
+async def create_cleaning_task(request: Request, db: Session = Depends(get_db)):
+    form_data = await request.form()
+    try:
+        room_id = int(form_data.get("room_id"))
+        cleaning_type = form_data.get("cleaning_type", "Standard")
+        notes = form_data.get("notes")
+        assigned_housekeeper_id = form_data.get("assigned_housekeeper_id")
+        
+        room = db.query(models.Room).filter(models.Room.id == room_id).first()
+        if not room:
+            return JSONResponse(status_code=404, content={"message": "Room not found"})
+        
+        new_cleaning = models.RoomCleaning(
+            room_id=room_id,
+            floor_wing=room.category or "Default",
+            cleaning_status="Pending",
+            cleaning_type=cleaning_type,
+            notes=notes,
+            assigned_housekeeper_id=int(assigned_housekeeper_id) if assigned_housekeeper_id and assigned_housekeeper_id != "" else None,
+            scheduled_time=datetime.datetime.utcnow(),
+            created_at=datetime.datetime.utcnow()
+        )
+        
+        # Set room status to cleaning if housekeeper is assigned, otherwise dirty
+        room.status = "cleaning" if assigned_housekeeper_id and assigned_housekeeper_id != "" else "dirty"
+        if room.status == "cleaning":
+            new_cleaning.cleaning_status = "In Progress"
+            new_cleaning.start_time = datetime.datetime.utcnow()
+        
+        db.add(new_cleaning)
+        db.commit()
+        return RedirectResponse(url="/admin/rooms/settings#vert-room-maintenance", status_code=303)
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=400, content={"message": str(e)})
+
+@app.post("/api/admin/rooms/cleaning/assign")
+async def assign_housekeeper(request: Request, db: Session = Depends(get_db)):
+    form_data = await request.form()
+    try:
+        task_id = int(form_data.get("task_id"))
+        housekeeper_id = int(form_data.get("housekeeper_id"))
+        
+        task = db.query(models.RoomCleaning).filter(models.RoomCleaning.id == task_id).first()
+        if not task:
+            return JSONResponse(status_code=404, content={"message": "Cleaning task not found"})
+        
+        task.assigned_housekeeper_id = housekeeper_id
+        task.cleaning_status = "In Progress"
+        task.start_time = datetime.datetime.utcnow()
+        if task.room:
+            task.room.status = "cleaning"
+        
+        db.commit()
+        return RedirectResponse(url="/admin/rooms/settings#vert-room-maintenance", status_code=303)
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=400, content={"message": str(e)})
+
+@app.post("/api/admin/rooms/cleaning/complete")
+async def complete_cleaning_task(request: Request, db: Session = Depends(get_db)):
+    form_data = await request.form()
+    try:
+        task_id = int(form_data.get("task_id"))
+        notes = form_data.get("notes", "")
+        
+        task = db.query(models.RoomCleaning).filter(models.RoomCleaning.id == task_id).first()
+        if not task:
+            return JSONResponse(status_code=404, content={"message": "Cleaning task not found"})
+        
+        task.cleaning_status = "Completed"
+        task.completion_time = datetime.datetime.utcnow()
+        if notes:
+            task.notes = (task.notes or "") + "\nCompletion Notes: " + notes
+        
+        if task.room:
+            # Check if there is an active maintenance ticket blocking the room
+            active_maint = db.query(models.RoomMaintenance).filter(
+                models.RoomMaintenance.room_id == task.room_id,
+                models.RoomMaintenance.status.in_(["Open", "Assigned", "In Progress"])
+            ).first()
+            if active_maint:
+                task.room.status = "maintenance"
+            else:
+                task.room.status = "available"
+        
+        db.commit()
+        return RedirectResponse(url="/admin/rooms/settings#vert-room-maintenance", status_code=303)
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=400, content={"message": str(e)})
+
+@app.post("/api/admin/rooms/cleaning/skip")
+async def skip_cleaning_task(request: Request, db: Session = Depends(get_db)):
+    form_data = await request.form()
+    try:
+        task_id = int(form_data.get("task_id"))
+        notes = form_data.get("notes", "")
+        
+        task = db.query(models.RoomCleaning).filter(models.RoomCleaning.id == task_id).first()
+        if not task:
+            return JSONResponse(status_code=404, content={"message": "Cleaning task not found"})
+        
+        task.cleaning_status = "Skipped"
+        task.completion_time = datetime.datetime.utcnow()
+        if notes:
+            task.notes = (task.notes or "") + "\nSkip Notes: " + notes
+        
+        if task.room:
+            active_maint = db.query(models.RoomMaintenance).filter(
+                models.RoomMaintenance.room_id == task.room_id,
+                models.RoomMaintenance.status.in_(["Open", "Assigned", "In Progress"])
+            ).first()
+            if active_maint:
+                task.room.status = "maintenance"
+            else:
+                task.room.status = "available"
+        
+        db.commit()
+        return RedirectResponse(url="/admin/rooms/settings#vert-room-maintenance", status_code=303)
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=400, content={"message": str(e)})
+
+@app.post("/api/admin/rooms/maintenance/add")
+async def add_maintenance_ticket(request: Request, db: Session = Depends(get_db)):
+    form_data = await request.form()
+    try:
+        room_id = form_data.get("room_id")
+        area = form_data.get("area")
+        issue_type = form_data.get("issue_type")
+        priority = form_data.get("priority", "Medium")
+        reported_by_id = int(form_data.get("reported_by_id"))
+        assigned_technician_id = form_data.get("assigned_technician_id")
+        scheduled_date = form_data.get("scheduled_date")
+        estimated_duration = form_data.get("estimated_duration")
+        cost = form_data.get("cost", 0.0)
+        notes = form_data.get("notes")
+        is_recurring = form_data.get("is_recurring") == "true" or form_data.get("is_recurring") == "on"
+        recurring_months = form_data.get("recurring_months")
+        
+        parsed_room_id = int(room_id) if room_id and room_id != "" else None
+        
+        if parsed_room_id:
+            room = db.query(models.Room).filter(models.Room.id == parsed_room_id).first()
+            if room:
+                room.status = "maintenance"
+                if not area or area.strip() == "":
+                    area = f"Room {room.room_number}"
+        
+        new_ticket = models.RoomMaintenance(
+            room_id=parsed_room_id,
+            area=area or "Common Area",
+            issue_type=issue_type,
+            priority=priority,
+            reported_by_id=reported_by_id,
+            assigned_technician_id=int(assigned_technician_id) if assigned_technician_id and assigned_technician_id != "" else None,
+            date_reported=datetime.datetime.utcnow(),
+            scheduled_date=datetime.datetime.strptime(scheduled_date, '%Y-%m-%d') if scheduled_date else None,
+            estimated_duration=float(estimated_duration) if estimated_duration else None,
+            status="Assigned" if assigned_technician_id and assigned_technician_id != "" else "Open",
+            cost=float(cost) if cost else 0.0,
+            notes=notes,
+            is_recurring=is_recurring,
+            recurring_months=int(recurring_months) if recurring_months and recurring_months != "" else None,
+            created_at=datetime.datetime.utcnow()
+        )
+        
+        db.add(new_ticket)
+        db.commit()
+        return RedirectResponse(url="/admin/rooms/settings#vert-room-maintenance", status_code=303)
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=400, content={"message": str(e)})
+
+@app.post("/api/admin/rooms/maintenance/update-status")
+async def update_maintenance_status(request: Request, db: Session = Depends(get_db)):
+    form_data = await request.form()
+    try:
+        ticket_id = int(form_data.get("ticket_id"))
+        status = form_data.get("status")
+        cost = float(form_data.get("cost") or 0.0)
+        notes = form_data.get("notes", "")
+        
+        ticket = db.query(models.RoomMaintenance).filter(models.RoomMaintenance.id == ticket_id).first()
+        if not ticket:
+            return JSONResponse(status_code=404, content={"message": "Maintenance ticket not found"})
+        
+        ticket.status = status
+        if cost > 0.0:
+            ticket.cost = cost
+        if notes:
+            ticket.notes = (ticket.notes or "") + "\nUpdate Notes: " + notes
+        
+        if status == "Completed":
+            ticket.completion_date = datetime.datetime.utcnow()
+            # Log maintenance cost to expenses
+            if ticket.cost > 0.0:
+                maint_account = db.query(models.Account).filter(
+                    (models.Account.name.ilike('%maintenance%')) | (models.Account.name.ilike('%repair%'))
+                ).first()
+                if not maint_account:
+                    maint_account = db.query(models.Account).filter(models.Account.account_type == "Expense").first()
+                if not maint_account:
+                    maint_account = db.query(models.Account).first()
+                
+                if maint_account:
+                    count = db.query(models.Expense).count()
+                    ref_no = f"EXP-MAINT-{count+1:04d}"
+                    new_exp = models.Expense(
+                        ref_no=ref_no,
+                        store_id=1,
+                        account_id=maint_account.id,
+                        amount=ticket.cost,
+                        balance=0.0,
+                        paid_to=f"Technician (Maintenance #{ticket.id})",
+                        expense_date=datetime.datetime.utcnow(),
+                        status="Completed",
+                        narrative=f"Auto-generated expense for completed room maintenance #{ticket.id} on room/area: {ticket.area}. Issue: {ticket.issue_type}.",
+                        is_active=True
+                    )
+                    db.add(new_exp)
+            
+            # If room is linked, release it (set to available) unless there is another active issue or dirty tasks
+            if ticket.room_id:
+                other_maint = db.query(models.RoomMaintenance).filter(
+                    models.RoomMaintenance.room_id == ticket.room_id,
+                    models.RoomMaintenance.id != ticket.id,
+                    models.RoomMaintenance.status.in_(["Open", "Assigned", "In Progress"])
+                ).first()
+                if not other_maint:
+                    # Check if needs cleaning
+                    dirty_cleaning = db.query(models.RoomCleaning).filter(
+                        models.RoomCleaning.room_id == ticket.room_id,
+                        models.RoomCleaning.cleaning_status.in_(["Pending", "In Progress"])
+                    ).first()
+                    if dirty_cleaning:
+                        ticket.room.status = "dirty"
+                    else:
+                        ticket.room.status = "available"
+            
+            # Generate next recurring ticket if applicable
+            if ticket.is_recurring and ticket.recurring_months:
+                next_sched = datetime.datetime.utcnow() + datetime.timedelta(days=30 * ticket.recurring_months)
+                new_recurring = models.RoomMaintenance(
+                    room_id=ticket.room_id,
+                    area=ticket.area,
+                    issue_type=ticket.issue_type,
+                    priority=ticket.priority,
+                    reported_by_id=ticket.reported_by_id,
+                    assigned_technician_id=ticket.assigned_technician_id,
+                    date_reported=datetime.datetime.utcnow(),
+                    scheduled_date=next_sched,
+                    status="Open" if not ticket.assigned_technician_id else "Assigned",
+                    is_recurring=True,
+                    recurring_months=ticket.recurring_months,
+                    notes=f"Auto-generated recurring ticket following completed ticket #{ticket.id}.",
+                    created_at=datetime.datetime.utcnow()
+                )
+                db.add(new_recurring)
+                
+        elif status in ["Open", "Assigned", "In Progress"]:
+            if ticket.room_id and ticket.room:
+                ticket.room.status = "maintenance"
+                
+        db.commit()
+        return RedirectResponse(url="/admin/rooms/settings#vert-room-maintenance", status_code=303)
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=400, content={"message": str(e)})
+
+@app.get("/api/admin/rooms/reports/cleaning/csv")
+async def export_cleaning_csv(db: Session = Depends(get_db)):
+    import csv
+    import io
+    from fastapi.responses import StreamingResponse
+    
+    cleanings = db.query(models.RoomCleaning).options(
+        joinedload(models.RoomCleaning.room),
+        joinedload(models.RoomCleaning.housekeeper)
+    ).order_by(models.RoomCleaning.created_at.desc()).all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Task ID", "Room Number", "Cleaning Type", "Status", "Housekeeper", "Scheduled Time", "Start Time", "Completion Time", "Duration (Mins)", "Notes"])
+    
+    for c in cleanings:
+        duration = ""
+        if c.start_time and c.completion_time:
+            duration = round((c.completion_time - c.start_time).total_seconds() / 60, 2)
+            
+        writer.writerow([
+            c.id,
+            c.room.room_number if c.room else "N/A",
+            c.cleaning_type,
+            c.cleaning_status,
+            c.housekeeper.name if c.housekeeper else "Unassigned",
+            c.scheduled_time.strftime("%Y-%m-%d %H:%M:%S") if c.scheduled_time else "",
+            c.start_time.strftime("%Y-%m-%d %H:%M:%S") if c.start_time else "",
+            c.completion_time.strftime("%Y-%m-%d %H:%M:%S") if c.completion_time else "",
+            duration,
+            c.notes or ""
+        ])
+        
+    output.seek(0)
+    headers = {"Content-Disposition": "attachment; filename=room_cleaning_report.csv"}
+    return StreamingResponse(io.BytesIO(output.read().encode("utf-8")), media_type="text/csv", headers=headers)
+
+@app.get("/api/admin/rooms/reports/maintenance/csv")
+async def export_maintenance_csv(db: Session = Depends(get_db)):
+    import csv
+    import io
+    from fastapi.responses import StreamingResponse
+    
+    maintenances = db.query(models.RoomMaintenance).options(
+        joinedload(models.RoomMaintenance.room),
+        joinedload(models.RoomMaintenance.reporter),
+        joinedload(models.RoomMaintenance.technician)
+    ).order_by(models.RoomMaintenance.created_at.desc()).all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Ticket ID", "Room/Area", "Issue Type", "Priority", "Status", "Reported By", "Assigned Technician", "Date Reported", "Completion Date", "Cost (KES)", "Notes", "Recurring?"])
+    
+    for m in maintenances:
+        writer.writerow([
+            m.id,
+            m.area,
+            m.issue_type,
+            m.priority,
+            m.status,
+            m.reporter.name if m.reporter else "Unknown",
+            m.technician.name if m.technician else "Unassigned",
+            m.date_reported.strftime("%Y-%m-%d %H:%M:%S") if m.date_reported else "",
+            m.completion_date.strftime("%Y-%m-%d %H:%M:%S") if m.completion_date else "",
+            m.cost,
+            m.notes or "",
+            "Yes" if m.is_recurring else "No"
+        ])
+        
+    output.seek(0)
+    headers = {"Content-Disposition": "attachment; filename=room_maintenance_report.csv"}
+    return StreamingResponse(io.BytesIO(output.read().encode("utf-8")), media_type="text/csv", headers=headers)
 
 @app.get("/admin/accounting/expenses", response_class=HTMLResponse)
 async def expenses_page(request: Request, db: Session = Depends(get_db)):

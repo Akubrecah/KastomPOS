@@ -15,4 +15,3 @@ with open(log_path, 'r', encoding='utf-8') as f:
             except Exception as e:
                 print(f"Error parsing json: {e}")
             break
-lmm 

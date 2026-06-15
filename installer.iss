@@ -53,7 +53,7 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 
 [Run]
 ; Launch after install
-Filename: "{app}\KastomPOS.exe"; Description: "{cm:LaunchProgram,KastomPOS}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\KastomPOS.exe"; Parameters: "--reinstall"; Description: "{cm:LaunchProgram,KastomPOS}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
 ; Clean up app data on uninstall

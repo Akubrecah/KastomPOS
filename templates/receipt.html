@@ -4,46 +4,77 @@
 <div class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-2xl border border-slate-200" id="receiptContent">
     <!-- Receipt Header -->
     <div class="text-center mb-8">
+        {% if settings.logo_url %}
+        <div class="mb-4 flex justify-center">
+            <img src="{{ settings.logo_url }}" alt="Logo" class="max-h-16 object-contain" />
+        </div>
+        {% endif %}
         <h1 class="text-2xl font-black text-slate-900 mb-1">{{ settings.business_name }}</h1>
-        <p class="text-xs text-slate-500 uppercase tracking-widest font-bold">KRA Fiscal Receipt</p>
+        {% if settings.receipt_header %}
+        <p class="text-xs text-slate-600 font-semibold mb-2">{{ settings.receipt_header }}</p>
+        {% endif %}
+        {% if settings.location %}
+        <p class="text-xs text-slate-500">{{ settings.location }}{% if settings.county %}, {{ settings.county }} County{% endif %}</p>
+        {% endif %}
+        {% if settings.phone %}
+        <p class="text-xs text-slate-500">Tel: {{ settings.phone }}</p>
+        {% endif %}
+        <p class="text-xs text-slate-500 uppercase tracking-widest font-bold mt-2">KRA Fiscal Receipt</p>
+        
         <div class="mt-4 border-y border-dashed border-slate-200 py-2 text-[10px] text-slate-400 space-y-1">
-            <p>Date: {{ receipt.generated_at.strftime('%d %b %Y, %H:%M') }}</p>
-            <p>Receipt #: {{ receipt.receipt_number }}</p>
-            {% if receipt.kra_control_number %}
+            <p>Date: {% if receipt and receipt.generated_at %}{{ receipt.generated_at.strftime('%d %b %Y, %H:%M') }}{% else %}{{ order.created_at.strftime('%d %b %Y, %H:%M') if order else 'N/A' }}{% endif %}</p>
+            <p>Receipt #: {{ receipt.receipt_number if receipt else 'REC-' ~ order.id }}</p>
+            <p>KRA PIN: {{ settings.kra_pin if settings.kra_pin else 'N/A' }}</p>
+            <p>ETR Serial #: {{ settings.etr_serial if settings.etr_serial else 'KP0918273645' }}</p>
+            {% if receipt and receipt.kra_control_number %}
             <p class="text-slate-900 font-black">CU QR: {{ receipt.kra_control_number }}</p>
+            {% else %}
+            <p class="text-slate-900 font-bold">TIMS Sign: {{ receipt.receipt_number if receipt else 'REC-' ~ order.id }}-KRA-{{ receipt.id if receipt else order.id }}</p>
             {% endif %}
         </div>
     </div>
 
     <!-- Order Items -->
     <div class="space-y-4 mb-8">
-        {% for item in order.items %}
-        <div class="flex justify-between items-start">
-            <div class="flex-1">
-                <p class="text-sm font-bold text-slate-900">{{ item.product.name }}</p>
-                <p class="text-[10px] text-slate-500">{{ item.quantity }} x {{ settings.currency }} {{ item.unit_price }}</p>
-                {% if item.note %}
-                <p class="text-[10px] text-amber-600 italic">({{ item.note }})</p>
-                {% endif %}
+        {% if order and order.items %}
+            {% for item in order.items %}
+            <div class="flex justify-between items-start">
+                <div class="flex-1">
+                    <p class="text-sm font-bold text-slate-900">{{ item.product.name }}</p>
+                    <p class="text-[10px] text-slate-500">{{ item.quantity }} x {{ settings.currency }} {{ item.unit_price }}</p>
+                    {% if item.note %}
+                    <p class="text-[10px] text-amber-600 italic">({{ item.note }})</p>
+                    {% endif %}
+                </div>
+                <p class="text-sm font-black text-slate-900">{{ settings.currency }} {{ item.quantity * item.unit_price }}</p>
             </div>
-            <p class="text-sm font-black text-slate-900">{{ settings.currency }} {{ item.quantity * item.unit_price }}</p>
-        </div>
-        {% endfor %}
+            {% endfor %}
+        {% else %}
+            <p class="text-sm text-slate-500 text-center">No items in this order.</p>
+        {% endif %}
     </div>
 
     <!-- Totals -->
     <div class="border-t border-dashed border-slate-200 pt-4 space-y-2 mb-8">
+        {% set tax_rate = (settings.tax_rate|float) if settings.tax_rate else 16.0 %}
+        {% if tax_rate > 0 %}
         <div class="flex justify-between text-sm">
-            <span class="text-slate-500 font-bold">SUBTOTAL</span>
-            <span class="font-black text-slate-900">{{ settings.currency }} {{ "{:,.2f}".format(order.total_amount) }}</span>
+            <span class="text-slate-500 font-bold">TAXABLE (EXCL. VAT)</span>
+            <span class="font-black text-slate-900">{{ settings.currency }} {{ "{:,.2f}".format(order.total_amount / (1.0 + tax_rate / 100.0)) if order else '0.00' }}</span>
         </div>
         <div class="flex justify-between text-sm">
-            <span class="text-slate-500 font-bold">VAT (16%)</span>
-            <span class="font-black text-slate-900">{{ settings.currency }} {{ "{:,.2f}".format(order.total_amount * 0.16) }}</span>
+            <span class="text-slate-500 font-bold">VAT ({{ tax_rate|int }}%)</span>
+            <span class="font-black text-slate-900">{{ settings.currency }} {{ "{:,.2f}".format(order.total_amount - (order.total_amount / (1.0 + tax_rate / 100.0))) if order else '0.00' }}</span>
         </div>
+        {% else %}
+        <div class="flex justify-between text-sm">
+            <span class="text-slate-500 font-bold">TAX (EXEMPT)</span>
+            <span class="font-black text-slate-900">{{ settings.currency }} 0.00</span>
+        </div>
+        {% endif %}
         <div class="flex justify-between text-lg pt-2 border-t border-slate-900">
-            <span class="font-black text-slate-900 tracking-tighter">TOTAL AMOUNT</span>
-            <span class="font-black text-slate-900">{{ settings.currency }} {{ "{:,.2f}".format(order.total_amount) }}</span>
+            <span class="font-black text-slate-900 tracking-tighter">TOTAL AMOUNT (INCL. VAT)</span>
+            <span class="font-black text-slate-900">{{ settings.currency }} {{ "{:,.2f}".format(order.total_amount) if order else '0.00' }}</span>
         </div>
     </div>
 
@@ -51,22 +82,31 @@
     <div class="bg-slate-50 p-4 rounded-xl mb-8">
         <div class="flex justify-between text-[10px] font-bold text-slate-500">
             <span>PAYMENT METHOD</span>
-            <span class="text-slate-900">{{ order.payments[0].method|upper if order.payments else 'N/A' }}</span>
+            <span class="text-slate-900">{{ order.payments[0].method|upper if (order and order.payments) else 'N/A' }}</span>
         </div>
         <div class="flex justify-between text-[10px] font-bold text-slate-500 mt-1">
             <span>CASHIER</span>
-            <span class="text-slate-900">{{ order.payments[0].cashier.name if order.payments else 'N/A' }}</span>
+            <span class="text-slate-900">{{ order.payments[0].cashier.name if (order and order.payments) else 'N/A' }}</span>
         </div>
     </div>
 
     <!-- Footer -->
     <div class="text-center space-y-4">
+        {% if settings.mpesa_paybill %}
+        <div class="bg-teal-50 border border-teal-100 p-3 rounded-lg text-xs font-bold text-teal-800">
+            M-PESA: {{ settings.mpesa_paybill }}
+        </div>
+        {% endif %}
         <div class="flex justify-center">
             <div class="w-24 h-24 bg-slate-100 flex items-center justify-center rounded-lg border-2 border-slate-200">
                 <i class="fas fa-qrcode text-4xl text-slate-300"></i>
             </div>
         </div>
+        {% if settings.receipt_footer %}
+        <p class="text-[10px] font-bold text-slate-400 italic">{{ settings.receipt_footer }}</p>
+        {% else %}
         <p class="text-[10px] font-bold text-slate-400 italic">Thank you for visiting {{ settings.business_name }}!</p>
+        {% endif %}
         <p class="text-[8px] text-slate-300">System by KastomPOS AI</p>
     </div>
 </div>

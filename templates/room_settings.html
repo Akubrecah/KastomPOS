@@ -191,9 +191,510 @@
                                     </div>
 
                                     <!-- Placeholder Tabs -->
+                                    <!-- Room Cleaning & Maintenance Dashboard -->
                                     <div class="tab-pane fade" id="vert-room-maintenance" role="tabpanel" aria-labelledby="vert-room-maintenance-tab">
-                                        <h5>Room Maintenance Status</h5>
-                                        <p>Coming Soon: Manage room cleaning and maintenance schedules.</p>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <h5>Room Operations & Maintenance</h5>
+                                            </div>
+                                            <div class="col-md-6 text-right">
+                                                <a href="/api/admin/rooms/reports/cleaning/csv" class="btn btn-xs btn-outline-primary mr-1" title="Export Cleaning CSV"><i class="fa fa-broom"></i> Export Cleaning CSV</a>
+                                                <a href="/api/admin/rooms/reports/maintenance/csv" class="btn btn-xs btn-outline-warning" title="Export Maintenance CSV"><i class="fa fa-wrench"></i> Export Maintenance CSV</a>
+                                            </div>
+                                        </div>
+
+                                        <!-- Nested Tabs Configuration -->
+                                        <div class="card card-teal card-outline card-tabs">
+                                            <div class="card-header p-0 pt-1">
+                                                <ul class="nav nav-tabs" id="custom-tabs-one-tab" role="tablist">
+                                                    <li class="nav-item">
+                                                        <a class="nav-link active" id="sub-cleaning-tab" data-toggle="pill" href="#sub-cleaning" role="tab" aria-controls="sub-cleaning" aria-selected="true"><i class="fa fa-broom"></i> Housekeeping ({{ total_dirty }} Dirty)</a>
+                                                    </li>
+                                                    <li class="nav-item">
+                                                        <a class="nav-link" id="sub-maintenance-tab" data-toggle="pill" href="#sub-maintenance" role="tab" aria-controls="sub-maintenance" aria-selected="false"><i class="fa fa-wrench"></i> Maintenance ({{ open_tickets }} Open)</a>
+                                                    </li>
+                                                    <li class="nav-item">
+                                                        <a class="nav-link" id="sub-maint-reports-tab" data-toggle="pill" href="#sub-maint-reports" role="tab" aria-controls="sub-maint-reports" aria-selected="false"><i class="fa fa-bar-chart"></i> Operations Reports</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="tab-content" id="custom-tabs-one-tabContent">
+                                                    
+                                                    <!-- HOUSEKEEPING / CLEANING -->
+                                                    <div class="tab-pane fade show active" id="sub-cleaning" role="tabpanel" aria-labelledby="sub-cleaning-tab">
+                                                        <!-- Cleaning KPIs -->
+                                                        <div class="row">
+                                                            <div class="col-md-4 col-sm-6">
+                                                                <div class="info-box bg-light">
+                                                                    <span class="info-box-icon bg-danger"><i class="fa fa-exclamation-triangle"></i></span>
+                                                                    <div class="info-box-content">
+                                                                        <span class="info-box-text">Pending / Dirty</span>
+                                                                        <span class="info-box-number">{{ total_dirty }} Rooms</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4 col-sm-6">
+                                                                <div class="info-box bg-light">
+                                                                    <span class="info-box-icon bg-warning"><i class="fa fa-spinner fa-spin"></i></span>
+                                                                    <div class="info-box-content">
+                                                                        <span class="info-box-text">In Progress</span>
+                                                                        <span class="info-box-number">{{ cleaning_in_progress }} Tasks</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4 col-sm-6">
+                                                                <div class="info-box bg-light">
+                                                                    <span class="info-box-icon bg-success"><i class="fa fa-check-circle"></i></span>
+                                                                    <div class="info-box-content">
+                                                                        <span class="info-box-text">Clean & Available</span>
+                                                                        <span class="info-box-number">{{ total_clean }} Rooms</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="row">
+                                                            <!-- Cleaning task table -->
+                                                            <div class="col-md-8">
+                                                                <div class="card card-outline card-teal">
+                                                                    <div class="card-header">
+                                                                        <h3 class="card-title text-sm"><i class="fa fa-list"></i> Cleaning Task List</h3>
+                                                                    </div>
+                                                                    <div class="card-body p-0">
+                                                                        <div class="table-responsive">
+                                                                            <table class="table table-sm table-striped table-hover mb-0">
+                                                                                <thead>
+                                                                                    <tr>
+                                                                                        <th>Room</th>
+                                                                                        <th>Type</th>
+                                                                                        <th>Status</th>
+                                                                                        <th>Housekeeper</th>
+                                                                                        <th>Scheduled</th>
+                                                                                        <th>Action</th>
+                                                                                    </tr>
+                                                                                </thead>
+                                                                                <tbody>
+                                                                                    {% for c in cleanings %}
+                                                                                    <tr>
+                                                                                        <td><strong>{{ c.room.room_number if c.room else 'N/A' }}</strong></td>
+                                                                                        <td><span class="badge badge-secondary">{{ c.cleaning_type }}</span></td>
+                                                                                        <td>
+                                                                                            {% if c.cleaning_status == 'Pending' %}
+                                                                                            <span class="badge badge-danger"><i class="fa fa-clock-o"></i> Pending</span>
+                                                                                            {% elif c.cleaning_status == 'In Progress' %}
+                                                                                            <span class="badge badge-warning"><i class="fa fa-refresh fa-spin"></i> In Progress</span>
+                                                                                            {% elif c.cleaning_status == 'Completed' %}
+                                                                                            <span class="badge badge-success"><i class="fa fa-check"></i> Completed</span>
+                                                                                            {% else %}
+                                                                                            <span class="badge badge-secondary">{{ c.cleaning_status }}</span>
+                                                                                            {% endif %}
+                                                                                        </td>
+                                                                                        <td>{{ c.housekeeper.name if c.housekeeper else 'Unassigned' }}</td>
+                                                                                        <td><small>{{ c.scheduled_time.strftime('%d-%m %H:%M') if c.scheduled_time else '' }}</small></td>
+                                                                                        <td>
+                                                                                            {% if c.cleaning_status == 'Pending' %}
+                                                                                            <form action="/api/admin/rooms/cleaning/assign" method="post" class="form-inline d-inline">
+                                                                                                <input type="hidden" name="task_id" value="{{ c.id }}" />
+                                                                                                <select name="housekeeper_id" class="form-control form-control-xs mr-1" style="height: 25px; font-size: 11px;" required>
+                                                                                                    <option value="">-- Assign --</option>
+                                                                                                    {% for staff in staff_list %}
+                                                                                                    <option value="{{ staff.id }}">{{ staff.name }}</option>
+                                                                                                    {% endfor %}
+                                                                                                </select>
+                                                                                                <button type="submit" class="btn btn-xs btn-primary"><i class="fa fa-play"></i> Start</button>
+                                                                                            </form>
+                                                                                            {% elif c.cleaning_status == 'In Progress' %}
+                                                                                            <div class="btn-group">
+                                                                                                <button type="button" class="btn btn-xs btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                                                                    Action
+                                                                                                </button>
+                                                                                                <div class="dropdown-menu p-2" style="min-width: 200px;">
+                                                                                                    <form action="/api/admin/rooms/cleaning/complete" method="post">
+                                                                                                        <input type="hidden" name="task_id" value="{{ c.id }}" />
+                                                                                                        <div class="form-group mb-1">
+                                                                                                            <input type="text" name="notes" placeholder="Notes (optional)" class="form-control form-control-sm" style="font-size: 11px;" />
+                                                                                                        </div>
+                                                                                                        <button type="submit" class="btn btn-block btn-xs btn-success mb-1"><i class="fa fa-check"></i> Complete Clean</button>
+                                                                                                    </form>
+                                                                                                    <form action="/api/admin/rooms/cleaning/skip" method="post">
+                                                                                                        <input type="hidden" name="task_id" value="{{ c.id }}" />
+                                                                                                        <div class="form-group mb-1">
+                                                                                                            <input type="text" name="notes" placeholder="Reason to skip" class="form-control form-control-sm" style="font-size: 11px;" required />
+                                                                                                        </div>
+                                                                                                        <button type="submit" class="btn btn-block btn-xs btn-outline-danger"><i class="fa fa-forward"></i> Skip Task</button>
+                                                                                                    </form>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            {% else %}
+                                                                                            <span class="text-muted text-xs">-</span>
+                                                                                            {% endif %}
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                    {% else %}
+                                                                                    <tr>
+                                                                                        <td colspan="6" class="text-center text-muted p-3">No cleaning tasks found.</td>
+                                                                                    </tr>
+                                                                                    {% endfor %}
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Manual scheduling form -->
+                                                            <div class="col-md-4">
+                                                                <div class="card card-outline card-teal">
+                                                                    <div class="card-header">
+                                                                        <h3 class="card-title text-sm"><i class="fa fa-calendar-plus-o"></i> Schedule Cleaning</h3>
+                                                                    </div>
+                                                                    <div class="card-body">
+                                                                        <form action="/api/admin/rooms/cleaning/create" method="post">
+                                                                            <div class="form-group">
+                                                                                <label class="text-xs">Room <span class="text-danger">*</span></label>
+                                                                                <select name="room_id" class="form-control form-control-sm" required>
+                                                                                    <option value="">-- Select Room --</option>
+                                                                                    {% for room in rooms_list %}
+                                                                                    <option value="{{ room.id }}">Room {{ room.room_number }} ({{ room.room_type }} - {{ room.status|capitalize }})</option>
+                                                                                    {% endfor %}
+                                                                                </select>
+                                                                            </div>
+                                                                            <div class="form-group">
+                                                                                <label class="text-xs">Cleaning Type</label>
+                                                                                <select name="cleaning_type" class="form-control form-control-sm">
+                                                                                    <option value="Standard">Standard Clean</option>
+                                                                                    <option value="Deep Clean">Deep Clean</option>
+                                                                                    <option value="Checkout Clean">Checkout Clean</option>
+                                                                                    <option value="Turndown">Turndown Service</option>
+                                                                                </select>
+                                                                            </div>
+                                                                            <div class="form-group">
+                                                                                <label class="text-xs">Assign Housekeeper (Optional)</label>
+                                                                                <select name="assigned_housekeeper_id" class="form-control form-control-sm">
+                                                                                    <option value="">-- Leave Unassigned --</option>
+                                                                                    {% for staff in staff_list %}
+                                                                                    <option value="{{ staff.id }}">{{ staff.name }}</option>
+                                                                                    {% endfor %}
+                                                                                </select>
+                                                                            </div>
+                                                                            <div class="form-group">
+                                                                                <label class="text-xs">Instructions / Notes</label>
+                                                                                <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="e.g. check minibar, change duvet cover"></textarea>
+                                                                            </div>
+                                                                            <button type="submit" class="btn btn-sm btn-teal btn-block"><i class="fa fa-check"></i> Assign Task</button>
+                                                                        </form>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- MAINTENANCE TICKETS -->
+                                                    <div class="tab-pane fade" id="sub-maintenance" role="tabpanel" aria-labelledby="sub-maintenance-tab">
+                                                        <!-- Maintenance KPIs -->
+                                                        <div class="row">
+                                                            <div class="col-md-4 col-sm-6">
+                                                                <div class="info-box bg-light">
+                                                                    <span class="info-box-icon bg-danger"><i class="fa fa-wrench"></i></span>
+                                                                    <div class="info-box-content">
+                                                                        <span class="info-box-text">Active Tickets</span>
+                                                                        <span class="info-box-number">{{ open_tickets }} Open</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4 col-sm-6">
+                                                                <div class="info-box bg-light">
+                                                                    <span class="info-box-icon bg-warning"><i class="fa fa-exclamation-circle"></i></span>
+                                                                    <div class="info-box-content">
+                                                                        <span class="info-box-text">Urgent Tickets</span>
+                                                                        <span class="info-box-number">{{ urgent_tickets }} Active</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4 col-sm-6">
+                                                                <div class="info-box bg-light">
+                                                                    <span class="info-box-icon bg-primary"><i class="fa fa-money"></i></span>
+                                                                    <div class="info-box-content">
+                                                                        <span class="info-box-text">Total Expenses Logged</span>
+                                                                        <span class="info-box-number">KES {{ total_maint_cost|format_currency }}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="row">
+                                                            <!-- Maintenance Ticket Logs -->
+                                                            <div class="col-md-8">
+                                                                <div class="card card-outline card-warning">
+                                                                    <div class="card-header">
+                                                                        <h3 class="card-title text-sm"><i class="fa fa-list"></i> Maintenance Ticket Log</h3>
+                                                                    </div>
+                                                                    <div class="card-body p-0">
+                                                                        <div class="table-responsive">
+                                                                            <table class="table table-sm table-striped table-hover mb-0">
+                                                                                <thead>
+                                                                                    <tr>
+                                                                                        <th>ID</th>
+                                                                                        <th>Location/Area</th>
+                                                                                        <th>Issue Type</th>
+                                                                                        <th>Priority</th>
+                                                                                        <th>Technician</th>
+                                                                                        <th>Status</th>
+                                                                                        <th>Cost</th>
+                                                                                        <th>Action</th>
+                                                                                    </tr>
+                                                                                </thead>
+                                                                                <tbody>
+                                                                                    {% for m in maintenances %}
+                                                                                    <tr>
+                                                                                        <td>#{{ m.id }}</td>
+                                                                                        <td><strong>{{ m.area }}</strong></td>
+                                                                                        <td><span class="text-xs">{{ m.issue_type }}</span></td>
+                                                                                        <td>
+                                                                                            {% if m.priority == 'Urgent' %}
+                                                                                            <span class="badge badge-danger text-xs">Urgent</span>
+                                                                                            {% elif m.priority == 'High' %}
+                                                                                            <span class="badge badge-warning text-xs">High</span>
+                                                                                            {% elif m.priority == 'Medium' %}
+                                                                                            <span class="badge badge-info text-xs">Medium</span>
+                                                                                            {% else %}
+                                                                                            <span class="badge badge-secondary text-xs">Low</span>
+                                                                                            {% endif %}
+                                                                                        </td>
+                                                                                        <td>{{ m.technician.name if m.technician else 'Unassigned' }}</td>
+                                                                                        <td>
+                                                                                            {% if m.status == 'Open' %}
+                                                                                            <span class="badge badge-danger">Open</span>
+                                                                                            {% elif m.status == 'In Progress' %}
+                                                                                            <span class="badge badge-warning">In Progress</span>
+                                                                                            {% elif m.status == 'Completed' %}
+                                                                                            <span class="badge badge-success">Completed</span>
+                                                                                            {% else %}
+                                                                                            <span class="badge badge-secondary">{{ m.status }}</span>
+                                                                                            {% endif %}
+                                                                                        </td>
+                                                                                        <td>KES {{ m.cost|format_currency }}</td>
+                                                                                        <td>
+                                                                                            {% if m.status != 'Completed' %}
+                                                                                            <div class="btn-group">
+                                                                                                <button type="button" class="btn btn-xs btn-outline-warning dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                                                                    Update
+                                                                                                </button>
+                                                                                                <div class="dropdown-menu p-2" style="min-width: 250px; right: 0; left: auto;">
+                                                                                                    <form action="/api/admin/rooms/maintenance/update-status" method="post">
+                                                                                                        <input type="hidden" name="ticket_id" value="{{ m.id }}" />
+                                                                                                        <div class="form-group mb-1">
+                                                                                                            <label class="text-xs mb-0">Status</label>
+                                                                                                            <select name="status" class="form-control form-control-sm" required>
+                                                                                                                <option value="In Progress" {% if m.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                                                                                                <option value="On Hold" {% if m.status == 'On Hold' %}selected{% endif %}>On Hold</option>
+                                                                                                                <option value="Completed">Completed / Resolve</option>
+                                                                                                            </select>
+                                                                                                        </div>
+                                                                                                        <div class="form-group mb-1">
+                                                                                                            <label class="text-xs mb-0">Actual Cost (KES)</label>
+                                                                                                            <input type="number" step="0.01" name="cost" value="{{ m.cost }}" class="form-control form-control-sm" />
+                                                                                                        </div>
+                                                                                                        <div class="form-group mb-2">
+                                                                                                            <label class="text-xs mb-0">Update Notes</label>
+                                                                                                            <input type="text" name="notes" placeholder="Provide notes..." class="form-control form-control-sm" />
+                                                                                                        </div>
+                                                                                                        <button type="submit" class="btn btn-block btn-xs btn-warning"><i class="fa fa-save"></i> Save Status</button>
+                                                                                                    </form>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            {% else %}
+                                                                                            <span class="text-muted text-xs">-</span>
+                                                                                            {% endif %}
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                    {% else %}
+                                                                                    <tr>
+                                                                                        <td colspan="8" class="text-center text-muted p-3">No maintenance tickets reported.</td>
+                                                                                    </tr>
+                                                                                    {% endfor %}
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- Create Ticket Form -->
+                                                            <div class="col-md-4">
+                                                                <div class="card card-outline card-warning">
+                                                                    <div class="card-header">
+                                                                        <h3 class="card-title text-sm"><i class="fa fa-plus-circle"></i> Log Maintenance Issue</h3>
+                                                                    </div>
+                                                                    <div class="card-body">
+                                                                        <form action="/api/admin/rooms/maintenance/add" method="post">
+                                                                            <input type="hidden" name="reported_by_id" value="{{ staff_list[0].id if staff_list else 1 }}" />
+                                                                            <div class="form-group">
+                                                                                <label class="text-xs">Location / Room</label>
+                                                                                <select name="room_id" class="form-control form-control-sm">
+                                                                                    <option value="">-- Common Area / Non-Room --</option>
+                                                                                    {% for room in rooms_list %}
+                                                                                    <option value="{{ room.id }}">Room {{ room.room_number }} ({{ room.room_type }} - {{ room.status|capitalize }})</option>
+                                                                                    {% endfor %}
+                                                                                </select>
+                                                                            </div>
+                                                                            <div class="form-group">
+                                                                                <label class="text-xs">Specific Area Name</label>
+                                                                                <input type="text" name="area" class="form-control form-control-sm" placeholder="e.g. Swimming Pool, Room 104 Balcony" />
+                                                                            </div>
+                                                                            <div class="form-group">
+                                                                                <label class="text-xs">Issue Type <span class="text-danger">*</span></label>
+                                                                                <select name="issue_type" class="form-control form-control-sm" required>
+                                                                                    <option value="Electrical">Electrical</option>
+                                                                                    <option value="Plumbing">Plumbing</option>
+                                                                                    <option value="Furniture">Furniture & Fittings</option>
+                                                                                    <option value="AC/Heating">AC & Heating</option>
+                                                                                    <option value="General Repair">General Repair</option>
+                                                                                    <option value="Preventive">Preventive Maintenance</option>
+                                                                                </select>
+                                                                            </div>
+                                                                            <div class="row">
+                                                                                <div class="col-6 form-group">
+                                                                                    <label class="text-xs">Priority</label>
+                                                                                    <select name="priority" class="form-control form-control-sm">
+                                                                                        <option value="Low">Low</option>
+                                                                                        <option value="Medium" selected>Medium</option>
+                                                                                        <option value="High">High</option>
+                                                                                        <option value="Urgent">Urgent</option>
+                                                                                    </select>
+                                                                                </div>
+                                                                                <div class="col-6 form-group">
+                                                                                    <label class="text-xs">Assign Tech</label>
+                                                                                    <select name="assigned_technician_id" class="form-control form-control-sm">
+                                                                                        <option value="">-- Unassigned --</option>
+                                                                                        {% for staff in staff_list %}
+                                                                                        <option value="{{ staff.id }}">{{ staff.name }}</option>
+                                                                                        {% endfor %}
+                                                                                    </select>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="row">
+                                                                                <div class="col-6 form-group">
+                                                                                    <label class="text-xs">Est. Cost (KES)</label>
+                                                                                    <input type="number" step="0.01" name="cost" class="form-control form-control-sm" placeholder="0.00" />
+                                                                                </div>
+                                                                                <div class="col-6 form-group">
+                                                                                    <label class="text-xs">Scheduled Date</label>
+                                                                                    <input type="date" name="scheduled_date" class="form-control form-control-sm" />
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="row">
+                                                                                <div class="col-6 form-group">
+                                                                                    <label class="text-xs">Est. Hours</label>
+                                                                                    <input type="number" step="0.1" name="estimated_duration" class="form-control form-control-sm" placeholder="Hours" />
+                                                                                </div>
+                                                                                <div class="col-6 form-group">
+                                                                                    <div class="custom-control custom-checkbox mt-4">
+                                                                                        <input class="custom-control-input" type="checkbox" id="is_recurring_cb" name="is_recurring" />
+                                                                                        <label for="is_recurring_cb" class="custom-control-label text-xs">Is Recurring</label>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="form-group" id="recurring_months_group" style="display:none;">
+                                                                                <label class="text-xs">Recurrence Frequency (Months)</label>
+                                                                                <input type="number" name="recurring_months" class="form-control form-control-sm" placeholder="e.g. 3" min="1" />
+                                                                            </div>
+                                                                            <script>
+                                                                                document.getElementById('is_recurring_cb').addEventListener('change', function() {
+                                                                                    document.getElementById('recurring_months_group').style.display = this.checked ? 'block' : 'none';
+                                                                                });
+                                                                            </script>
+                                                                            <div class="form-group">
+                                                                                <label class="text-xs">Issue Description / Details</label>
+                                                                                <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Explain the issue details..." required></textarea>
+                                                                            </div>
+                                                                            <button type="submit" class="btn btn-sm btn-warning btn-block text-bold"><i class="fa fa-exclamation-circle"></i> Log Service Request</button>
+                                                                        </form>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- PERFORMANCE & ANALYTICS REPORTS -->
+                                                    <div class="tab-pane fade" id="sub-maint-reports" role="tabpanel" aria-labelledby="sub-maint-reports-tab">
+                                                        <div class="row">
+                                                            <!-- Cleaning speeds -->
+                                                            <div class="col-md-6">
+                                                                <div class="card card-outline card-teal">
+                                                                    <div class="card-header">
+                                                                        <h3 class="card-title text-sm"><i class="fa fa-tachometer"></i> Average Housekeeper Speed (Completed Tasks)</h3>
+                                                                    </div>
+                                                                    <div class="card-body p-0">
+                                                                        <table class="table table-sm table-striped">
+                                                                            <thead>
+                                                                                <tr>
+                                                                                    <th>Housekeeper</th>
+                                                                                    <th class="text-center">Tasks Done</th>
+                                                                                    <th class="text-right">Avg Duration (Mins)</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                {% if housekeep_stats %}
+                                                                                    {% for name, stats in housekeep_stats.items() %}
+                                                                                    <tr>
+                                                                                        <td>{{ name }}</td>
+                                                                                        <td class="text-center">{{ stats.count }}</td>
+                                                                                        <td class="text-right"><strong>{{ (stats.sum / stats.count)|round(1) }}</strong> mins</td>
+                                                                                    </tr>
+                                                                                    {% endfor %}
+                                                                                {% else %}
+                                                                                    <tr>
+                                                                                        <td colspan="3" class="text-center text-muted p-3">No speed data available yet. Complete a few tasks with start and end times logged.</td>
+                                                                                    </tr>
+                                                                                {% endif %}
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+ 
+                                                            <!-- Monthly maintenance expenses -->
+                                                            <div class="col-md-6">
+                                                                <div class="card card-outline card-warning">
+                                                                    <div class="card-header">
+                                                                        <h3 class="card-title text-sm"><i class="fa fa-money"></i> Maintenance Expenses by Issue Type</h3>
+                                                                    </div>
+                                                                    <div class="card-body p-0">
+                                                                        <table class="table table-sm table-striped">
+                                                                            <thead>
+                                                                                <tr>
+                                                                                    <th>Issue Type</th>
+                                                                                    <th class="text-center">Tickets Count</th>
+                                                                                    <th class="text-right">Total Cost logged</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                {% if issue_stats %}
+                                                                                    {% for issue, stats in issue_stats.items() %}
+                                                                                    <tr>
+                                                                                        <td>{{ issue }}</td>
+                                                                                        <td class="text-center">{{ stats.count }}</td>
+                                                                                        <td class="text-right"><strong>KES {{ stats.cost|format_currency }}</strong></td>
+                                                                                    </tr>
+                                                                                    {% endfor %}
+                                                                                {% else %}
+                                                                                    <tr>
+                                                                                        <td colspan="3" class="text-center text-muted p-3">No maintenance costs recorded yet.</td>
+                                                                                    </tr>
+                                                                                {% endif %}
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="tab-pane fade" id="vert-revenue-allocations" role="tabpanel" aria-labelledby="vert-revenue-allocations-tab">
                             <div class="row">
